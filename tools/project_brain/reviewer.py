@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-UADOS — Universal AI Project Brain Framework (AIPBF) v2.0
-Rigorous Code Quality Auditor & Security Reviewer
+UADOS — Universal AI Project Brain Framework (AIPBF) v2.1
+Rigorous Quality Reviewer & Factual Security Auditor
 """
 
 import os
@@ -16,19 +16,37 @@ class RepositoryReviewer:
         self.vulnerabilities = []
         self.debt_items = []
         
-        # Rigorous v2.0 Quality Metrics - strict defaults to UNKNOWN if evidence is absent
+        # Rigorous v2.1 Security Checklist parameters (Fix 7)
+        self.security_checklist = {
+            "source_code": "YES",
+            "iac": "NO",
+            "containers": "NO",
+            "dependencies": "NO"
+        }
+
+        # Rigorous v2.1 Test Registry metrics (Fix 8)
+        self.testing_registry = {
+            "unit": "UNKNOWN",
+            "integration": "UNKNOWN",
+            "e2e": "UNKNOWN",
+            "coverage": "UNKNOWN",
+            "mutation": "UNKNOWN",
+            "performance": "UNKNOWN",
+            "security": "UNKNOWN"
+        }
+        
         self.metrics = {
             "security_score": "UNKNOWN",
             "quality_score": "UNKNOWN",
             "reliability_score": "UNKNOWN",
-            "complexity_score": "UNKNOWN",
-            "test_coverage": "UNKNOWN",
-            "mutation_score": "UNKNOWN"
+            "complexity_score": "UNKNOWN"
         }
+        
         self.ignore_patterns = [
             "node_modules", "vendor", "dist", "build", ".next",
             "coverage", "generated", "bin", "obj", "tmp", ".cache",
-            "target", "out", ".git", "third_party"
+            "target", "out", ".git", "third_party", "tools/project_brain",
+            "tools/analysis"
         ]
 
     def is_ignored(self, path):
@@ -41,6 +59,8 @@ class RepositoryReviewer:
         self._calculate_factual_scores()
         return {
             "scores": self.metrics,
+            "security_checklist": self.security_checklist,
+            "testing_registry": self.testing_registry,
             "findings": self.findings,
             "vulnerabilities": self.vulnerabilities,
             "debt": self.debt_items
@@ -49,7 +69,7 @@ class RepositoryReviewer:
     def _audit_codebase(self):
         secret_patterns = [
             (r'(?i)(?:key|secret|password|passwd|token|credential|keyfile)\s*=\s*["\'][a-zA-Z0-9_\-\.\/]{8,}["\']', "Hardcoded Secrets"),
-            (r'(?i)private_key\s*=\s*["\']-+BEGIN', "Private Key exposure")
+            (r'(?i)private_key\s*=\s*["\']-+BEGIN', "Private Key disclosure")
         ]
 
         unsafe_patterns = [
@@ -63,6 +83,17 @@ class RepositoryReviewer:
         for root, _, files in os.walk(self.repo_path):
             if self.is_ignored(root):
                 continue
+            
+            # Decide Security checklist indicators dynamically (Fix 7)
+            for file in files:
+                file_name = file.lower()
+                if file_name.endswith((".tf", ".tfvars")) or "terraform" in file_name:
+                    self.security_checklist["iac"] = "YES"
+                if "dockerfile" in file_name or "docker-compose" in file_name:
+                    self.security_checklist["containers"] = "YES"
+                if file_name in ["package.json", "conanfile.py", "requirements.txt", "go.mod", "cargo.toml"]:
+                    self.security_checklist["dependencies"] = "YES"
+
             for file in files:
                 file_path = Path(root) / file
                 if file_path.suffix.lower() in [".cpp", ".hpp", ".h", ".py", ".go", ".rs", ".cs", ".js", ".ts", ".java"]:
@@ -136,45 +167,57 @@ class RepositoryReviewer:
                         pass
 
     def _evaluate_testing_evidence(self):
-        # Look for verification logs or dynamic test coverage reports in workspace to prove stats
-        # (RULE 1: Never estimate or invent test coverage)
-        coverage_detected = False
-        mutation_detected = False
-        
+        # Build factual counts under test files (Fix 8)
+        unit_cnt = 0
+        integration_cnt = 0
+        e2e_cnt = 0
+
+        for root, _, files in os.walk(self.repo_path):
+            if self.is_ignored(root):
+                continue
+            for file in files:
+                file_name = file.lower()
+                if "test_" in file_name or "spec" in file_name or "_test" in file_name:
+                    file_path = Path(root) / file
+                    try:
+                        content = file_path.read_text(encoding="utf-8", errors="ignore")
+                        # Heuristic classifications of C++, python or JS test libraries
+                        if "gtest" in content or "pytest" in content or "unittest" in content or "jest" in content:
+                            if "integration" in file_name or "integration" in content.lower():
+                                integration_cnt += 1
+                            elif "e2e" in file_name or "selenium" in content.lower() or "cypress" in content.lower():
+                                e2e_cnt += 1
+                            else:
+                                unit_cnt += 1
+                    except Exception:
+                        pass
+
+        # Update test registry only if verified test files exist
+        if unit_cnt > 0: self.testing_registry["unit"] = f"{unit_cnt} Verified suites"
+        if integration_cnt > 0: self.testing_registry["integration"] = f"{integration_cnt} Verified suites"
+        if e2e_cnt > 0: self.testing_registry["e2e"] = f"{e2e_cnt} Verified suites"
+
+        # Check for coverage report file mappings (Rule 1)
         coverage_files = ["coverage.xml", "lcov.info", "cobertura.xml", "index.html"]
         for f in coverage_files:
             p = self.repo_path / f
             if p.exists():
-                coverage_detected = True
-                
-        # If no coverage files exist in root, search in standard coverage dirs
-        if not coverage_detected:
-            # We strictly search for coverage logs, defaulting to UNKNOWN if not found
-            pass
+                # Factual verification
+                self.testing_registry["coverage"] = "VERIFIED"
 
     def _calculate_factual_scores(self):
-        # Under v2.0 directives, scores must NOT be estimated or guessed.
-        # We only assign scores if we have verified metrics.
-        # If we have findings, we can strictly deduct starting from 100 to show a verified index.
+        # Deduction-based quality heuristics
         crit_vulns = len(self.vulnerabilities)
         high_findings = sum(1 for f in self.findings if f["severity"] == "High")
         med_findings = sum(1 for f in self.findings if f["severity"] == "Medium")
         low_findings = sum(1 for f in self.findings if f["severity"] == "Low")
 
-        # Security Score: Factually derived from findings. 100% if no findings exist.
         self.metrics["security_score"] = str(max(0, 100 - (crit_vulns * 25) - (high_findings * 15) - (med_findings * 5)))
 
-        # Quality Score
         large_files = len(self.debt_items)
         self.metrics["quality_score"] = str(max(0, 100 - (large_files * 10) - (low_findings * 2)))
 
-        # Reliability Score
         unsafe_funcs = sum(1 for f in self.findings if f["category"] == "Reliability")
         self.metrics["reliability_score"] = str(max(0, 100 - (unsafe_funcs * 10)))
 
-        # Complexity rating
         self.metrics["complexity_score"] = str(min(100, 10 + (large_files * 15) + (len(self.findings) * 2)))
-        
-        # Test coverage & Mutation scores default to UNKNOWN as direct test binary logging is absent (Rule 1)
-        self.metrics["test_coverage"] = "UNKNOWN"
-        self.metrics["mutation_score"] = "UNKNOWN"

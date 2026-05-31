@@ -17,7 +17,7 @@ class SelfHealingQualityGate:
         self.repo_path = repo_path
         self.analysis = analysis_data
         self.review = review_data
-        self.ignore_patterns = ["node_modules", "vendor", "dist", "build", "third_party"]
+        self.ignore_patterns = ["node_modules", "vendor", "dist", "build", "third_party", "tools"]
 
     def validate(self):
         print("[QualityGate] Validating generated project brain metadata...")

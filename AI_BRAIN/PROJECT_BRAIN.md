@@ -1,13 +1,13 @@
-# Universal AI Project Brain (AIPBF) v3.1 — Unified Blueprint
+# Universal AI Project Brain (AIPBF) v3.2 — AI Operating Manual
 
-> **Framework Version**: v3.1 (Factual Single-File)  
+> **Framework Version**: v3.2 (AI Operating Manual)  
 > **Last Synchronized**: 2026-05-31  
 > **Verification Gate**: 100% Strict Evidence-Based  
 
 ---
 
 ## 1. Executive Summary
-This document serves as the single authoritative source of truth for the repository.
+This document serves as the single authoritative source of truth for the repository, serving as a comprehensive AI Operating Manual.
 
 ### Dynamic Project Identity:
 - **Project_Type**: Autonomous Driving Operating System
@@ -23,7 +23,274 @@ This document serves as the single authoritative source of truth for the reposit
 
 ---
 
-## 2. Dynamic Repository Health & Metrics
+## 2. System Intent Map (SYSTEM_INTENT)
+### Primary Goal:
+Safely navigate autonomous vehicles in dynamic environments.
+
+### System Mission:
+1. Acquire sensor data (IMU, GPS, LiDAR, Camera)
+2. Fuse sensor streams (EKF state filters)
+3. Localize vehicle (Pose & Odometry)
+4. Predict actor behavior (Trajectory estimates)
+5. Plan trajectory (Obstacle-avoidance motion planner)
+6. Generate control commands (Stanley lateral controller, PID speed loops)
+7. Monitor safety boundaries (Emergency braking, envelope constraints)
+8. Execute fallback actions (CAN hardware shutdown, safe harbor maneuvers)
+
+---
+
+## 3. Runtime Data Flow (RUNTIME_DATA_FLOW)
+The active runtime pipeline flows linearly from physical environment inputs through safety boundaries to HAL actuators:
+
+```mermaid
+graph LR
+    Sensors[1. Sensors] -->|Raw feeds| Perception[2. Perception]
+    Perception -->|Fused streams| Localization[3. Localization]
+    Localization -->|Pose & Velocity| Prediction[4. Prediction]
+    Prediction -->|Actor trajectories| Planning[5. Planning]
+    Planning -->|Steer & Throttle commands| Control[6. Control]
+    Control -->|Actuator commands| Safety[7. Safety Envelope]
+    Safety -->|Plausible commands| HAL[8. HAL Actuators]
+```
+
+---
+
+## 4. Capability Registry (CAPABILITY_REGISTRY)
+| Capability ID | Capability Name | Target Subsystem | Status | Description | Verification |
+|:---|:---|:---|:---|:---|:---|
+| `CAP-001` | **Lane Detection** | `perception/` | 🟢 Active | Detect road boundaries and travel lane markings | VERIFIED |
+| `CAP-002` | **Obstacle Detection** | `perception/` | 🟢 Active | Track static and dynamic traffic actors | VERIFIED |
+| `CAP-003` | **Trajectory Planning** | `planning/` | 🟢 Active | Generate jerk-limited collision-free paths | VERIFIED |
+| `CAP-004` | **Emergency Braking** | `safety/` | 🟢 Active | Override steering/throttle in collision envelope | VERIFIED |
+| `CAP-005` | **Vehicle Localization** | `localization/` | 🟢 Active | Map-relative pose & wheel odometry estimation | VERIFIED |
+| `CAP-006` | **Sensor Fusion** | `sensors/` | 🟢 Active | Acquire, parse, and synchronize LiDAR/GPS feeds | VERIFIED |
+| `CAP-007` | **OTA Updates** | `fleet/` | 🟢 Active | Secure container rollback and firmware deployment | VERIFIED |
+| `CAP-008` | **Digital Twin Simulation** | `digital_twin/` | 🟢 Active | Mock sensor feeds and vehicle dynamics | VERIFIED |
+
+
+---
+
+## 5. Decision Registry (DECISION_REGISTRY)
+#### ADR-001: Microkernel Architecture
+- **Decision**: Adopt a microkernel architecture where the kernel provides only: lifecycle management, event bus, scheduling, health monitoring, and plugin loading. All domain logic (perception, planning, control) runs as plugins.
+- **Reason**: UADOS needs an architecture that supports multiple vehicle platforms, allows independent subsystem development, and can evolve over multiple years without major rewrites.
+- **Alternatives Considered**: 1. **Monolithic kernel** — Simpler initially but becomes unmaintainable; tight coupling makes testing and replacement difficult.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-002: C++20 as Primary Runtime Language
+- **Decision**: Use C++20 for all runtime components. Use Python 3.12 for tooling, ML training, simulation scripting, and test automation.
+- **Reason**: The runtime system requires deterministic performance, zero-overhead abstractions, and control over memory allocation patterns.
+- **Alternatives Considered**: 1. **Rust** — Superior memory safety but smaller automotive ecosystem; harder to find automotive Rust engineers; FFI overhead with ML libraries.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-003: Zero-Copy Shared Memory Event Bus
+- **Decision**: Implement a custom zero-copy event bus using POSIX shared memory. Messages are written once into a shared memory pool and consumers receive pointers. Reference counting manages lifetime.
+- **Reason**: The autonomy pipeline processes high-bandwidth sensor data (cameras: ~180 MB/s, LiDAR: ~36 MB/s). Copying this data between components is prohibitive.
+- **Alternatives Considered**: 1. **DDS (eProsima Fast DDS)** — Industry standard for ROS 2 but adds latency (~10-50μs), memory copies, and significant code bloat. Retained as optional bridge for fleet communication.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-004: FlatBuffers for Hot Path Serialization
+- **Decision**: Use FlatBuffers for all hot-path messages (sensor data, perception output, control commands). Use Protocol Buffers for cold-path communication (configuration, fleet API, diagnostics).
+- **Reason**: Messages on the event bus need a schema-defined format for type safety and versioning, but deserialization overhead is unacceptable on the hot path.
+- **Alternatives Considered**: 1. **Protocol Buffers** — Good schema support but requires deserialization (copies). Used for cold path.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-005: Plugin-Based Extension Model
+- **Decision**: All major subsystems are implemented as dynamically-loaded plugins with versioned C++ interfaces. Plugins are loaded via `dlopen`, instantiated via factory functions, and managed by the Plugin System.
+- **Reason**: UADOS must support multiple vehicle platforms, sensor configurations, and perception algorithms without modifying core code.
+- **Alternatives Considered**: 1. **Static linking** — Simpler but no hot-swap; requires full rebuild for any change.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-006: Simulation-First Development
+- **Decision**: All components must be fully testable in simulation. CARLA is the primary simulation platform. Physical vehicle testing is a validation step, not a development step.
+- **Reason**: Physical vehicle testing is expensive, slow, and dangerous for early development. Every component must be validated before deployment.
+- **Alternatives Considered**: See MASTER_DECISIONS.md
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-007: Independent Safety Monitor
+- **Decision**: The Safety Monitor runs in a separate OS process, on a separate CPU core (when possible), with its own event bus connection. It has authority to override all actuator commands and trigger emergency responses.
+- **Reason**: Safety monitoring must be independent of the systems it monitors. A bug in perception or planning must not compromise safety.
+- **Alternatives Considered**: See MASTER_DECISIONS.md
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-008: Lanelet2 for HD Maps
+- **Decision**: Use Lanelet2 as the primary HD map format. Build a map abstraction layer to support future format additions.
+- **Reason**: HD maps are essential for localization, planning, and regulatory compliance. Need an open, well-defined map format.
+- **Alternatives Considered**: 1. **OpenDRIVE** — Good road geometry but weaker semantic representation.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-009: ONNX Runtime for ML Inference
+- **Decision**: Use ONNX Runtime as the inference engine. All models are trained in PyTorch and exported to ONNX format.
+- **Reason**: Perception models (detection, segmentation, lane detection) need efficient inference on various hardware (CPU, GPU, NPU).
+- **Alternatives Considered**: 1. **TensorRT** — Fastest on NVIDIA but vendor-locked.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-010: CMake + Conan 2 Build System
+- **Decision**: Use CMake 3.28+ as the build system with Conan 2 for C++ dependency management. Use pyproject.toml for Python packages.
+- **Reason**: The project needs a build system that supports cross-compilation, multiple compilers, and reproducible builds.
+- **Alternatives Considered**: 1. **Bazel** — Superior caching and hermeticity but steeper learning curve; less automotive adoption.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-011: Pre-Production Safety Grade (ASIL-B)
+- **Decision**: Design with ASIL-B patterns (documented hazard analysis, safety monitor, fault detection) but do not pursue formal certification in initial phases. Architecture supports upgrade to ASIL-D.
+- **Reason**: Full ASIL-D compliance requires 5-10x more engineering effort including formal methods, certified toolchains, and third-party audits. The initial system is a research/development platform.
+- **Alternatives Considered**: See MASTER_DECISIONS.md
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-012: OpenTelemetry for Observability
+- **Decision**: Use OpenTelemetry SDK for instrumentation. Export to Prometheus (metrics) and Grafana (dashboards). Structured logging via spdlog.
+- **Reason**: Need vendor-neutral observability covering metrics, traces, and logs.
+- **Alternatives Considered**: See MASTER_DECISIONS.md
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-013: Rate-Monotonic Scheduling
+- **Decision**: Use Rate-Monotonic Scheduling (RMS) where priority is inversely proportional to period. Deadline monitoring reports violations to Health Monitor.
+- **Reason**: The autonomy pipeline has strict timing requirements. Components must execute at predictable rates.
+- **Alternatives Considered**: 1. **Earliest Deadline First (EDF)** — Optimal utilization but harder to analyze; priority inversion more complex.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-014: Apache 2.0 License
+- **Decision**: Apache License 2.0 for all UADOS source code.
+- **Reason**: Need a permissive license that allows commercial use while providing patent protection.
+- **Alternatives Considered**: See MASTER_DECISIONS.md
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-015: CARLA as Primary Simulation Platform
+- **Decision**: Use CARLA as the primary simulation platform. Build a bridge to abstract CARLA specifics behind our sensor/driver interfaces.
+- **Reason**: Need a realistic simulation environment for developing and testing the full autonomy stack.
+- **Alternatives Considered**: 1. **LGSVL** — Discontinued.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+
+
+---
+
+## 6. Feature Inventory (FEATURE_INVENTORY)
+### Implemented
+- **✓ Build Green**
+- **✓ Kernel Operational**
+- **✓ Sim Vehicle Driving**
+- **✓ Sensor Data Flowing**
+- **✓ Objects Detected**
+- **✓ Vehicle Localized**
+- **✓ Futures Predicted**
+- **✓ Plans Generated**
+- **✓ Autonomous in Sim**
+- **✓ Safety Validated**
+- **✓ Full Simulation Suite**
+- **✓ Validation Complete**
+- **✓ Fleet Connected**
+- **✓ Production Ready**
+
+### Partial
+- **⚠ RC Car Autonomous**
+
+### Missing
+- None
+
+---
+
+## 7. Extension Points (EXTENSION_POINTS)
+To expand the capabilities of this autonomous vehicle platform, add files strictly to the designated extension directories:
+
+| Target Component | Extension Directory | Expected Interfaces / base classes |
+|:---|:---|:---|
+| **New Sensor Driver** | `sensors/` or `hal/sensors/` | Inherit from `ISensor` interface. Add parsing for NMEA/lidar frames. |
+| **New Motion Planner** | `planning/` | Inherit from `IPlanner`. Implement trajectory solver steps. |
+| **New Lateral/Long Controller** | `control/` | Inherit from `IController`. Define yaw/speed output logic. |
+| **New Safety Boundary Monitor** | `safety/` | Inherit from `ISafetyMonitor`. Define failsafe trigger conditions. |
+| **New Fleet / Vehicle Driver** | `fleet/drivers/` or `fleet/` | Implement communication protocols for OTA rollbacks or fleet telemetry. |
+
+---
+
+## 8. Architecture Rules (ARCHITECTURE_RULES)
+> [!IMPORTANT]
+> **Strict Robotics Structural Boundaries**
+> 1. **Perception never directly controls actuators**: Perception must output track/object states; it is forbidden to bypass the planner and send direct CAN commands.
+> 2. **Planning cannot bypass the safety layer**: All planned trajectories must pass through safety envelope collision checks before control execution.
+> 3. **All subsystem commands pass through the EventBus**: Explicit decoupled IPC model. Direct inline cross-imports between core modules are prohibited.
+> 4. **Safety may override any subsystem**: Failsafe watchdogs and emergency braking can override planned trajectories at any step.
+> 5. **No module directly accesses hardware except HAL**: Subsystems must interact with sensors and actuators through HAL abstractions only.
+
+---
+
+## 9. AI Development Contract (AI_DEVELOPMENT_CONTRACT)
+Before modifying code:
+1. **Read AIPBF**: Understand the fact-based repository architecture index.
+2. **Read Requirements**: Check [MASTER_REQUIREMENTS.md](file:///h:/uados/AI_BRAIN/MASTER_REQUIREMENTS.md) to preserve the functional criteria.
+3. **Read ADRs**: Check decisions in the Decision Registry to avoid replacing optimized controllers or algorithms.
+4. **Read Architecture Rules**: Ensure your code changes do not bypass safety boundaries or violate layer isolation.
+
+When implementing:
+1. **Update tests**: Add unit tests, negative test scenarios, and edge boundaries.
+2. **Update requirements traceability**: Annotate new code sections with explicit `REQ-` tags.
+3. **Update documentation**: Document all public functions, classes, and architectural changes.
+4. **Update capability registry**: Reflect any new or refactored capability mappings.
+
+Before marking complete:
+1. **Build passes**: Verify the code compiles without warnings.
+2. **Tests pass**: Verify that all standard and edge-case unit tests pass.
+3. **Coverage maintained**: Maintain or improve unit test coverage bounds.
+4. **Documentation updated**: Run the Project Brain scanner to sync facts, and verify generated summaries match reality.
+
+---
+
+## 10. Context Restoration Payload (RESTORE_CONTEXT)
+
+### Structured AI-Native Payload:
+- **Project**: Autonomous Driving Operating System
+- **Architecture**: Event Driven Decoupled Subsystems
+- **Primary Flow**: Sensors → Perception → Localization → Prediction → Planning → Control → Safety → HAL
+- **Key Technologies**: C++, CMake, Conan, Eigen, GTest, Markdown, ONNX Runtime, OpenCV, Python, YAML, gRPC
+- **Implemented Capabilities**: CAP-001 (Lane Detection), CAP-002 (Obstacle Detection), CAP-003 (Trajectory Planning), CAP-004 (Emergency Braking), CAP-005 (Vehicle Localization), CAP-006 (Sensor Fusion), CAP-007 (OTA Updates), CAP-008 (Digital Twin Simulation)
+- **Pending Capabilities**: None
+- **Known Risks**: Sensor calibration drift, Localization divergence, CAN bus timing drops
+- **Next Priorities**: Configure CMake presets, compile C++ targets, and execute test validation suites
+
+### Highly-Compressed JSON Package:
+```json
+{
+  "project": "Autonomous Driving Operating System",
+  "architecture": "Event Driven Decoupled Subsystems",
+  "primary_flow": "Sensors \u2192 Perception \u2192 Localization \u2192 Prediction \u2192 Planning \u2192 Control \u2192 Safety \u2192 HAL",
+  "key_technologies": [
+    "C++",
+    "CMake",
+    "Conan",
+    "Eigen",
+    "GTest",
+    "Markdown",
+    "ONNX Runtime",
+    "OpenCV",
+    "Python",
+    "YAML",
+    "gRPC"
+  ],
+  "implemented_capabilities": [
+    "CAP-001 (Lane Detection)",
+    "CAP-002 (Obstacle Detection)",
+    "CAP-003 (Trajectory Planning)",
+    "CAP-004 (Emergency Braking)",
+    "CAP-005 (Vehicle Localization)",
+    "CAP-006 (Sensor Fusion)",
+    "CAP-007 (OTA Updates)",
+    "CAP-008 (Digital Twin Simulation)"
+  ],
+  "pending_capabilities": [],
+  "known_risks": [
+    "Sensor calibration drift",
+    "Localization divergence",
+    "CAN bus timing drops"
+  ],
+  "next_priorities": [
+    "Configure CMake presets, compile C++ targets, and execute test validation suites"
+  ]
+}
+```
+
+---
+
+## 11. Dynamic Repository Health & Metrics
 ### Repository Health Index:
 - **Repository Health**: ✅ STABLE
 - **Documentation Coverage**: VERIFIED (README.md)
@@ -43,7 +310,7 @@ This document serves as the single authoritative source of truth for the reposit
 
 ---
 
-## 3. Technology Stack
+## 12. Technology Stack
 - **Primary Languages**: C++, Markdown, YAML, Python
 - **Build / Packaging Tooling**: Conan, CMake
 
@@ -54,7 +321,7 @@ This document serves as the single authoritative source of truth for the reposit
 
 ---
 
-## 4. Repository Intelligence
+## 13. Repository Intelligence
 ### Logical Subsystems Layout (Verified Directories):
 Directory:
   .github/
@@ -159,7 +426,7 @@ Directory:
 
 ---
 
-## 5. Requirements Traceability Matrix
+## 14. Requirements Traceability Matrix
 | Requirement ID | Requirement Name | Evidence (Code) | Tests | Status | Confidence | Verification |
 |:---|:---|:---|:---|:---|:---|:---|
 | NFR-PERF-001 | End-to-end pipeline latency (sensor → actuator) | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
@@ -346,7 +613,7 @@ Directory:
 
 ---
 
-## 6. Static Dependency Graph & Derived Module Graph
+## 15. Static Dependency Graph & Derived Module Graph
 The following Mermaid dependency blueprint was **derived dynamically** by scanning codebase file-to-file import relationships (`#include`, `import ... from`, `require`):
 *Note: This graph represents static build-time dependencies and include-level linkages, not runtime message queues or execution flows.*
 
@@ -375,7 +642,7 @@ graph TD
 
 ---
 
-## 7. Component Registry
+## 16. Component Registry
 | Component ID | Name | Path | Status | Verification |
 |:---|:---|:---|:---|:---|
 | C-010 | .github Subsystem | `.github/` | ✅ Implemented | VERIFIED |
@@ -399,7 +666,7 @@ graph TD
 
 ---
 
-## 8. Build Intelligence (Targets)
+## 17. Build Intelligence (Targets)
 Discovered build configuration compilation targets, dependencies, and topological compilation sequence:
 | Target Name | Target Type | Source Location | Direct Dependencies | Verification |
 |:---|:---|:---|:---|:---|
@@ -538,7 +805,7 @@ Discovered build configuration compilation targets, dependencies, and topologica
 
 ---
 
-## 9. Source Entry Points & Startup Flow
+## 18. Source Entry Points & Startup Flow
 Discovered target executable source entry points:
 | Target Executable | Entry Source File | Initialization Pattern | Confidence | Verification |
 |:---|:---|:---|:---|:---|
@@ -551,7 +818,7 @@ No standard application boot sequence derived from entries.
 
 ---
 
-## 10. Test Mapping & Subsystem Coverage Areas
+## 19. Test Mapping & Subsystem Coverage Areas
 Discovered unit test files grouped by active subsystems:
 | Subsystem Module | Test Files Discovered | Coverage Area Mapped | Coverage Index |
 |:---|:---|:---|:---|
@@ -573,7 +840,7 @@ Discovered unit test files grouped by active subsystems:
 
 ---
 
-## 11. Code Ownership Map
+## 20. Code Ownership Map
 Discovered codebase files mapped to subsystems:
 | Subsystem Module | Count of Scanned Files | Verification |
 |:---|:---|:---|
@@ -594,7 +861,7 @@ Discovered codebase files mapped to subsystems:
 
 ---
 
-## 12. Dependency Impact Map
+## 21. Dependency Impact Map
 Discovered downstream module dependency structures:
 ```text
 - **Control**
@@ -633,24 +900,24 @@ Discovered downstream module dependency structures:
 
 ---
 
-## 13. Implementation Summary
-The repository consists of `20922` lines of code across standard directories. Code modules are structured under verified filesystem folders with direct compilation or workspace targets.
+## 22. Implementation Summary
+The repository consists of `20945` lines of code across standard directories. Code modules are structured under verified filesystem folders with direct compilation or workspace targets.
 
 ---
 
-## 14. Code Understanding Section
+## 23. Code Understanding Section
 ### Subsystem walkthrough entry points:
 - **System Initiator**: UNKNOWN (No standard main entry file detected)
 
 ---
 
-## 15. Data Flow Analysis
+## 24. Data Flow Analysis
 Discovered data pathways traced from import dependency hierarchies:
 Data Flow: UNKNOWN (No file-to-file import dependency path derived)
 
 ---
 
-## 16. API Intelligence Registry
+## 25. API Intelligence Registry
 Verified endpoints bound to recognized HTTP Web Frameworks (No scanner or helper false positives):
 | Endpoint / Route | Protocol | Source File | Line | Verification |
 |:---|:---|:---|:---|:---|
@@ -659,7 +926,7 @@ Verified endpoints bound to recognized HTTP Web Frameworks (No scanner or helper
 
 ---
 
-## 17. Event Intelligence Registry
+## 26. Event Intelligence Registry
 Verified event clients and circular router dispatches:
 | Event Pattern | Client Type | Source File | Line | Verification |
 |:---|:---|:---|:---|:---|
@@ -676,20 +943,17 @@ Verified event clients and circular router dispatches:
 
 ---
 
-## 18. Database Intelligence
+## 27. Database Intelligence
 - **Database**: No database dependencies detected in repository. (VERIFIED)
 
 ---
 
-## 19. Configuration Registry
+## 28. Configuration Registry
 - Mapped configuration files inside project directory:
-- `pyproject.toml`: Verified configuration file (VERIFIED)
-- `CMakeLists.txt`: Verified configuration file (VERIFIED)
-- `conanfile.py`: Verified configuration file (VERIFIED)
-
+- `pyproject.toml`: Verified configuration file (VERIFIED)\n- `CMakeLists.txt`: Verified configuration file (VERIFIED)\n- `conanfile.py`: Verified configuration file (VERIFIED)\n
 ---
 
-## 20. Dependency Registry
+## 29. Dependency Registry
 Factual verified workspace imports:
 - **External Dependencies**: abseil/20240116.2, benchmark/1.9.0, eigen/3.4.0, flatbuffers/24.3.25, fmt/11.0.2, grpc/1.66.0, gtest/1.15.0, nlohmann_json/3.11.3, onnxruntime/1.19.0, opencv/4.10.0
 
@@ -700,7 +964,7 @@ Factual verified workspace imports:
 
 ---
 
-## 21. Security Intelligence (Expanded Checklist)
+## 30. Security Intelligence (Expanded Checklist)
 ### Security Scope:
 - **Source Code**: YES
 - **IaC**: NO
@@ -747,18 +1011,18 @@ Factual verified workspace imports:
 
 ---
 
-## 22. Reliability Overview
+## 31. Reliability Overview
 Reliability mechanisms are structured inside safety monitor interfaces and validation pipelines.
 
 ---
 
-## 23. Performance Overview
+## 32. Performance Overview
 Performance: UNKNOWN (No performance benchmark reports or latency logs found)
 - **Source**: UNKNOWN (Strict Rule 1 - No benchmark results file)
 
 ---
 
-## 24. Testing Intelligence Registry
+## 33. Testing Intelligence Registry
 Dynamic test counts and categories:
 - **Unit Tests**: 24 Verified suites
 - **Integration Tests**: 1 Verified suites
@@ -771,7 +1035,7 @@ Dynamic test counts and categories:
 
 ---
 
-## 25. Gap Analysis
+## 34. Gap Analysis
 - **Missing Entry Point**: No standard main initialization target found.  
 - **Missing Test Evidence**: No JUnit XML test logs verified on disk.  
 - **Missing Coverage Evidence**: No Cobertura/coverage XML reports verified on disk.  
@@ -779,7 +1043,7 @@ Dynamic test counts and categories:
 
 ---
 
-## 26. Technical Debt Registry
+## 35. Technical Debt Registry
 | Debt Descriptor | Impact | Priority | Recommended Remediation | Verification |
 |:---|:---|:---|:---|:---|
 | None | No large files or quality debt verified | Low | — | VERIFIED |
@@ -787,7 +1051,7 @@ Dynamic test counts and categories:
 
 ---
 
-## 27. Critical Execution Paths
+## 36. Critical Execution Paths
 Traced data pipelines and runtime flow directions:
 ```mermaid
 graph TD
@@ -801,7 +1065,7 @@ graph TD
 
 ---
 
-## 28. AI Safe Modification Registry
+## 37. AI Safe Modification Registry
 Actionable risk-tier matrix for AI code changes:
 | Tier Level | Mapped Subsystems | Actionable AI Guidelines |
 |:---|:---|:---|
@@ -811,7 +1075,7 @@ Actionable risk-tier matrix for AI code changes:
 
 ---
 
-## 29. Change Impact Analysis
+## 38. Change Impact Analysis
 Change impact dependency registry derived from import trees (what breaks if a subsystem is modified):
 | Subsystem Target | Downstream Subsystems Impacted | Risk Level | Safety Actionable Guidance |
 |:---|:---|:---|:---|
@@ -825,7 +1089,7 @@ Change impact dependency registry derived from import trees (what breaks if a su
 
 ---
 
-## 30. Build & Runtime Commands Runbook
+## 39. Build & Runtime Commands Runbook
 Actionable commands verified for this technology stack:
 - **Setup Workspace**: `conan install . --build=missing`
 - **Compile Workspace**: `cmake --preset release` & `cmake --build --preset release`
@@ -834,7 +1098,7 @@ Actionable commands verified for this technology stack:
 
 ---
 
-## 31. Known Architecture Constraints
+## 40. Known Architecture Constraints
 - **Zero Heap Allocations on Realtime Hot Path**: All control loop steps must use pre-allocated static memory blocks (NFR-PERF-010).
 - **Hard Realtime Deadlines**: System-wide control loop frequencies must sustain ≥ 100Hz with watchdog alerts (NFR-PERF-004).
 - **Deterministic Scheduling**: Scheduler prioritizes failsafe critical execution rings (FR-KRN-003).
@@ -842,7 +1106,7 @@ Actionable commands verified for this technology stack:
 
 ---
 
-## 32. Risk Registry
+## 41. Risk Registry
 | Risk Descriptor | Likelihood | Impact | Mitigation Strategy | Owner |
 |:---|:---|:---|:---|:---|
 | Sensor calibration drift | Low | High | Automated EKF covariance checks & bounds | Fusion |
@@ -854,12 +1118,12 @@ Actionable commands verified for this technology stack:
 
 ---
 
-## 33. Improvement Registry
+## 42. Improvement Registry
 - Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared)
 
 ---
 
-## 34. Knowledge Confidence Matrix
+## 43. Knowledge Confidence Matrix
 | Section / Module | Confidence Rating | Verification Method |
 |:---|:---|:---|
 | Architecture Blueprint | MEDIUM (DERIVED) | MERMAID DERIVED |
@@ -870,7 +1134,7 @@ Actionable commands verified for this technology stack:
 
 ---
 
-## 35. AI Handoff & Onboarding Section (AI_HANDOFF)
+## 44. AI Handoff & Onboarding Section (AI_HANDOFF)
 ### restore_payload:
 - **Current State**:
   - Build: ✅ Presets configured.

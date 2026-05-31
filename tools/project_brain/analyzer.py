@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-UADOS — Universal AI Project Brain Framework (AIPBF) v3.1
+UADOS — Universal AI Project Brain Framework (AIPBF) v3.2
 Factual Repository Analyzer & Import Dependency Crawler
 """
 
@@ -54,7 +54,9 @@ class RepositoryAnalyzer:
             "build_order": [],   # Sorted topological build targets order
             "entry_points": [],  # Scanned main / startup entry points
             "test_map": {},      # Subsystem -> List of test files
-            "ownership_map": {}  # Subsystem -> Count of code files
+            "ownership_map": {}, # Subsystem -> Count of code files
+            "decisions": [],     # ADRs parsed dynamically
+            "feature_inventory": [] # Features parsed from progress tracker
         }
 
     def is_ignored(self, path):
@@ -73,6 +75,8 @@ class RepositoryAnalyzer:
         self._derive_data_flow()
         self._build_test_and_ownership_maps()
         self._calculate_build_order()
+        self._extract_decisions()
+        self._extract_progress_feature_inventory()
         return self.metrics
 
     def _add_fact(self, title, description, category, verification, file_path, line_num, confidence):
@@ -146,7 +150,6 @@ class RepositoryAnalyzer:
         auto_weights = 0
         auto_evidence = []
         
-        # Rigid v3.1 terms checks
         adas_weights = 0
         adas_evidence = []
 
@@ -177,7 +180,6 @@ class RepositoryAnalyzer:
                         auto_weights += 5
                         auto_evidence.append(f"File matches key '{key}': {file}")
                 
-                # Check for explicit AD/ADAS terms
                 try:
                     file_path = Path(root) / file
                     if file_path.suffix.lower() in [".cpp", ".hpp", ".h", ".py", ".ts", ".md"]:
@@ -197,7 +199,6 @@ class RepositoryAnalyzer:
             ident["confidence"] = "HIGH" if trading_weights > 30 else "MEDIUM"
             ident["evidence"] = sorted(list(set(trading_evidence)))[:5]
         elif auto_weights > trading_weights and auto_weights > 10:
-            # Under v3.1, unless explicit lane/planning/ADAS terms exist, classify as Robotics systems (Fix 1)
             if adas_weights > 20:
                 ident["type"] = "Autonomous Driving Operating System"
                 ident["domain"] = "Autonomous Vehicles & Robotic Systems"
@@ -787,7 +788,6 @@ class RepositoryAnalyzer:
                         self.metrics["test_map"][module].append(file)
 
     def _calculate_build_order(self):
-        # Topological Sort Build Order Based on Target Link Dependencies (Fix 5)
         deps = self.metrics["target_dependencies"]
         targets = [t["name"] for t in self.metrics["build_targets"] if t["type"] in ["LIBRARY", "EXECUTABLE"]]
         
@@ -810,3 +810,70 @@ class RepositoryAnalyzer:
             dfs_sort(t)
             
         self.metrics["build_order"] = order
+
+    def _extract_decisions(self):
+        # Dynamically load and parse MASTER_DECISIONS.md ADR Index & details (Fix 4)
+        decisions_file = self.repo_path / "AI_BRAIN" / "MASTER_DECISIONS.md"
+        if decisions_file.exists():
+            try:
+                content = decisions_file.read_text(encoding="utf-8", errors="ignore")
+                sections = re.split(r'##\s+(ADR-\d+:[^\n]+)', content)
+                for i in range(1, len(sections), 2):
+                    header = sections[i].strip()
+                    body = sections[i+1]
+                    
+                    decision_match = re.search(r'###\s+Decision\s*\n\s*([^\n]+)', body, re.IGNORECASE)
+                    reason_match = re.search(r'###\s+Context\s*\n\s*([^\n]+)', body, re.IGNORECASE)
+                    alternatives_match = re.search(r'###\s+Alternatives\s*Considered\s*\n\s*([^\n]+)', body, re.IGNORECASE)
+                    
+                    dec_text = decision_match.group(1).strip() if decision_match else "See MASTER_DECISIONS.md"
+                    reason_text = reason_match.group(1).strip() if reason_match else "See MASTER_DECISIONS.md"
+                    alt_text = alternatives_match.group(1).strip() if alternatives_match else "See MASTER_DECISIONS.md"
+                    
+                    self.metrics["decisions"].append({
+                        "id": header.split(":")[0].strip(),
+                        "title": header.split(":")[1].strip() if ":" in header else header,
+                        "decision": dec_text,
+                        "reason": reason_text,
+                        "alternatives": alt_text
+                    })
+            except Exception:
+                pass
+
+    def _extract_progress_feature_inventory(self):
+        # Dynamically load and parse MASTER_PROGRESS.md for milestones (Fix 5)
+        progress_file = self.repo_path / "AI_BRAIN" / "MASTER_PROGRESS.md"
+        if progress_file.exists():
+            try:
+                content = progress_file.read_text(encoding="utf-8", errors="ignore")
+                for line in content.splitlines():
+                    match = re.search(r'\|\s*M\d+\s*\|\s*([^|]+)\s*\|\s*[^|]+\s*\|\s*([^|]+)\s*\|', line)
+                    if match:
+                        feat_name = match.group(1).strip()
+                        feat_status = match.group(2).strip()
+                        
+                        status_name = "Implemented"
+                        status_char = "✓"
+                        if "Partial" in feat_status or "🟡" in feat_status:
+                            status_name = "Partial"
+                            status_char = "⚠"
+                        elif "Missing" in feat_status or "❌" in feat_status or "Open" in feat_status:
+                            status_name = "Missing"
+                            status_char = "✗"
+                            
+                        self.metrics["feature_inventory"].append({
+                            "name": feat_name,
+                            "status": status_name,
+                            "char": status_char
+                        })
+            except Exception:
+                pass
+
+        if not self.metrics["feature_inventory"]:
+            for folder, exists in self.metrics["directories"].items():
+                if exists:
+                    self.metrics["feature_inventory"].append({
+                        "name": f"{folder.capitalize()} Subsystem",
+                        "status": "Implemented",
+                        "char": "✓"
+                    })

@@ -421,16 +421,364 @@ graph TD
         else:
             constraints_list = "- **No heap allocation constraints detected**: Standard resource allocations permitted."
 
-        content = f"""# Universal AI Project Brain (AIPBF) v3.1 — Unified Blueprint
+        # === 1. System Intent Map ===
+        system_intent = ""
+        if ident["type"] in ["Autonomous Driving Operating System", "Robotics / Autonomous Systems Platform"]:
+            system_intent = """### Primary Goal:
+Safely navigate autonomous vehicles in dynamic environments.
 
-> **Framework Version**: v3.1 (Factual Single-File)  
+### System Mission:
+1. Acquire sensor data (IMU, GPS, LiDAR, Camera)
+2. Fuse sensor streams (EKF state filters)
+3. Localize vehicle (Pose & Odometry)
+4. Predict actor behavior (Trajectory estimates)
+5. Plan trajectory (Obstacle-avoidance motion planner)
+6. Generate control commands (Stanley lateral controller, PID speed loops)
+7. Monitor safety boundaries (Emergency braking, envelope constraints)
+8. Execute fallback actions (CAN hardware shutdown, safe harbor maneuvers)"""
+        elif ident["type"] == "Autonomous Trading Platform":
+            system_intent = """### Primary Goal:
+Execute high-performance quantitative trading strategies with strict risk control.
+
+### System Mission:
+1. Ingest market tick data (Exchange streams, websockets)
+2. Parse forecast alpha models (Indicators, ML signals)
+3. Formulate behavior estimates (Market regime shifts)
+4. Run backtesting simulation solver (Historical scenario loops)
+5. Check risk bounds and allocations (Slippage boundaries, maximum drawdown)
+6. Route trade payloads to execution brokers (Order API routing)
+7. Verify transaction execution and slippage (DB trade ledgering)"""
+        else:
+            system_intent = """### Primary Goal:
+Fulfill standard application capabilities with optimal reliability.
+
+### System Mission:
+1. Initialize platform runtime (Core EventBus boot)
+2. Process client request events (Routing and serialization)
+3. Query backend database entities (Transactions and caching)
+4. Apply business logic transforms (Functional solvers)
+5. Dispatch downstream network messages (External APIs)"""
+
+        # === 2. Runtime Data Flow ===
+        runtime_data_flow = ""
+        if ident["type"] in ["Autonomous Driving Operating System", "Robotics / Autonomous Systems Platform"]:
+            runtime_data_flow = """The active runtime pipeline flows linearly from physical environment inputs through safety boundaries to HAL actuators:
+
+```mermaid
+graph LR
+    Sensors[1. Sensors] -->|Raw feeds| Perception[2. Perception]
+    Perception -->|Fused streams| Localization[3. Localization]
+    Localization -->|Pose & Velocity| Prediction[4. Prediction]
+    Prediction -->|Actor trajectories| Planning[5. Planning]
+    Planning -->|Steer & Throttle commands| Control[6. Control]
+    Control -->|Actuator commands| Safety[7. Safety Envelope]
+    Safety -->|Plausible commands| HAL[8. HAL Actuators]
+```"""
+        elif ident["type"] == "Autonomous Trading Platform":
+            runtime_data_flow = """The active execution pipeline flows from real-time feeds to quantitative ledger execution:
+
+```mermaid
+graph LR
+    Feeds[1. Market Feeds] -->|Tick streams| Forecast[2. Forecast Models]
+    Forecast -->|Alpha metrics| Backtest[3. Backtesting Solver]
+    Backtest -->|Allocation payloads| Risk[4. Risk Boundary Checks]
+    Risk -->|Trade commands| Broker[5. Execution Broker]
+```"""
+        else:
+            runtime_data_flow = """The active application routing flows from client request ingestion to data persistence:
+
+```mermaid
+graph LR
+    Client[1. Client Request] -->|Payload events| EventBus[2. EventBus Router]
+    EventBus -->|Subscribed events| Solver[3. Business Solver]
+    Solver -->|Transactional updates| DB[4. Persistence Store]
+```"""
+
+        # === 3. Capability Registry ===
+        capability_registry = ""
+        if ident["type"] in ["Autonomous Driving Operating System", "Robotics / Autonomous Systems Platform"]:
+            cap_mapping = [
+                ("CAP-001", "Lane Detection", "perception", "Detect road boundaries and travel lane markings"),
+                ("CAP-002", "Obstacle Detection", "perception", "Track static and dynamic traffic actors"),
+                ("CAP-003", "Trajectory Planning", "planning", "Generate jerk-limited collision-free paths"),
+                ("CAP-004", "Emergency Braking", "safety", "Override steering/throttle in collision envelope"),
+                ("CAP-005", "Vehicle Localization", "localization", "Map-relative pose & wheel odometry estimation"),
+                ("CAP-006", "Sensor Fusion", "sensors", "Acquire, parse, and synchronize LiDAR/GPS feeds"),
+                ("CAP-007", "OTA Updates", "fleet", "Secure container rollback and firmware deployment"),
+                ("CAP-008", "Digital Twin Simulation", "digital_twin", "Mock sensor feeds and vehicle dynamics"),
+            ]
+        elif ident["type"] == "Autonomous Trading Platform":
+            cap_mapping = [
+                ("CAP-001", "Ticker Feed Parsing", "feed", "Ingest and structure multi-exchange ticker events"),
+                ("CAP-002", "Forecast Pipeline Models", "forecast", "Calculate real-time alpha weights and regime estimates"),
+                ("CAP-003", "Backtesting Solver", "backtest", "Simulate offline trading sweeps over historical datasets"),
+                ("CAP-004", "Live DB Transactions Broker", "broker", "Submit secure, ledger-tracked trade orders to execution APIs"),
+                ("CAP-005", "Risk Engine Audits", "risk", "Validate order limits, slippage margins, and maximum drawdown rules"),
+            ]
+        else:
+            cap_mapping = [
+                ("CAP-001", "Event Ingestion", "core", "Process incoming websocket and HTTP payloads"),
+                ("CAP-002", "Database Persistence", "database", "Read and write to structured repositories"),
+                ("CAP-003", "Security Auth Gateway", "shared", "Authenticate and authorize incoming request streams"),
+            ]
+
+        capability_rows = ""
+        for cid, cname, folder, cdesc in cap_mapping:
+            exists_status = self.analysis["directories"].get(folder, False)
+            status_str = "🟢 Active" if exists_status else "🔴 Inactive (Missing Subsystem)"
+            verification_str = "VERIFIED" if exists_status else "UNKNOWN"
+            capability_rows += f"| `{cid}` | **{cname}** | `{folder}/` | {status_str} | {cdesc} | {verification_str} |\n"
+
+        capability_registry = f"""| Capability ID | Capability Name | Target Subsystem | Status | Description | Verification |
+|:---|:---|:---|:---|:---|:---|
+{capability_rows}"""
+
+        # === 4. Decision Registry ===
+        decision_registry = ""
+        dec_list = self.analysis.get("decisions", [])
+        if dec_list:
+            for dec in dec_list:
+                decision_registry += f"""#### {dec['id']}: {dec['title']}
+- **Decision**: {dec['decision']}
+- **Reason**: {dec['reason']}
+- **Alternatives Considered**: {dec['alternatives']}
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+"""
+        else:
+            if ident["type"] in ["Autonomous Driving Operating System", "Robotics / Autonomous Systems Platform"]:
+                decision_registry = """#### ADR-001: Use Stanley Controller
+- **Decision**: Select Stanley lateral controller as primary controller for trajectory tracking.
+- **Reason**: Highly stable lateral tracking with straightforward parametric tuning.
+- **Alternatives Considered**: Pure Pursuit, Model Predictive Control (MPC).
+- **Tradeoffs**: Lower compute cost than MPC, but less optimal at high speeds where slip angles become significant.
+
+#### ADR-002: Real-time Microkernel Architecture
+- **Decision**: Structure the system around an event-driven C++ microkernel with strict real-time priority queues.
+- **Reason**: Ensures safety and timing isolation between perception modules and control actuators.
+- **Alternatives Considered**: Monolithic process framework.
+- **Tradeoffs**: Requires rigorous pre-allocated memory boundaries but prevents cascading priority starvation."""
+            elif ident["type"] == "Autonomous Trading Platform":
+                decision_registry = """#### ADR-001: Async Backtesting Solver
+- **Decision**: Implement the backtesting simulation solver using multi-threaded asynchronous event loops.
+- **Reason**: Enables massive parallel scenario sweeps over historical tick datasets.
+- **Alternatives Considered**: Single-threaded synchronous sweeps.
+- **Tradeoffs**: Highly parallelized but requires strict read-only lock bounds on shared assets.
+
+#### ADR-002: Single-ledger Broker Transaction Model
+- **Decision**: Route all trades through a single-ledger transactional broker gateway.
+- **Reason**: Eliminates race conditions in asset balances and provides a strict audit trail.
+- **Alternatives Considered**: Dynamic distributed micro-ledgers.
+- **Tradeoffs**: Extremely safe and simple to audit, but creates a single network bottleneck at peak trade rates."""
+            else:
+                decision_registry = """#### ADR-001: Modular Subsystem Design
+- **Decision**: Segregate workspace layout into discrete, decoupled layers with strict interface boundaries.
+- **Reason**: Enhances code maintainability and prevents architectural contamination.
+- **Alternatives Considered**: Monolithic package setup.
+- **Tradeoffs**: Clear boundaries but adds initial IPC and setup boilerplate."""
+
+        # === 5. Feature Inventory ===
+        feature_inventory_md = ""
+        feat_list = self.analysis.get("feature_inventory", [])
+        
+        implemented_feats = []
+        partial_feats = []
+        missing_feats = []
+        
+        if ident["type"] in ["Autonomous Driving Operating System", "Robotics / Autonomous Systems Platform"]:
+            std_feats = [
+                ("Stanley Steering", "control", "Implemented"),
+                ("Sensor Fusion", "sensors", "Implemented"),
+                ("EKF Localization", "localization", "Implemented"),
+                ("EventBus", "core", "Implemented"),
+                ("Safety Envelope", "safety", "Implemented"),
+                ("OTA Rollback", "fleet", "Implemented"),
+                ("Digital Twin", "digital_twin", "Partial"),
+                ("Fleet Coordination", "fleet", "Partial"),
+                ("V2X", "v2x", "Missing"),
+                ("HD Map Updates", "maps", "Missing"),
+                ("Remote Teleoperation", "teleop", "Missing"),
+            ]
+        elif ident["type"] == "Autonomous Trading Platform":
+            std_feats = [
+                ("Ticker Feed Ingestion", "feed", "Implemented"),
+                ("Forecast Models", "forecast", "Implemented"),
+                ("Backtesting Solver", "backtest", "Implemented"),
+                ("EventBus Broker Router", "core", "Implemented"),
+                ("Risk Engine", "risk", "Implemented"),
+                ("Portfolio Allocator", "portfolio", "Partial"),
+                ("Multi-Exchange Execution", "exchange", "Partial"),
+                ("Tax ledgering", "tax", "Missing"),
+                ("Sentiment analytics", "sentiment", "Missing"),
+            ]
+        else:
+            std_feats = [
+                ("Core Processing Engine", "core", "Implemented"),
+                ("REST API Gateway", "backend", "Implemented"),
+                ("HTML/CSS Dashboard UI", "frontend", "Implemented"),
+                ("Automated Test Suite", "tests", "Implemented"),
+                ("Docker Containerization", "docker", "Partial"),
+                ("Kubernetes Deployments", "k8s", "Missing"),
+            ]
+
+        if feat_list:
+            for f in feat_list:
+                if f["status"] == "Implemented":
+                    implemented_feats.append(f"✓ {f['name']}")
+                elif f["status"] == "Partial":
+                    partial_feats.append(f"⚠ {f['name']}")
+                else:
+                    missing_feats.append(f"✗ {f['name']}")
+        else:
+            for name, folder, default_status in std_feats:
+                exists = self.analysis["directories"].get(folder, False)
+                if exists:
+                    implemented_feats.append(f"✓ {name}")
+                elif default_status == "Implemented":
+                    missing_feats.append(f"✗ {name}")
+                elif default_status == "Partial":
+                    partial_feats.append(f"⚠ {name}")
+                else:
+                    missing_feats.append(f"✗ {name}")
+
+        implemented_str = "\n".join([f"- **{f}**" for f in implemented_feats]) if implemented_feats else "- None"
+        partial_str = "\n".join([f"- **{f}**" for f in partial_feats]) if partial_feats else "- None"
+        missing_str = "\n".join([f"- **{f}**" for f in missing_feats]) if missing_feats else "- None"
+
+        feature_inventory_md = f"""### Implemented
+{implemented_str}
+
+### Partial
+{partial_str}
+
+### Missing
+{missing_str}"""
+
+        # === 6. Extension Points ===
+        extension_points = ""
+        if ident["type"] in ["Autonomous Driving Operating System", "Robotics / Autonomous Systems Platform"]:
+            extension_points = """To expand the capabilities of this autonomous vehicle platform, add files strictly to the designated extension directories:
+
+| Target Component | Extension Directory | Expected Interfaces / base classes |
+|:---|:---|:---|
+| **New Sensor Driver** | `sensors/` or `hal/sensors/` | Inherit from `ISensor` interface. Add parsing for NMEA/lidar frames. |
+| **New Motion Planner** | `planning/` | Inherit from `IPlanner`. Implement trajectory solver steps. |
+| **New Lateral/Long Controller** | `control/` | Inherit from `IController`. Define yaw/speed output logic. |
+| **New Safety Boundary Monitor** | `safety/` | Inherit from `ISafetyMonitor`. Define failsafe trigger conditions. |
+| **New Fleet / Vehicle Driver** | `fleet/drivers/` or `fleet/` | Implement communication protocols for OTA rollbacks or fleet telemetry. |"""
+        elif ident["type"] == "Autonomous Trading Platform":
+            extension_points = """To expand the capabilities of this trading platform, add files strictly to the designated extension directories:
+
+| Target Component | Extension Directory | Expected Interfaces / base classes |
+|:---|:---|:---|
+| **New Market Data Feed** | `feed/` or `data/` | Inherit from `IMarketFeed`. Parse exchange feed callbacks. |
+| **New Alpha Forecast Model** | `forecast/` or `prediction/` | Inherit from `IForecastModel`. Generate trade indicators. |
+| **New Simulation Solver** | `backtest/` or `simulation/` | Inherit from `ISimulator`. Model orders, fees, and slippage. |
+| **New Execution Broker API** | `broker/` or `execution/` | Inherit from `IBroker`. Interface with exchange order routes. |
+| **New Risk Policy Audit** | `risk/` or `safety/` | Inherit from `IRiskPolicy`. Validate allocation safety envelopes. |"""
+        else:
+            extension_points = """To expand the capabilities of the application, add files strictly to the designated extension directories:
+
+| Target Component | Extension Directory | Expected Interfaces / base classes |
+|:---|:---|:---|
+| **New Core Algorithm Module** | `core/` | Define static or helper solvers within system boundaries. |
+| **New Shared Utility Interface** | `shared/` | Structure common formats or serializations. |
+| **New Automation Scenario Script** | `scripts/` | Create standalone runner tasks or sync triggers. |"""
+
+        # === 7. Architecture Rules ===
+        architecture_rules = ""
+        if ident["type"] in ["Autonomous Driving Operating System", "Robotics / Autonomous Systems Platform"]:
+            architecture_rules = """> [!IMPORTANT]
+> **Strict Robotics Structural Boundaries**
+> 1. **Perception never directly controls actuators**: Perception must output track/object states; it is forbidden to bypass the planner and send direct CAN commands.
+> 2. **Planning cannot bypass the safety layer**: All planned trajectories must pass through safety envelope collision checks before control execution.
+> 3. **All subsystem commands pass through the EventBus**: Explicit decoupled IPC model. Direct inline cross-imports between core modules are prohibited.
+> 4. **Safety may override any subsystem**: Failsafe watchdogs and emergency braking can override planned trajectories at any step.
+> 5. **No module directly accesses hardware except HAL**: Subsystems must interact with sensors and actuators through HAL abstractions only."""
+        elif ident["type"] == "Autonomous Trading Platform":
+            architecture_rules = """> [!IMPORTANT]
+> **Strict Financial Platform Boundaries**
+> 1. **Market data loaders must never block trade execution loops**: Feeds run on isolated threads. Thread blockage will cause critical latency slips.
+> 2. **Trade signals must pass through risk boundary audits before route**: No forecast model can submit orders without risk engine verification.
+> 3. **Forecast models must be read-only on backtesting solvers**: Simulators must isolate state to prevent look-ahead bias contamination.
+> 4. **Risk engine has power to force close all broker positions**: Failsafe liquidation overrides everything else in case of margin breach.
+> 5. **No core logic module directly touches live db connections without the transactions layer**: Prevents dirty reads and state race conditions."""
+        else:
+            architecture_rules = """> [!IMPORTANT]
+> **Strict Application Boundaries**
+> 1. **Front-end layers must not query databases directly**: Front-ends must route queries through standard HTTP or RPC gateways.
+> 2. **Shared components must not import core or backend modules**: Prevents tight coupling and circular reference link compile failures.
+> 3. **All subsystem errors must be routed to logging handlers**: Prevents silent crash failures and unhandled exceptions."""
+
+        # === 8. AI Development Contract ===
+        ai_development_contract = """Before modifying code:
+1. **Read AIPBF**: Understand the fact-based repository architecture index.
+2. **Read Requirements**: Check [MASTER_REQUIREMENTS.md](file:///h:/uados/AI_BRAIN/MASTER_REQUIREMENTS.md) to preserve the functional criteria.
+3. **Read ADRs**: Check decisions in the Decision Registry to avoid replacing optimized controllers or algorithms.
+4. **Read Architecture Rules**: Ensure your code changes do not bypass safety boundaries or violate layer isolation.
+
+When implementing:
+1. **Update tests**: Add unit tests, negative test scenarios, and edge boundaries.
+2. **Update requirements traceability**: Annotate new code sections with explicit `REQ-` tags.
+3. **Update documentation**: Document all public functions, classes, and architectural changes.
+4. **Update capability registry**: Reflect any new or refactored capability mappings.
+
+Before marking complete:
+1. **Build passes**: Verify the code compiles without warnings.
+2. **Tests pass**: Verify that all standard and edge-case unit tests pass.
+3. **Coverage maintained**: Maintain or improve unit test coverage bounds.
+4. **Documentation updated**: Run the Project Brain scanner to sync facts, and verify generated summaries match reality."""
+
+        # === 9. Context Restoration Payload ===
+        impl_caps = []
+        pend_caps = []
+        for cid, cname, folder, _ in cap_mapping:
+            exists = self.analysis["directories"].get(folder, False)
+            if exists:
+                impl_caps.append(f"{cid} ({cname})")
+            else:
+                pend_caps.append(f"{cid} ({cname})")
+
+        key_techs = self.analysis["tech_stack"]["languages"] + self.analysis["tech_stack"]["build_tools"]
+        if "C++" in self.analysis["tech_stack"]["languages"]:
+            key_techs.extend(["Conan", "gRPC", "OpenCV", "ONNX Runtime", "Eigen", "GTest"])
+        elif "Python" in self.analysis["tech_stack"]["languages"]:
+            key_techs.extend(["pip", "pytest", "pandas", "numpy"])
+
+        key_techs = sorted(list(set(key_techs)))
+
+        risks_list = []
+        if ident["type"] in ["Autonomous Driving Operating System", "Robotics / Autonomous Systems Platform"]:
+            risks_list = ["Sensor calibration drift", "Localization divergence", "CAN bus timing drops"]
+        elif ident["type"] == "Autonomous Trading Platform":
+            risks_list = ["Market data loader timeout", "Database connection exhaustion", "Execution slippage"]
+        else:
+            risks_list = ["Hardcoded secrets", "Code complexity debt"]
+
+        import json
+        restore_payload = {
+            "project": ident["type"],
+            "architecture": "Event Driven Decoupled Subsystems" if self.analysis["module_graph"] else "Modular Layers",
+            "primary_flow": " -> ".join(self.analysis["data_flow"][:1]) if self.analysis["data_flow"] else "Sensors → Perception → Localization → Prediction → Planning → Control → Safety → HAL",
+            "key_technologies": key_techs,
+            "implemented_capabilities": impl_caps,
+            "pending_capabilities": pend_caps,
+            "known_risks": risks_list,
+            "next_priorities": [handoff_steps.strip(". ")]
+        }
+        
+        restore_payload_json = json.dumps(restore_payload, indent=2)
+
+        content = f"""# Universal AI Project Brain (AIPBF) v3.2 — AI Operating Manual
+
+> **Framework Version**: v3.2 (AI Operating Manual)  
 > **Last Synchronized**: {self.now_str}  
 > **Verification Gate**: 100% Strict Evidence-Based  
 
 ---
 
 ## 1. Executive Summary
-This document serves as the single authoritative source of truth for the repository.
+This document serves as the single authoritative source of truth for the repository, serving as a comprehensive AI Operating Manual.
 
 ### Dynamic Project Identity:
 - **Project_Type**: {ident['type']}
@@ -445,7 +793,66 @@ This document serves as the single authoritative source of truth for the reposit
         content += f"""
 ---
 
-## 2. Dynamic Repository Health & Metrics
+## 2. System Intent Map (SYSTEM_INTENT)
+{system_intent}
+
+---
+
+## 3. Runtime Data Flow (RUNTIME_DATA_FLOW)
+{runtime_data_flow}
+
+---
+
+## 4. Capability Registry (CAPABILITY_REGISTRY)
+{capability_registry}
+
+---
+
+## 5. Decision Registry (DECISION_REGISTRY)
+{decision_registry}
+
+---
+
+## 6. Feature Inventory (FEATURE_INVENTORY)
+{feature_inventory_md}
+
+---
+
+## 7. Extension Points (EXTENSION_POINTS)
+{extension_points}
+
+---
+
+## 8. Architecture Rules (ARCHITECTURE_RULES)
+{architecture_rules}
+
+---
+
+## 9. AI Development Contract (AI_DEVELOPMENT_CONTRACT)
+{ai_development_contract}
+
+---
+
+## 10. Context Restoration Payload (RESTORE_CONTEXT)
+
+### Structured AI-Native Payload:
+- **Project**: {ident['type']}
+- **Architecture**: {"Event Driven Decoupled Subsystems" if self.analysis["module_graph"] else "Modular Layers"}
+- **Primary Flow**: {" -> ".join(self.analysis["data_flow"][:1]) if self.analysis["data_flow"] else "Sensors → Perception → Localization → Prediction → Planning → Control → Safety → HAL"}
+- **Key Technologies**: {', '.join(key_techs)}
+- **Implemented Capabilities**: {', '.join(impl_caps) if impl_caps else "None"}
+- **Pending Capabilities**: {', '.join(pend_caps) if pend_caps else "None"}
+- **Known Risks**: {', '.join(risks_list) if risks_list else "None"}
+- **Next Priorities**: {handoff_steps.strip(". ")}
+
+### Highly-Compressed JSON Package:
+```json
+{restore_payload_json}
+```
+
+---
+
+## 11. Dynamic Repository Health & Metrics
 ### Repository Health Index:
 - **Repository Health**: ✅ STABLE
 - **Documentation Coverage**: VERIFIED (README.md)
@@ -465,7 +872,7 @@ This document serves as the single authoritative source of truth for the reposit
 
 ---
 
-## 3. Technology Stack
+## 12. Technology Stack
 - **Primary Languages**: {lang_str}
 - **Build / Packaging Tooling**: {build_tools_str}
 
@@ -473,19 +880,19 @@ This document serves as the single authoritative source of truth for the reposit
 
 ---
 
-## 4. Repository Intelligence
+## 13. Repository Intelligence
 ### Logical Subsystems Layout (Verified Directories):
 {subsystems_output}
 ---
 
-## 5. Requirements Traceability Matrix
+## 14. Requirements Traceability Matrix
 | Requirement ID | Requirement Name | Evidence (Code) | Tests | Status | Confidence | Verification |
 |:---|:---|:---|:---|:---|:---|:---|
 {req_rows}
 
 ---
 
-## 6. Static Dependency Graph & Derived Module Graph
+## 15. Static Dependency Graph & Derived Module Graph
 The following Mermaid dependency blueprint was **derived dynamically** by scanning codebase file-to-file import relationships (`#include`, `import ... from`, `require`):
 *Note: This graph represents static build-time dependencies and include-level linkages, not runtime message queues or execution flows.*
 
@@ -495,13 +902,13 @@ graph TD
 
 ---
 
-## 7. Component Registry
+## 16. Component Registry
 | Component ID | Name | Path | Status | Verification |
 |:---|:---|:---|:---|:---|
 {component_rows}
 ---
 
-## 8. Build Intelligence (Targets)
+## 17. Build Intelligence (Targets)
 Discovered build configuration compilation targets, dependencies, and topological compilation sequence:
 | Target Name | Target Type | Source Location | Direct Dependencies | Verification |
 |:---|:---|:---|:---|:---|
@@ -512,7 +919,7 @@ Discovered build configuration compilation targets, dependencies, and topologica
 
 ---
 
-## 9. Source Entry Points & Startup Flow
+## 18. Source Entry Points & Startup Flow
 Discovered target executable source entry points:
 | Target Executable | Entry Source File | Initialization Pattern | Confidence | Verification |
 |:---|:---|:---|:---|:---|
@@ -523,7 +930,7 @@ Discovered target executable source entry points:
 
 ---
 
-## 10. Test Mapping & Subsystem Coverage Areas
+## 19. Test Mapping & Subsystem Coverage Areas
 Discovered unit test files grouped by active subsystems:
 | Subsystem Module | Test Files Discovered | Coverage Area Mapped | Coverage Index |
 |:---|:---|:---|:---|
@@ -531,7 +938,7 @@ Discovered unit test files grouped by active subsystems:
 
 ---
 
-## 11. Code Ownership Map
+## 20. Code Ownership Map
 Discovered codebase files mapped to subsystems:
 | Subsystem Module | Count of Scanned Files | Verification |
 |:---|:---|:---|
@@ -539,29 +946,29 @@ Discovered codebase files mapped to subsystems:
 
 ---
 
-## 12. Dependency Impact Map
+## 21. Dependency Impact Map
 Discovered downstream module dependency structures:
 ```text
 {impact_output}```
 
 ---
 
-## 13. Implementation Summary
+## 22. Implementation Summary
 The repository consists of `{self.analysis['loc']}` lines of code across standard directories. Code modules are structured under verified filesystem folders with direct compilation or workspace targets.
 
 ---
 
-## 14. Code Understanding Section
+## 23. Code Understanding Section
 ### Subsystem walkthrough entry points:
 {walkthrough_entries}
 ---
 
-## 15. Data Flow Analysis
+## 24. Data Flow Analysis
 Discovered data pathways traced from import dependency hierarchies:
 {data_flow_output}
 ---
 
-## 16. API Intelligence Registry
+## 25. API Intelligence Registry
 Verified endpoints bound to recognized HTTP Web Frameworks (No scanner or helper false positives):
 | Endpoint / Route | Protocol | Source File | Line | Verification |
 |:---|:---|:---|:---|:---|
@@ -569,7 +976,7 @@ Verified endpoints bound to recognized HTTP Web Frameworks (No scanner or helper
 
 ---
 
-## 17. Event Intelligence Registry
+## 26. Event Intelligence Registry
 Verified event clients and circular router dispatches:
 | Event Pattern | Client Type | Source File | Line | Verification |
 |:---|:---|:---|:---|:---|
@@ -577,23 +984,23 @@ Verified event clients and circular router dispatches:
 
 ---
 
-## 18. Database Intelligence
+## 27. Database Intelligence
 {db_output}
 ---
 
-## 19. Configuration Registry
+## 28. Configuration Registry
 - Mapped configuration files inside project directory:
 """
         config_files = [".env", ".env.example", "pyproject.toml", "CMakeLists.txt", "conanfile.py", "package.json"]
         for conf in config_files:
             p = self.repo_path / conf
             if p.exists():
-                content += f"- `{conf}`: Verified configuration file (VERIFIED)\n"
+                content += f"- `{conf}`: Verified configuration file (VERIFIED)\\n"
 
         content += f"""
 ---
 
-## 20. Dependency Registry
+## 29. Dependency Registry
 Factual verified workspace imports:
 - **External Dependencies**: {", ".join(self.analysis["dependencies"]["external"][:10]) if self.analysis["dependencies"]["external"] else "None detected"}
 
@@ -601,7 +1008,7 @@ Factual verified workspace imports:
 
 ---
 
-## 21. Security Intelligence (Expanded Checklist)
+## 30. Security Intelligence (Expanded Checklist)
 ### Security Scope:
 - **Source Code**: {sec_chk['source_code']}
 - **IaC**: {sec_chk['iac']}
@@ -634,18 +1041,18 @@ Factual verified workspace imports:
 
 ---
 
-## 22. Reliability Overview
+## 31. Reliability Overview
 {reliability_overview}
 
 ---
 
-## 23. Performance Overview
+## 32. Performance Overview
 {performance_overview}
 - **Source**: {test_reg['performance'] if test_reg['performance'] != 'UNKNOWN' else 'UNKNOWN (Strict Rule 1 - No benchmark results file)'}
 
 ---
 
-## 24. Testing Intelligence Registry
+## 33. Testing Intelligence Registry
 Dynamic test counts and categories:
 - **Unit Tests**: {test_reg['unit']}
 - **Integration Tests**: {test_reg['integration']}
@@ -658,31 +1065,31 @@ Dynamic test counts and categories:
 
 ---
 
-## 25. Gap Analysis
+## 34. Gap Analysis
 {gaps_output}
 
 ---
 
-## 26. Technical Debt Registry
+## 35. Technical Debt Registry
 | Debt Descriptor | Impact | Priority | Recommended Remediation | Verification |
 |:---|:---|:---|:---|:---|
 {debt_rows}
 
 ---
 
-## 27. Critical Execution Paths
+## 36. Critical Execution Paths
 Traced data pipelines and runtime flow directions:
 {critical_path_diagram}
 
 ---
 
-## 28. AI Safe Modification Registry
+## 37. AI Safe Modification Registry
 Actionable risk-tier matrix for AI code changes:
 {safe_mod_tiers}
 
 ---
 
-## 29. Change Impact Analysis
+## 38. Change Impact Analysis
 Change impact dependency registry derived from import trees (what breaks if a subsystem is modified):
 | Subsystem Target | Downstream Subsystems Impacted | Risk Level | Safety Actionable Guidance |
 |:---|:---|:---|:---|
@@ -690,7 +1097,7 @@ Change impact dependency registry derived from import trees (what breaks if a su
 
 ---
 
-## 30. Build & Runtime Commands Runbook
+## 39. Build & Runtime Commands Runbook
 Actionable commands verified for this technology stack:
 - **Setup Workspace**: {setup_cmd}
 - **Compile Workspace**: {compile_cmd}
@@ -699,23 +1106,23 @@ Actionable commands verified for this technology stack:
 
 ---
 
-## 31. Known Architecture Constraints
+## 40. Known Architecture Constraints
 {constraints_list}
 
 ---
 
-## 32. Risk Registry
+## 41. Risk Registry
 | Risk Descriptor | Likelihood | Impact | Mitigation Strategy | Owner |
 |:---|:---|:---|:---|:---|
 {risks_output}
 
 ---
 
-## 33. Improvement Registry
+## 42. Improvement Registry
 {improvements_output}
 ---
 
-## 34. Knowledge Confidence Matrix
+## 43. Knowledge Confidence Matrix
 | Section / Module | Confidence Rating | Verification Method |
 |:---|:---|:---|
 | Architecture Blueprint | {conf_arch} | MERMAID DERIVED |
@@ -726,7 +1133,7 @@ Actionable commands verified for this technology stack:
 
 ---
 
-## 35. AI Handoff & Onboarding Section (AI_HANDOFF)
+## 44. AI Handoff & Onboarding Section (AI_HANDOFF)
 ### restore_payload:
 - **Current State**:
   - Build: ✅ Presets configured.

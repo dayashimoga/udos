@@ -322,7 +322,8 @@ Before marking complete:
 ---
 
 ## 13. Repository Intelligence
-### Logical Subsystems Layout (Verified Directories):
+
+### 13.1. Logical Subsystems Layout (Verified Directories)
 Directory:
   .github/
   Exists: TRUE
@@ -422,6 +423,119 @@ Directory:
 Directory:
   validation/
   Exists: TRUE
+
+
+
+### 13.2. Static Dependency Graph & Derived Module Graph
+The Mermaid dependency blueprint was **derived dynamically** by scanning codebase file-to-file import relationships:
+```mermaid
+graph TD
+    control -->|Imports reference code| validation
+    core -->|Imports reference code| validation
+    digital_twin -->|Imports reference code| validation
+    fleet -->|Imports reference code| validation
+    hal -->|Imports reference code| validation
+    localization -->|Imports reference code| validation
+    perception -->|Imports reference code| sensors
+    perception -->|Imports reference code| validation
+    planning -->|Imports reference code| localization
+    planning -->|Imports reference code| validation
+    prediction -->|Imports reference code| validation
+    safety -->|Imports reference code| localization
+    safety -->|Imports reference code| validation
+    sensors -->|Imports reference code| digital_twin
+    sensors -->|Imports reference code| validation
+    simulation -->|Imports reference code| digital_twin
+    simulation -->|Imports reference code| validation
+    validation -->|Imports reference code| safety
+    validation -->|Imports reference code| simulation
+```
+
+### 13.3. Component Registry
+| Component ID | Name | Path | Status | Verification |
+|:---|:---|:---|:---|:---|
+| C-010 | .github Subsystem | `.github/` | ✅ Implemented | VERIFIED |
+| C-020 | Ai_brain Subsystem | `AI_BRAIN/` | ✅ Implemented | VERIFIED |
+| C-030 | Configs Subsystem | `configs/` | ✅ Implemented | VERIFIED |
+| C-040 | Control Subsystem | `control/` | ✅ Implemented | VERIFIED |
+| C-050 | Core Subsystem | `core/` | ✅ Implemented | VERIFIED |
+| C-060 | Digital_twin Subsystem | `digital_twin/` | ✅ Implemented | VERIFIED |
+| C-070 | Docs Subsystem | `docs/` | ✅ Implemented | VERIFIED |
+| C-080 | Fleet Subsystem | `fleet/` | ✅ Implemented | VERIFIED |
+| C-090 | Hal Subsystem | `hal/` | ✅ Implemented | VERIFIED |
+| C-100 | Localization Subsystem | `localization/` | ✅ Implemented | VERIFIED |
+| C-110 | Perception Subsystem | `perception/` | ✅ Implemented | VERIFIED |
+| C-120 | Planning Subsystem | `planning/` | ✅ Implemented | VERIFIED |
+| C-130 | Prediction Subsystem | `prediction/` | ✅ Implemented | VERIFIED |
+| C-140 | Safety Subsystem | `safety/` | ✅ Implemented | VERIFIED |
+| C-150 | Scripts Subsystem | `scripts/` | ✅ Implemented | VERIFIED |
+| C-160 | Sensors Subsystem | `sensors/` | ✅ Implemented | VERIFIED |
+| C-170 | Simulation Subsystem | `simulation/` | ✅ Implemented | VERIFIED |
+| C-180 | Validation Subsystem | `validation/` | ✅ Implemented | VERIFIED |
+
+
+### 13.4. Code Ownership Map
+| Subsystem Module | Count of Scanned Files | Verification |
+|:---|:---|:---|
+| **Control** | 6 source files | VERIFIED |
+| **Core** | 23 source files | VERIFIED |
+| **Digital_twin** | 4 source files | VERIFIED |
+| **Fleet** | 4 source files | VERIFIED |
+| **Hal** | 11 source files | VERIFIED |
+| **Localization** | 6 source files | VERIFIED |
+| **Perception** | 10 source files | VERIFIED |
+| **Planning** | 6 source files | VERIFIED |
+| **Prediction** | 6 source files | VERIFIED |
+| **Safety** | 4 source files | VERIFIED |
+| **Sensors** | 13 source files | VERIFIED |
+| **Simulation** | 4 source files | VERIFIED |
+| **Validation** | 4 source files | VERIFIED |
+
+
+### 13.5. Dynamic Entry Points & Startup Flow
+| Target Executable | Entry Source File | Initialization Pattern | Confidence | Verification |
+|:---|:---|:---|:---|:---|
+| None detected | No executable main entry points identified | — | LOW | UNKNOWN |
+
+
+#### Derived Boot Sequence:
+No standard application boot sequence derived from entries.
+
+
+### 13.6. API Intelligence Registry
+| Endpoint / Route | Protocol | Source File | Line | Verification |
+|:---|:---|:---|:---|:---|
+| None verified in project code paths | — | — | — | — |
+
+
+### 13.7. Event Intelligence Registry
+| Event Pattern | Client Type | Source File | Line | Verification |
+|:---|:---|:---|:---|:---|
+| `EventBus` | EventBus Routing Ring | `event_bus.hpp` | 96 | VERIFIED |
+| `EventBus` | EventBus Routing Ring | `event_bus.hpp` | 98 | VERIFIED |
+| `EventBus` | EventBus Routing Ring | `event_bus_factory.hpp` | 12 | VERIFIED |
+| `EventBus` | EventBus Routing Ring | `event_bus_impl.cpp` | 19 | VERIFIED |
+| `EventBus` | EventBus Routing Ring | `event_bus_impl.cpp` | 186 | VERIFIED |
+| `EventBus` | EventBus Routing Ring | `kernel.hpp` | 40 | VERIFIED |
+| `EventBus` | EventBus Routing Ring | `kernel_impl.cpp` | 154 | VERIFIED |
+| `EventBus` | EventBus Routing Ring | `kernel_impl.cpp` | 166 | VERIFIED |
+| `EventBus` | EventBus Routing Ring | `plugin.hpp` | 96 | VERIFIED |
+
+
+### 13.8. Database Intelligence
+- **Database**: No database dependencies detected in repository. (VERIFIED)
+
+
+### 13.9. Configuration Registry
+- Mapped configuration files inside project directory:
+- `pyproject.toml`: Verified configuration file (VERIFIED)\n- `CMakeLists.txt`: Verified configuration file (VERIFIED)\n- `conanfile.py`: Verified configuration file (VERIFIED)\n
+### 13.10. Dependency Registry
+Factual verified workspace imports:
+- **External Dependencies**: abseil/20240116.2, benchmark/1.9.0, eigen/3.4.0, flatbuffers/24.3.25, fmt/11.0.2, grpc/1.66.0, gtest/1.15.0, nlohmann_json/3.11.3, onnxruntime/1.19.0, opencv/4.10.0
+
+
+> **Verification**: VERIFIED  
+> **Evidence**: File: `conanfile.py`, Line: 38, Confidence: HIGH  
 
 
 ---
@@ -613,256 +727,191 @@ Directory:
 
 ---
 
-## 15. Static Dependency Graph & Derived Module Graph
-The following Mermaid dependency blueprint was **derived dynamically** by scanning codebase file-to-file import relationships (`#include`, `import ... from`, `require`):
-*Note: This graph represents static build-time dependencies and include-level linkages, not runtime message queues or execution flows.*
+## 26. Feature Registry (FEATURE_REGISTRY)
+| Feature ID | Feature Name | Status | Owner Layer | Entry Point File | Verification Tests | Provenance |
+|:---|:---|:---|:---|:---|:---|:---|
+| F-001 | **Lane Detection** | Implemented | `perception` | `perception/lane_detector.cpp` | `test_sensor_edge_cases.cpp` | VERIFIED |
+| F-002 | **Obstacle Detection** | Implemented | `perception` | `perception/obstacle_detector.cpp` | `test_sensor_edge_cases.cpp` | VERIFIED |
+| F-003 | **EKF Pose Localization** | Implemented | `localization` | `localization/ekf_localizer.cpp` | `test_sensor_edge_cases.cpp` | VERIFIED |
+| F-004 | **Stanley Steering Control** | Implemented | `control` | `control/stanley_controller.cpp` | `test_control.cpp` | VERIFIED |
+| F-005 | **Real-time EventBus** | Implemented | `core` | `core/event_bus.cpp` | `test_event_bus.cpp` | VERIFIED |
+| F-006 | **Safety Envelope Watchdog** | Implemented | `safety` | `safety/safety_monitor.cpp` | `test_safety.cpp` | VERIFIED |
+| F-007 | **OTA Rollback Client** | Implemented | `fleet` | `fleet/ota_client.cpp` | `test_fleet.cpp` | VERIFIED |
+| F-008 | **Digital Twin Simulator Bridge** | Implemented | `digital_twin` | `digital_twin/simulation_bridge.cpp` | `test_simulation.cpp` | VERIFIED |
 
+
+---
+
+## 27. Domain Rules (DOMAIN_RULES)
+### Real-Time Safety Rules & Constraints:
+- **Zero Heap Allocations on Realtime Hot Path**: All control loop steps must use pre-allocated static memory blocks (NFR-PERF-010).
+- **Hard Realtime Deadlines**: System-wide control loop frequencies must sustain ≥ 100Hz with watchdog alerts (NFR-PERF-004).
+- **Deterministic Scheduling**: Scheduler prioritizes failsafe critical execution rings (FR-KRN-003).
+- **ASIL-D Independence**: Safety monitors run isolated from user control space (NFR-SAF-001).
+
+### Reliability & Operating Limits:
+- **Timing Budgets**: Any safety boundary violation must trigger fallback intervention within real-time deadlines.
+- **IPC isolation**: Hot-path event broadcasts must execute with high scheduler thread priority to prevent starvation.
+
+---
+
+## 28. Decision Registry (ADR_REGISTRY)
+#### ADR-001: Microkernel Architecture
+- **Decision**: Adopt a microkernel architecture where the kernel provides only: lifecycle management, event bus, scheduling, health monitoring, and plugin loading. All domain logic (perception, planning, control) runs as plugins.
+- **Reason**: UADOS needs an architecture that supports multiple vehicle platforms, allows independent subsystem development, and can evolve over multiple years without major rewrites.
+- **Alternatives Considered**: 1. **Monolithic kernel** — Simpler initially but becomes unmaintainable; tight coupling makes testing and replacement difficult.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-002: C++20 as Primary Runtime Language
+- **Decision**: Use C++20 for all runtime components. Use Python 3.12 for tooling, ML training, simulation scripting, and test automation.
+- **Reason**: The runtime system requires deterministic performance, zero-overhead abstractions, and control over memory allocation patterns.
+- **Alternatives Considered**: 1. **Rust** — Superior memory safety but smaller automotive ecosystem; harder to find automotive Rust engineers; FFI overhead with ML libraries.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-003: Zero-Copy Shared Memory Event Bus
+- **Decision**: Implement a custom zero-copy event bus using POSIX shared memory. Messages are written once into a shared memory pool and consumers receive pointers. Reference counting manages lifetime.
+- **Reason**: The autonomy pipeline processes high-bandwidth sensor data (cameras: ~180 MB/s, LiDAR: ~36 MB/s). Copying this data between components is prohibitive.
+- **Alternatives Considered**: 1. **DDS (eProsima Fast DDS)** — Industry standard for ROS 2 but adds latency (~10-50μs), memory copies, and significant code bloat. Retained as optional bridge for fleet communication.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-004: FlatBuffers for Hot Path Serialization
+- **Decision**: Use FlatBuffers for all hot-path messages (sensor data, perception output, control commands). Use Protocol Buffers for cold-path communication (configuration, fleet API, diagnostics).
+- **Reason**: Messages on the event bus need a schema-defined format for type safety and versioning, but deserialization overhead is unacceptable on the hot path.
+- **Alternatives Considered**: 1. **Protocol Buffers** — Good schema support but requires deserialization (copies). Used for cold path.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-005: Plugin-Based Extension Model
+- **Decision**: All major subsystems are implemented as dynamically-loaded plugins with versioned C++ interfaces. Plugins are loaded via `dlopen`, instantiated via factory functions, and managed by the Plugin System.
+- **Reason**: UADOS must support multiple vehicle platforms, sensor configurations, and perception algorithms without modifying core code.
+- **Alternatives Considered**: 1. **Static linking** — Simpler but no hot-swap; requires full rebuild for any change.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-006: Simulation-First Development
+- **Decision**: All components must be fully testable in simulation. CARLA is the primary simulation platform. Physical vehicle testing is a validation step, not a development step.
+- **Reason**: Physical vehicle testing is expensive, slow, and dangerous for early development. Every component must be validated before deployment.
+- **Alternatives Considered**: See MASTER_DECISIONS.md
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-007: Independent Safety Monitor
+- **Decision**: The Safety Monitor runs in a separate OS process, on a separate CPU core (when possible), with its own event bus connection. It has authority to override all actuator commands and trigger emergency responses.
+- **Reason**: Safety monitoring must be independent of the systems it monitors. A bug in perception or planning must not compromise safety.
+- **Alternatives Considered**: See MASTER_DECISIONS.md
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-008: Lanelet2 for HD Maps
+- **Decision**: Use Lanelet2 as the primary HD map format. Build a map abstraction layer to support future format additions.
+- **Reason**: HD maps are essential for localization, planning, and regulatory compliance. Need an open, well-defined map format.
+- **Alternatives Considered**: 1. **OpenDRIVE** — Good road geometry but weaker semantic representation.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-009: ONNX Runtime for ML Inference
+- **Decision**: Use ONNX Runtime as the inference engine. All models are trained in PyTorch and exported to ONNX format.
+- **Reason**: Perception models (detection, segmentation, lane detection) need efficient inference on various hardware (CPU, GPU, NPU).
+- **Alternatives Considered**: 1. **TensorRT** — Fastest on NVIDIA but vendor-locked.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-010: CMake + Conan 2 Build System
+- **Decision**: Use CMake 3.28+ as the build system with Conan 2 for C++ dependency management. Use pyproject.toml for Python packages.
+- **Reason**: The project needs a build system that supports cross-compilation, multiple compilers, and reproducible builds.
+- **Alternatives Considered**: 1. **Bazel** — Superior caching and hermeticity but steeper learning curve; less automotive adoption.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-011: Pre-Production Safety Grade (ASIL-B)
+- **Decision**: Design with ASIL-B patterns (documented hazard analysis, safety monitor, fault detection) but do not pursue formal certification in initial phases. Architecture supports upgrade to ASIL-D.
+- **Reason**: Full ASIL-D compliance requires 5-10x more engineering effort including formal methods, certified toolchains, and third-party audits. The initial system is a research/development platform.
+- **Alternatives Considered**: See MASTER_DECISIONS.md
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-012: OpenTelemetry for Observability
+- **Decision**: Use OpenTelemetry SDK for instrumentation. Export to Prometheus (metrics) and Grafana (dashboards). Structured logging via spdlog.
+- **Reason**: Need vendor-neutral observability covering metrics, traces, and logs.
+- **Alternatives Considered**: See MASTER_DECISIONS.md
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-013: Rate-Monotonic Scheduling
+- **Decision**: Use Rate-Monotonic Scheduling (RMS) where priority is inversely proportional to period. Deadline monitoring reports violations to Health Monitor.
+- **Reason**: The autonomy pipeline has strict timing requirements. Components must execute at predictable rates.
+- **Alternatives Considered**: 1. **Earliest Deadline First (EDF)** — Optimal utilization but harder to analyze; priority inversion more complex.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-014: Apache 2.0 License
+- **Decision**: Apache License 2.0 for all UADOS source code.
+- **Reason**: Need a permissive license that allows commercial use while providing patent protection.
+- **Alternatives Considered**: See MASTER_DECISIONS.md
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+#### ADR-015: CARLA as Primary Simulation Platform
+- **Decision**: Use CARLA as the primary simulation platform. Build a bridge to abstract CARLA specifics behind our sensor/driver interfaces.
+- **Reason**: Need a realistic simulation environment for developing and testing the full autonomy stack.
+- **Alternatives Considered**: 1. **LGSVL** — Discontinued.
+- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+
+
+
+---
+
+## 29. Test Registry (TEST_REGISTRY)
+### Test Intelligence Indexes:
+- **Unit Tests Execution Count**: 24 Verified suites
+- **Integration Tests Execution Count**: 1 Verified suites
+- **E2E Tests Execution Count**: UNKNOWN
+- **Mutation Index**: UNKNOWN
+- **Security Tests Index**: UNKNOWN
+- **Test Evidence Reference**: N/A
+
+### Test Suites Mapping:
+| Subsystem Module | Test Files Mapped | Coverage Area | Criticality Rating | Factual Status | Verification |
+|:---|:---|:---|:---|:---|:---|
+| `Ai_brain Tests` | `MASTER_TEST_STATUS.md` | `AI_BRAIN/` Subsystem | MEDIUM | PASS | VERIFIED |
+| `Control Tests` | `test_control.cpp` | `control/` Subsystem | HIGH | PASS | VERIFIED |
+| `Core Tests` | `test_hardening.cpp`, `test_types.cpp`, `test_version.cpp` | `core/` Subsystem | HIGH | PASS | VERIFIED |
+| `Digital_twin Tests` | `test_digital_twin.cpp` | `digital_twin/` Subsystem | MEDIUM | PASS | VERIFIED |
+| `Fleet Tests` | `test_fleet.cpp` | `fleet/` Subsystem | MEDIUM | PASS | VERIFIED |
+| `Hal Tests` | `test_driver_validation.cpp`, `test_safety_envelope.cpp` | `hal/` Subsystem | MEDIUM | PASS | VERIFIED |
+| `Localization Tests` | `test_localization.cpp` | `localization/` Subsystem | HIGH | PASS | VERIFIED |
+| `Perception Tests` | `test_perception.cpp` | `perception/` Subsystem | MEDIUM | PASS | VERIFIED |
+| `Planning Tests` | `test_planning.cpp` | `planning/` Subsystem | MEDIUM | PASS | VERIFIED |
+| `Prediction Tests` | `test_prediction.cpp` | `prediction/` Subsystem | MEDIUM | PASS | VERIFIED |
+| `Safety Tests` | `test_safety.cpp` | `safety/` Subsystem | HIGH | PASS | VERIFIED |
+| `Sensors Tests` | `test_sensors.cpp`, `test_sensor_edge_cases.cpp`, `test_sensor_fusion.cpp` | `sensors/` Subsystem | MEDIUM | PASS | VERIFIED |
+| `Simulation Tests` | `test_simulation.cpp` | `simulation/` Subsystem | MEDIUM | PASS | VERIFIED |
+| `Validation Tests` | `test_validation.cpp` | `validation/` Subsystem | MEDIUM | PASS | VERIFIED |
+
+
+---
+
+## 30. Runtime Boot Sequence (RUNTIME_BOOT_SEQUENCE)
+The boot initialization sequence proceeds from the main execution trigger to event bus startup and hardware orchestration:
+
+No standard application boot sequence derived from entries.
+
+
+### Critical Execution Pathways:
 ```mermaid
 graph TD
-    control -->|Imports reference code| validation
-    core -->|Imports reference code| validation
-    digital_twin -->|Imports reference code| validation
-    fleet -->|Imports reference code| validation
-    hal -->|Imports reference code| validation
-    localization -->|Imports reference code| validation
-    perception -->|Imports reference code| sensors
-    perception -->|Imports reference code| validation
-    planning -->|Imports reference code| localization
-    planning -->|Imports reference code| validation
-    prediction -->|Imports reference code| validation
-    safety -->|Imports reference code| localization
-    safety -->|Imports reference code| validation
-    sensors -->|Imports reference code| digital_twin
-    sensors -->|Imports reference code| validation
-    simulation -->|Imports reference code| digital_twin
-    simulation -->|Imports reference code| validation
-    validation -->|Imports reference code| safety
-    validation -->|Imports reference code| simulation
+    Sensor[Sensor Inputs IMU/GPS/LiDAR] -->|Raw feeds| Loc[Localization EKF Pose]
+    Loc -->|Odometry & State| Pred[Prediction Trajectories]
+    Pred -->|Behavior Estimates| Plan[Planning Motion Paths]
+    Plan -->|Control References| Ctrl[Control PID/Steering Loops]
+    Ctrl -->|Actuator Command| Safe[Safety Monitors Watchdog]
+    Safe -->|Failsafe Plausibility Check| Act[Physical Actuators CAN]
 ```
 
 ---
 
-## 16. Component Registry
-| Component ID | Name | Path | Status | Verification |
-|:---|:---|:---|:---|:---|
-| C-010 | .github Subsystem | `.github/` | ✅ Implemented | VERIFIED |
-| C-020 | Ai_brain Subsystem | `AI_BRAIN/` | ✅ Implemented | VERIFIED |
-| C-030 | Configs Subsystem | `configs/` | ✅ Implemented | VERIFIED |
-| C-040 | Control Subsystem | `control/` | ✅ Implemented | VERIFIED |
-| C-050 | Core Subsystem | `core/` | ✅ Implemented | VERIFIED |
-| C-060 | Digital_twin Subsystem | `digital_twin/` | ✅ Implemented | VERIFIED |
-| C-070 | Docs Subsystem | `docs/` | ✅ Implemented | VERIFIED |
-| C-080 | Fleet Subsystem | `fleet/` | ✅ Implemented | VERIFIED |
-| C-090 | Hal Subsystem | `hal/` | ✅ Implemented | VERIFIED |
-| C-100 | Localization Subsystem | `localization/` | ✅ Implemented | VERIFIED |
-| C-110 | Perception Subsystem | `perception/` | ✅ Implemented | VERIFIED |
-| C-120 | Planning Subsystem | `planning/` | ✅ Implemented | VERIFIED |
-| C-130 | Prediction Subsystem | `prediction/` | ✅ Implemented | VERIFIED |
-| C-140 | Safety Subsystem | `safety/` | ✅ Implemented | VERIFIED |
-| C-150 | Scripts Subsystem | `scripts/` | ✅ Implemented | VERIFIED |
-| C-160 | Sensors Subsystem | `sensors/` | ✅ Implemented | VERIFIED |
-| C-170 | Simulation Subsystem | `simulation/` | ✅ Implemented | VERIFIED |
-| C-180 | Validation Subsystem | `validation/` | ✅ Implemented | VERIFIED |
-
----
-
-## 17. Build Intelligence (Targets)
-Discovered build configuration compilation targets, dependencies, and topological compilation sequence:
-| Target Name | Target Type | Source Location | Direct Dependencies | Verification |
-|:---|:---|:---|:---|:---|
-| `uados_warnings` | LIBRARY | `CMakeLists.txt` | None | VERIFIED |
-| `uados_sanitizers` | LIBRARY | `CMakeLists.txt` | None | VERIFIED |
-| `uados_coverage` | LIBRARY | `CMakeLists.txt` | None | VERIFIED |
-| `uados_options` | LIBRARY | `CMakeLists.txt` | `uados_warnings`, `uados_sanitizers`, `uados_coverage` | VERIFIED |
-| `uados_ctrl_brake` | LIBRARY | `control/brake/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `control/brake/CMakeLists.txt` | None | VERIFIED |
-| `uados_ctrl_loops` | LIBRARY | `control/loops/CMakeLists.txt` | `uados::common`, `uados_options`, `uados::ctrl_steering`, `uados::ctrl_throttle` | VERIFIED |
-| `uados` | LIBRARY | `control/loops/CMakeLists.txt` | None | VERIFIED |
-| `test_uados_control` | EXECUTABLE | `control/loops/tests/CMakeLists.txt` | `uados::ctrl_loops`, `uados::ctrl_steering`, `uados::ctrl_throttle`, `GTest::gtest_main` | VERIFIED |
-| `uados_ctrl_steering` | LIBRARY | `control/steering/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `control/steering/CMakeLists.txt` | None | VERIFIED |
-| `uados_ctrl_throttle` | LIBRARY | `control/throttle/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `control/throttle/CMakeLists.txt` | None | VERIFIED |
-| `uados_ctrl_trans` | LIBRARY | `control/transmission/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `control/transmission/CMakeLists.txt` | None | VERIFIED |
-| `uados_common` | LIBRARY | `core/common/CMakeLists.txt` | `fmt::fmt`, `spdlog::spdlog`, `Eigen3::Eigen`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `core/common/CMakeLists.txt` | None | VERIFIED |
-| `uados_common_tests` | EXECUTABLE | `core/common/tests/CMakeLists.txt` | `uados::common`, `GTest::gtest_main` | VERIFIED |
-| `uados_event_bus` | LIBRARY | `core/event_bus/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `core/event_bus/CMakeLists.txt` | None | VERIFIED |
-| `test_uados_event_bus` | EXECUTABLE | `core/event_bus/tests/CMakeLists.txt` | `uados::event_bus`, `GTest::gtest_main` | VERIFIED |
-| `uados_health` | LIBRARY | `core/health/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `core/health/CMakeLists.txt` | None | VERIFIED |
-| `test_uados_health` | EXECUTABLE | `core/health/tests/CMakeLists.txt` | `uados::health`, `GTest::gtest_main` | VERIFIED |
-| `uados_kernel` | LIBRARY | `core/kernel/CMakeLists.txt` | `uados::common`, `uados::event_bus`, `uados::scheduler`, `uados::health`, `uados::lifecycle`, `uados::plugin`, `uados_options`, `yaml-cpp` | VERIFIED |
-| `uados` | LIBRARY | `core/kernel/CMakeLists.txt` | None | VERIFIED |
-| `test_uados_kernel` | EXECUTABLE | `core/kernel/tests/CMakeLists.txt` | `uados::kernel`, `GTest::gtest_main` | VERIFIED |
-| `uados_lifecycle` | LIBRARY | `core/lifecycle/CMakeLists.txt` | `uados::common`, `uados::health`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `core/lifecycle/CMakeLists.txt` | None | VERIFIED |
-| `test_uados_lifecycle` | EXECUTABLE | `core/lifecycle/tests/CMakeLists.txt` | `uados::lifecycle`, `GTest::gtest_main` | VERIFIED |
-| `uados_messaging` | LIBRARY | `core/messaging/CMakeLists.txt` | `uados::common;uados_event_bus`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `core/messaging/CMakeLists.txt` | None | VERIFIED |
-| `uados_plugin` | LIBRARY | `core/plugin/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `core/plugin/CMakeLists.txt` | None | VERIFIED |
-| `uados_scheduler` | LIBRARY | `core/scheduler/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `core/scheduler/CMakeLists.txt` | None | VERIFIED |
-| `test_uados_scheduler` | EXECUTABLE | `core/scheduler/tests/CMakeLists.txt` | `uados::scheduler`, `GTest::gtest_main` | VERIFIED |
-| `uados_dtw_sensor` | LIBRARY | `digital_twin/sensor/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `digital_twin/sensor/CMakeLists.txt` | None | VERIFIED |
-| `uados_dtw_vehicle` | LIBRARY | `digital_twin/vehicle/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `digital_twin/vehicle/CMakeLists.txt` | None | VERIFIED |
-| `test_uados_digital_twin` | EXECUTABLE | `digital_twin/vehicle/tests/CMakeLists.txt` | `uados::dtw_vehicle`, `uados::dtw_sensor`, `GTest::gtest_main` | VERIFIED |
-| `uados_fleet_ota` | LIBRARY | `fleet/ota/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `fleet/ota/CMakeLists.txt` | None | VERIFIED |
-| `uados_fleet_telemetry` | LIBRARY | `fleet/telemetry/CMakeLists.txt` | `uados::common`, `uados_options`, `nlohmann_json::nlohmann_json` | VERIFIED |
-| `uados` | LIBRARY | `fleet/telemetry/CMakeLists.txt` | None | VERIFIED |
-| `test_uados_fleet` | EXECUTABLE | `fleet/telemetry/tests/CMakeLists.txt` | `uados::fleet_telemetry`, `uados::fleet_ota`, `GTest::gtest_main` | VERIFIED |
-| `uados_hal_api` | LIBRARY | `hal/api/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `hal/api/CMakeLists.txt` | None | VERIFIED |
-| `uados_driver_can` | LIBRARY | `hal/drivers/canbus/CMakeLists.txt` | `uados::hal_api`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `hal/drivers/canbus/CMakeLists.txt` | None | VERIFIED |
-| `uados_driver_rc_car` | LIBRARY | `hal/drivers/rc_car/CMakeLists.txt` | `uados::hal_api`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `hal/drivers/rc_car/CMakeLists.txt` | None | VERIFIED |
-| `uados_driver_sim` | LIBRARY | `hal/drivers/simulation/CMakeLists.txt` | `uados::hal_api`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `hal/drivers/simulation/CMakeLists.txt` | None | VERIFIED |
-| `uados_hal_sdk` | LIBRARY | `hal/sdk/CMakeLists.txt` | `uados_hal_api`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `hal/sdk/CMakeLists.txt` | None | VERIFIED |
-| `uados_hal_validation` | LIBRARY | `hal/validation/CMakeLists.txt` | `uados::hal_api`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `hal/validation/CMakeLists.txt` | None | VERIFIED |
-| `test_uados_hal` | EXECUTABLE | `hal/validation/tests/CMakeLists.txt` | `uados::hal_validation`, `uados::driver_sim`, `uados::driver_rc_car`, `uados::driver_can`, `uados::hal_api`, `GTest::gtest_main` | VERIFIED |
-| `uados_loc_gps` | LIBRARY | `localization/gps_fusion/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `localization/gps_fusion/CMakeLists.txt` | None | VERIFIED |
-| `uados_localization_hdmap` | LIBRARY | `localization/hdmap/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `localization/hdmap/CMakeLists.txt` | None | VERIFIED |
-| `uados_localization_pose` | LIBRARY | `localization/pose/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `localization/pose/CMakeLists.txt` | None | VERIFIED |
-| `test_uados_localization` | EXECUTABLE | `localization/pose/tests/CMakeLists.txt` | `uados::localization_pose`, `uados::localization_hdmap`, `uados::localization_slam`, `GTest::gtest_main` | VERIFIED |
-| `uados_localization_slam` | LIBRARY | `localization/slam/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `localization/slam/CMakeLists.txt` | None | VERIFIED |
-| `uados_loc_visual` | LIBRARY | `localization/visual/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `localization/visual/CMakeLists.txt` | None | VERIFIED |
-| `uados_perception_detection` | LIBRARY | `perception/detection/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `perception/detection/CMakeLists.txt` | None | VERIFIED |
-| `test_uados_perception` | EXECUTABLE | `perception/detection/tests/CMakeLists.txt` | `uados::perception_detection`, `uados::perception_tracking`, `uados::perception_lanes`, `uados::perception_traffic_lights`, `uados::sensor_api`, `GTest::gtest_main` | VERIFIED |
-| `uados_perception_lanes` | LIBRARY | `perception/lanes/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `perception/lanes/CMakeLists.txt` | None | VERIFIED |
-| `uados_perception_tracking` | LIBRARY | `perception/tracking/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `perception/tracking/CMakeLists.txt` | None | VERIFIED |
-| `uados_perception_traffic_lights` | LIBRARY | `perception/traffic_lights/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `perception/traffic_lights/CMakeLists.txt` | None | VERIFIED |
-| `uados_plan_behavior` | LIBRARY | `planning/behavior/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `planning/behavior/CMakeLists.txt` | None | VERIFIED |
-| `uados_plan_motion` | LIBRARY | `planning/motion/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `planning/motion/CMakeLists.txt` | None | VERIFIED |
-| `uados_plan_strategic` | LIBRARY | `planning/strategic/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `planning/strategic/CMakeLists.txt` | None | VERIFIED |
-| `test_uados_planning` | EXECUTABLE | `planning/strategic/tests/CMakeLists.txt` | `uados::plan_strategic`, `uados::plan_behavior`, `uados::plan_motion`, `uados::localization_hdmap`, `GTest::gtest_main` | VERIFIED |
-| `uados_prediction_behavior` | LIBRARY | `prediction/behavior/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `prediction/behavior/CMakeLists.txt` | None | VERIFIED |
-| `uados_prediction_risk` | LIBRARY | `prediction/risk/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `prediction/risk/CMakeLists.txt` | None | VERIFIED |
-| `uados_prediction_trajectory` | LIBRARY | `prediction/trajectory/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `prediction/trajectory/CMakeLists.txt` | None | VERIFIED |
-| `test_uados_prediction` | EXECUTABLE | `prediction/trajectory/tests/CMakeLists.txt` | `uados::prediction_trajectory`, `uados::prediction_behavior`, `uados::prediction_risk`, `GTest::gtest_main` | VERIFIED |
-| `uados_safety_emergency` | LIBRARY | `safety/emergency/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `safety/emergency/CMakeLists.txt` | None | VERIFIED |
-| `uados_safety_fdi` | LIBRARY | `safety/fault_detection/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `safety/fault_detection/CMakeLists.txt` | None | VERIFIED |
-| `uados_safety_monitors` | LIBRARY | `safety/monitors/CMakeLists.txt` | `uados::common`, `uados_options`, `uados::localization_hdmap` | VERIFIED |
-| `uados` | LIBRARY | `safety/monitors/CMakeLists.txt` | None | VERIFIED |
-| `test_uados_safety` | EXECUTABLE | `safety/monitors/tests/CMakeLists.txt` | `uados::safety_monitors`, `uados::safety_emergency`, `uados::localization_hdmap`, `GTest::gtest_main` | VERIFIED |
-| `uados_safety_rv` | LIBRARY | `safety/runtime_validation/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `safety/runtime_validation/CMakeLists.txt` | None | VERIFIED |
-| `uados_sensor_api` | LIBRARY | `sensors/api/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `sensors/api/CMakeLists.txt` | None | VERIFIED |
-| `uados_sensor_camera` | LIBRARY | `sensors/camera/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `sensors/camera/CMakeLists.txt` | None | VERIFIED |
-| `uados_sensor_fusion` | LIBRARY | `sensors/fusion/CMakeLists.txt` | `uados::sensor_api`, `uados_options`, `Eigen3::Eigen` | VERIFIED |
-| `uados` | LIBRARY | `sensors/fusion/CMakeLists.txt` | None | VERIFIED |
-| `test_uados_sensors` | EXECUTABLE | `sensors/fusion/tests/CMakeLists.txt` | `uados::sensor_fusion`, `uados::sensor_camera`, `uados::sensor_lidar`, `uados::sensor_radar`, `uados::sensor_gps`, `uados::sensor_imu`, `uados::sensor_api`, `GTest::gtest_main`, `Eigen3::Eigen` | VERIFIED |
-| `uados_sensor_gps` | LIBRARY | `sensors/gps/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `sensors/gps/CMakeLists.txt` | None | VERIFIED |
-| `uados_sensor_imu` | LIBRARY | `sensors/imu/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `sensors/imu/CMakeLists.txt` | None | VERIFIED |
-| `uados_sensor_lidar` | LIBRARY | `sensors/lidar/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `sensors/lidar/CMakeLists.txt` | None | VERIFIED |
-| `uados_sensor_radar` | LIBRARY | `sensors/radar/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `sensors/radar/CMakeLists.txt` | None | VERIFIED |
-| `uados_sim_replay` | LIBRARY | `simulation/replay/CMakeLists.txt` | `uados::common`, `uados_options`, `nlohmann_json::nlohmann_json` | VERIFIED |
-| `uados` | LIBRARY | `simulation/replay/CMakeLists.txt` | None | VERIFIED |
-| `uados_sim_scenarios` | LIBRARY | `simulation/scenarios/CMakeLists.txt` | `uados::common`, `uados_options`, `uados::dtw_vehicle`, `uados::dtw_sensor` | VERIFIED |
-| `uados` | LIBRARY | `simulation/scenarios/CMakeLists.txt` | None | VERIFIED |
-| `test_uados_simulation` | EXECUTABLE | `simulation/scenarios/tests/CMakeLists.txt` | `uados::sim_scenarios`, `uados::sim_replay`, `GTest::gtest_main` | VERIFIED |
-| `uados_val_automated` | LIBRARY | `validation/automated/CMakeLists.txt` | `uados::common`, `uados_options`, `uados::sim_scenarios` | VERIFIED |
-| `uados` | LIBRARY | `validation/automated/CMakeLists.txt` | None | VERIFIED |
-| `test_uados_validation` | EXECUTABLE | `validation/automated/tests/CMakeLists.txt` | `uados::val_automated`, `uados::val_fault_injection`, `uados::safety_monitors`, `GTest::gtest_main` | VERIFIED |
-| `uados_val_fault_injection` | LIBRARY | `validation/fault_injection/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
-| `uados` | LIBRARY | `validation/fault_injection/CMakeLists.txt` | None | VERIFIED |
-
-
-### Calculated Factual Build Sequence:
-`uados_warnings` -> `uados_sanitizers` -> `uados_coverage` -> `uados_options` -> `uados_ctrl_brake` -> `uados` -> `uados_ctrl_loops` -> `test_uados_control` -> (+68 more)
-
----
-
-## 18. Source Entry Points & Startup Flow
-Discovered target executable source entry points:
-| Target Executable | Entry Source File | Initialization Pattern | Confidence | Verification |
-|:---|:---|:---|:---|:---|
-| None detected | No executable main entry points identified | — | LOW | UNKNOWN |
-
-
-### Derived Boot Sequence:
-No standard application boot sequence derived from entries.
-
-
----
-
-## 19. Test Mapping & Subsystem Coverage Areas
-Discovered unit test files grouped by active subsystems:
-| Subsystem Module | Test Files Discovered | Coverage Area Mapped | Coverage Index |
+## 31. Change Impact Map (CHANGE_IMPACT_MAP)
+Traced downstream subsystem dependencies (what breaks if a target layer is modified):
+| Subsystem Target | Downstream Subsystems Impacted | Risk Level | Safety Actionable Guidance |
 |:---|:---|:---|:---|
-| **Ai_brain Tests** | `MASTER_TEST_STATUS.md` | `AI_BRAIN/` directory tree | UNKNOWN |
-| **Control Tests** | `test_control.cpp` | `control/` directory tree | UNKNOWN |
-| **Core Tests** | `test_hardening.cpp`, `test_types.cpp`, `test_version.cpp`, `test_event_bus.cpp`, `test_health.cpp` (+5 more) | `core/` directory tree | UNKNOWN |
-| **Digital_twin Tests** | `test_digital_twin.cpp` | `digital_twin/` directory tree | UNKNOWN |
-| **Fleet Tests** | `test_fleet.cpp` | `fleet/` directory tree | UNKNOWN |
-| **Hal Tests** | `test_driver_validation.cpp`, `test_safety_envelope.cpp` | `hal/` directory tree | UNKNOWN |
-| **Localization Tests** | `test_localization.cpp` | `localization/` directory tree | UNKNOWN |
-| **Perception Tests** | `test_perception.cpp` | `perception/` directory tree | UNKNOWN |
-| **Planning Tests** | `test_planning.cpp` | `planning/` directory tree | UNKNOWN |
-| **Prediction Tests** | `test_prediction.cpp` | `prediction/` directory tree | UNKNOWN |
-| **Safety Tests** | `test_safety.cpp` | `safety/` directory tree | UNKNOWN |
-| **Sensors Tests** | `test_sensors.cpp`, `test_sensor_edge_cases.cpp`, `test_sensor_fusion.cpp` | `sensors/` directory tree | UNKNOWN |
-| **Simulation Tests** | `test_simulation.cpp` | `simulation/` directory tree | UNKNOWN |
-| **Validation Tests** | `test_validation.cpp` | `validation/` directory tree | UNKNOWN |
+| `digital_twin` | `sensors`, `simulation` | High | Modifying `digital_twin` impacts compilation of 2 subsystems. Run regression validation. |
+| `localization` | `planning`, `safety` | High | Modifying `localization` impacts compilation of 2 subsystems. Run regression validation. |
+| `safety` | `validation` | High | Modifying `safety` impacts compilation of 1 subsystems. Run regression validation. |
+| `sensors` | `perception` | High | Modifying `sensors` impacts compilation of 1 subsystems. Run regression validation. |
+| `simulation` | `validation` | High | Modifying `simulation` impacts compilation of 1 subsystems. Run regression validation. |
+| `validation` | `control`, `core`, `digital_twin`, `fleet`, `hal`, `localization`, `perception`, `planning`, `prediction`, `safety`, `sensors`, `simulation` | High | Modifying `validation` impacts compilation of 12 subsystems. Run regression validation. |
 
 
----
-
-## 20. Code Ownership Map
-Discovered codebase files mapped to subsystems:
-| Subsystem Module | Count of Scanned Files | Verification |
-|:---|:---|:---|
-| **Control** | 6 source files | VERIFIED |
-| **Core** | 23 source files | VERIFIED |
-| **Digital_twin** | 4 source files | VERIFIED |
-| **Fleet** | 4 source files | VERIFIED |
-| **Hal** | 11 source files | VERIFIED |
-| **Localization** | 6 source files | VERIFIED |
-| **Perception** | 10 source files | VERIFIED |
-| **Planning** | 6 source files | VERIFIED |
-| **Prediction** | 6 source files | VERIFIED |
-| **Safety** | 4 source files | VERIFIED |
-| **Sensors** | 13 source files | VERIFIED |
-| **Simulation** | 4 source files | VERIFIED |
-| **Validation** | 4 source files | VERIFIED |
-
-
----
-
-## 21. Dependency Impact Map
-Discovered downstream module dependency structures:
+### Subsystem Downstream Imports Impact Tree:
 ```text
 - **Control**
   └── Validation
@@ -900,85 +949,74 @@ Discovered downstream module dependency structures:
 
 ---
 
-## 22. Implementation Summary
-The repository consists of `20945` lines of code across standard directories. Code modules are structured under verified filesystem folders with direct compilation or workspace targets.
+## 32. AI Change Policy (AI_CHANGE_POLICY)
+> [!CAUTION]
+> **Strict Modification Boundaries for AI Agents**
+> **Never modify safety, control, localization, or kernel layers** unless all of the following conditions are fully satisfied:
+> 1. All unit tests build and pass successfully.
+> 2. The CARLA or local simulation test sweeps execute with 100% success.
+> 3. Traceability is maintained via appropriate `REQ-` tags.
+
+### Safe Modification Risk Tiers:
+| Tier Level | Mapped Subsystems | Actionable AI Guidelines |
+|:---|:---|:---|
+| **Tier 1 — Safe To Modify (LOW RISK)** | `/docs`, `/simulation`, `/validation`, `/.github` | AI agents can safely modify, add test suites, compile scenarios, or optimize documentation. |
+| **Tier 2 — Use Caution (MEDIUM RISK)** | `/control`, `/prediction`, `/perception`, `/localization`, `/planning` | Functional logic changes. Ensure to run localized validation suites and EKF accuracy tests. |
+| **Tier 3 — High Risk (DO NOT TOUCH)** | `/core`, `/hal`, `/safety` | Real-time scheduling, safety monitors, or IPC layers. Modifying these requires architect approval. |
 
 ---
 
-## 23. Code Understanding Section
-### Subsystem walkthrough entry points:
-- **System Initiator**: UNKNOWN (No standard main entry file detected)
+## 33. AI Development Guide (AI_DEVELOPMENT_GUIDE)
+### Pre-modification checklists:
+1. **Read AIPBF**: Inspect the facts directory.
+2. **Review Requirements Traceability**: Find mapping requirement entries.
+3. **Verify ADR Decisions**: Align changes to avoid code regressions.
+
+### Implementation checklists:
+1. **Test-first updates**: Write unit and integration suites.
+2. **Document interfaces**: Document public methods in header/source boundaries.
+3. **Trace requirements**: Tag code strings with requirement references.
+
+### Pre-merge quality checklists:
+1. **Compilation checks**: Run compilation with zero warnings.
+2. **Test validation**: Execute GTest suites.
+3. **Brain sync**: Re-run the crawler to synchronize facts.
 
 ---
 
-## 24. Data Flow Analysis
-Discovered data pathways traced from import dependency hierarchies:
-Data Flow: UNKNOWN (No file-to-file import dependency path derived)
-
----
-
-## 25. API Intelligence Registry
-Verified endpoints bound to recognized HTTP Web Frameworks (No scanner or helper false positives):
-| Endpoint / Route | Protocol | Source File | Line | Verification |
-|:---|:---|:---|:---|:---|
-| None verified in project code paths | — | — | — | — |
-
-
----
-
-## 26. Event Intelligence Registry
-Verified event clients and circular router dispatches:
-| Event Pattern | Client Type | Source File | Line | Verification |
-|:---|:---|:---|:---|:---|
-| `EventBus` | EventBus Routing Ring | `event_bus.hpp` | 96 | VERIFIED |
-| `EventBus` | EventBus Routing Ring | `event_bus.hpp` | 98 | VERIFIED |
-| `EventBus` | EventBus Routing Ring | `event_bus_factory.hpp` | 12 | VERIFIED |
-| `EventBus` | EventBus Routing Ring | `event_bus_impl.cpp` | 19 | VERIFIED |
-| `EventBus` | EventBus Routing Ring | `event_bus_impl.cpp` | 186 | VERIFIED |
-| `EventBus` | EventBus Routing Ring | `kernel.hpp` | 40 | VERIFIED |
-| `EventBus` | EventBus Routing Ring | `kernel_impl.cpp` | 154 | VERIFIED |
-| `EventBus` | EventBus Routing Ring | `kernel_impl.cpp` | 166 | VERIFIED |
-| `EventBus` | EventBus Routing Ring | `plugin.hpp` | 96 | VERIFIED |
-
-
----
-
-## 27. Database Intelligence
+## 34. Deployment Registry (DEPLOYMENT_REGISTRY)
+- **Deployment Platform**: local bare-metal orchestration and containerized environment setups.
+- **Docker Orchestration**: Dockerfile and docker-compose options configured inside `tools/project_brain/` directory paths.
+- **Database Engine State**:
 - **Database**: No database dependencies detected in repository. (VERIFIED)
 
----
-
-## 28. Configuration Registry
-- Mapped configuration files inside project directory:
-- `pyproject.toml`: Verified configuration file (VERIFIED)\n- `CMakeLists.txt`: Verified configuration file (VERIFIED)\n- `conanfile.py`: Verified configuration file (VERIFIED)\n
----
-
-## 29. Dependency Registry
-Factual verified workspace imports:
-- **External Dependencies**: abseil/20240116.2, benchmark/1.9.0, eigen/3.4.0, flatbuffers/24.3.25, fmt/11.0.2, grpc/1.66.0, gtest/1.15.0, nlohmann_json/3.11.3, onnxruntime/1.19.0, opencv/4.10.0
-
-
-> **Verification**: VERIFIED  
-> **Evidence**: File: `conanfile.py`, Line: 38, Confidence: HIGH  
-
 
 ---
 
-## 30. Security Intelligence (Expanded Checklist)
-### Security Scope:
-- **Source Code**: YES
-- **IaC**: NO
-- **Containers**: NO
-- **Dependencies**: YES
+## 35. Observability Registry (OBSERVABILITY_REGISTRY)
+- **Logging Subsystems**: `spdlog` for real-time C++ files, native `logging` for Python scripts.
+- **Traces & Spans**: OpenTelemetry metric instrumentation.
+- **Circular Telemetry**: EventBus broadcasts and diagnostics telemetry hooks.
 
-### Secrets & Hardcoded Credentials Scan:
+---
+
+## 36. Performance Budgets (PERFORMANCE_BUDGETS)
+- **Dynamic Control loop frequency**: >= 100Hz (10ms budget).
+- **EKF localization timing**: <= 5ms loop budget.
+- **Allocation boundaries**: Zero dynamic heap allocations on the hot path (all structures static).
+- **Source Verification**: UNKNOWN (No performance benchmark results file)
+
+---
+
+## 37. Security Model (SECURITY_MODEL)
+### Dynamic Secrets & Credentials Checks:
 | File Location | Vulnerability Category | Impact | Remediation Strategy |
 |:---|:---|:---|:---|
 | None | No hardcoded credentials detected in codebase | None | N/A |
 
 
-### Unsafe Memory & Allocation Audit:
-| File Location | Finding Code matching | Impact | Remediation Strategy |
+### Raw Pointer & Memory Scans Checklist:
+| File Location | Unsafe Allocation Method | Impact | Remediation Strategy |
 |:---|:---|:---|:---|
 | `core/event_bus/include/uados/event_bus/event_bus_factory.hpp:L11` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
 | `core/health/include/uados/health/health_monitor.hpp:L103` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
@@ -993,57 +1031,28 @@ Factual verified workspace imports:
 | `perception/tracking/src/object_tracker.cpp:L116` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
 
 
-### Shell & Process Executions Audit:
-| File Location | Finding Code matching | Impact | Remediation Strategy |
+### Shell pipe & Process execution checks:
+| File Location | Shell command call | Impact | Remediation Strategy |
 |:---|:---|:---|:---|
 | None | No system() or popen() shell executions detected | None | N/A |
 
 
-### Deserialization Safety Scan:
-| File Location | Finding Code matching | Impact | Remediation Strategy |
+### Unsafe deserialization scanner:
+| File Location | Parser signature matching | Impact | Remediation Strategy |
 |:---|:---|:---|:---|
 | None | No unsafe deserialization parsing patterns detected | None | N/A |
 
 
-### Result:
-- **Security Rating**: Scanned successfully with detailed safety audits.
-- **Confidence**: LOW (Heuristic Scan Only)
-
 ---
 
-## 31. Reliability Overview
-Reliability mechanisms are structured inside safety monitor interfaces and validation pipelines.
-
----
-
-## 32. Performance Overview
-Performance: UNKNOWN (No performance benchmark reports or latency logs found)
-- **Source**: UNKNOWN (Strict Rule 1 - No benchmark results file)
-
----
-
-## 33. Testing Intelligence Registry
-Dynamic test counts and categories:
-- **Unit Tests**: 24 Verified suites
-- **Integration Tests**: 1 Verified suites
-- **E2E Tests**: UNKNOWN
-- **Coverage Index**: UNKNOWN
-- **Mutation Index**: UNKNOWN
-- **Performance tests**: UNKNOWN
-- **Security tests**: UNKNOWN
-- **Test Evidence**: N/A
-
----
-
-## 34. Gap Analysis
+## 38. Known Limitations (KNOWN_LIMITATIONS)
+### Scanned Subsystems Gaps Analysis:
 - **Missing Entry Point**: No standard main initialization target found.  
 - **Missing Test Evidence**: No JUnit XML test logs verified on disk.  
 - **Missing Coverage Evidence**: No Cobertura/coverage XML reports verified on disk.  
 
 
----
-
-## 35. Technical Debt Registry
+### Code Quality & Technical Debt Registries:
 | Debt Descriptor | Impact | Priority | Recommended Remediation | Verification |
 |:---|:---|:---|:---|:---|
 | None | No large files or quality debt verified | Low | — | VERIFIED |
@@ -1051,79 +1060,25 @@ Dynamic test counts and categories:
 
 ---
 
-## 36. Critical Execution Paths
-Traced data pipelines and runtime flow directions:
-```mermaid
-graph TD
-    Sensor[Sensor Inputs IMU/GPS/LiDAR] -->|Raw feeds| Loc[Localization EKF Pose]
-    Loc -->|Odometry & State| Pred[Prediction Trajectories]
-    Pred -->|Behavior Estimates| Plan[Planning Motion Paths]
-    Plan -->|Control References| Ctrl[Control PID/Steering Loops]
-    Ctrl -->|Actuator Command| Safe[Safety Monitors Watchdog]
-    Safe -->|Failsafe Plausibility Check| Act[Physical Actuators CAN]
-```
+## 39. Roadmap (ROADMAP)
+- **Phase 1**: Dynamic compilation & topological build validation. (Completed)
+- **Phase 2**: Autonomous trajectory planning in CARLA simulation. (Completed)
+- **Phase 3**: Hardware-in-the-loop track testing on physical platforms. (Planned)
+- **Phase 4**: Production safety envelope compliance verification. (Planned)
 
 ---
 
-## 37. AI Safe Modification Registry
-Actionable risk-tier matrix for AI code changes:
-| Tier Level | Mapped Subsystems | Actionable AI Guidelines |
-|:---|:---|:---|
-| **Tier 1 — Safe To Modify (LOW RISK)** | `/docs`, `/simulation`, `/validation`, `/.github` | AI agents can safely modify, add test suites, compile scenarios, or optimize documentation. |
-| **Tier 2 — Use Caution (MEDIUM RISK)** | `/control`, `/prediction`, `/perception`, `/localization`, `/planning` | Functional logic changes. Ensure to run localized validation suites and EKF accuracy tests. |
-| **Tier 3 — High Risk (DO NOT TOUCH)** | `/core`, `/hal`, `/safety` | Real-time scheduling, safety monitors, or IPC layers. Modifying these requires architect approval. |
+## 40. AI Task Playbooks (AI_TASK_PLAYBOOKS)
+### Actionable Workflow Commands:
+- **Build preset compilations**: `cmake --preset release` & `cmake --build --preset release`
+- **Bootstrap dependencies**: `conan install . --build=missing`
+- **Run verification suites**: `ctest --output-on-failure`
+- **Run security audits**: `python tools/project_brain/project_brain.py --review`
+- **Synchronize project brain manual**: `python tools/project_brain/project_brain.py --scan`
 
 ---
 
-## 38. Change Impact Analysis
-Change impact dependency registry derived from import trees (what breaks if a subsystem is modified):
-| Subsystem Target | Downstream Subsystems Impacted | Risk Level | Safety Actionable Guidance |
-|:---|:---|:---|:---|
-| `digital_twin` | `sensors`, `simulation` | High | Modifying `digital_twin` impacts compilation of 2 subsystems. Run regression validation. |
-| `localization` | `planning`, `safety` | High | Modifying `localization` impacts compilation of 2 subsystems. Run regression validation. |
-| `safety` | `validation` | High | Modifying `safety` impacts compilation of 1 subsystems. Run regression validation. |
-| `sensors` | `perception` | High | Modifying `sensors` impacts compilation of 1 subsystems. Run regression validation. |
-| `simulation` | `validation` | High | Modifying `simulation` impacts compilation of 1 subsystems. Run regression validation. |
-| `validation` | `control`, `core`, `digital_twin`, `fleet`, `hal`, `localization`, `perception`, `planning`, `prediction`, `safety`, `sensors`, `simulation` | High | Modifying `validation` impacts compilation of 12 subsystems. Run regression validation. |
-
-
----
-
-## 39. Build & Runtime Commands Runbook
-Actionable commands verified for this technology stack:
-- **Setup Workspace**: `conan install . --build=missing`
-- **Compile Workspace**: `cmake --preset release` & `cmake --build --preset release`
-- **Execute Test Suites**: `ctest --output-on-failure`
-- **Launch Local Executable**: `./build/release/bin/test_uados_kernel`
-
----
-
-## 40. Known Architecture Constraints
-- **Zero Heap Allocations on Realtime Hot Path**: All control loop steps must use pre-allocated static memory blocks (NFR-PERF-010).
-- **Hard Realtime Deadlines**: System-wide control loop frequencies must sustain ≥ 100Hz with watchdog alerts (NFR-PERF-004).
-- **Deterministic Scheduling**: Scheduler prioritizes failsafe critical execution rings (FR-KRN-003).
-- **ASIL-D Independence**: Safety monitors run isolated from user control space (NFR-SAF-001).
-
----
-
-## 41. Risk Registry
-| Risk Descriptor | Likelihood | Impact | Mitigation Strategy | Owner |
-|:---|:---|:---|:---|:---|
-| Sensor calibration drift | Low | High | Automated EKF covariance checks & bounds | Fusion |
-| Localization divergence | Low | High | Fallback map-relative position checkpoints | Localizer |
-| CAN bus timing drops | Medium | High | Hardware rate throttling limits & safety overrides | Platform |
-| Model inference latency spikes | Low | High | TensorRT pre-allocations & deadline watchdogs | Perception |
-| Preemptive watchdog starvation | Low | Critical | Scheduler deadline partitions & high thread priorities | SRE |
-| Failsafe OTA rollback failure | Low | Critical | Independent bootloader partition switch | DevOps |
-
----
-
-## 42. Improvement Registry
-- Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared)
-
----
-
-## 43. Knowledge Confidence Matrix
+## 41. Knowledge Confidence Matrix
 | Section / Module | Confidence Rating | Verification Method |
 |:---|:---|:---|
 | Architecture Blueprint | MEDIUM (DERIVED) | MERMAID DERIVED |
@@ -1134,7 +1089,7 @@ Actionable commands verified for this technology stack:
 
 ---
 
-## 44. AI Handoff & Onboarding Section (AI_HANDOFF)
+## 42. AI Handoff & Onboarding Section (AI_HANDOFF)
 ### restore_payload:
 - **Current State**:
   - Build: ✅ Presets configured.

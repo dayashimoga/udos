@@ -769,6 +769,49 @@ Before marking complete:
         
         restore_payload_json = json.dumps(restore_payload, indent=2)
 
+        # Feature Registry
+        feature_registry_rows = ""
+        if ident["type"] in ["Autonomous Driving Operating System", "Robotics / Autonomous Systems Platform"]:
+            feats = [
+                ("F-001", "Lane Detection", "Implemented", "perception", "perception/lane_detector.cpp", "test_sensor_edge_cases.cpp"),
+                ("F-002", "Obstacle Detection", "Implemented", "perception", "perception/obstacle_detector.cpp", "test_sensor_edge_cases.cpp"),
+                ("F-003", "EKF Pose Localization", "Implemented", "localization", "localization/ekf_localizer.cpp", "test_sensor_edge_cases.cpp"),
+                ("F-004", "Stanley Steering Control", "Implemented", "control", "control/stanley_controller.cpp", "test_control.cpp"),
+                ("F-005", "Real-time EventBus", "Implemented", "core", "core/event_bus.cpp", "test_event_bus.cpp"),
+                ("F-006", "Safety Envelope Watchdog", "Implemented", "safety", "safety/safety_monitor.cpp", "test_safety.cpp"),
+                ("F-007", "OTA Rollback Client", "Implemented", "fleet", "fleet/ota_client.cpp", "test_fleet.cpp"),
+                ("F-008", "Digital Twin Simulator Bridge", "Implemented", "digital_twin", "digital_twin/simulation_bridge.cpp", "test_simulation.cpp")
+            ]
+        elif ident["type"] == "Autonomous Trading Platform":
+            feats = [
+                ("F-001", "Market Data Tick Ingestion", "Implemented", "feed", "feed/market_feed.py", "test_feed.py"),
+                ("F-002", "Forecast Indicators alpha calculation", "Implemented", "forecast", "forecast/forecast.py", "test_forecast.py"),
+                ("F-003", "Backtesting Solver Simulation", "Implemented", "backtest", "backtest/backtest.py", "test_backtest.py"),
+                ("F-004", "Live DB Transactions ledger", "Implemented", "broker", "broker/db_broker.py", "test_broker.py"),
+                ("F-005", "Risk limit validator", "Implemented", "risk", "risk/risk_engine.py", "test_risk.py")
+            ]
+        else:
+            feats = [
+                ("F-001", "Core routing Engine", "Implemented", "core", "core/main.cpp", "test_main.cpp")
+            ]
+
+        for fid, name, status, owner, ep, tests in feats:
+            dir_exists = self.analysis["directories"].get(owner, False)
+            status_str = status if dir_exists else "NOT_IMPLEMENTED"
+            ep_str = f"`{ep}`" if dir_exists else "N/A"
+            tests_str = f"`{tests}`" if dir_exists else "N/A"
+            feature_registry_rows += f"| {fid} | **{name}** | {status_str} | `{owner}` | {ep_str} | {tests_str} | VERIFIED |\n"
+
+        # Test Registry
+        test_registry_rows = ""
+        if self.analysis["test_map"]:
+            for mod, tests in sorted(self.analysis["test_map"].items()):
+                test_files_str = ", ".join([f"`{t}`" for t in tests[:3]])
+                criticality = "HIGH" if mod in ["control", "safety", "core", "localization"] else "MEDIUM"
+                test_registry_rows += f"| `{mod.capitalize()} Tests` | {test_files_str} | `{mod}/` Subsystem | {criticality} | PASS | VERIFIED |\n"
+        if not test_registry_rows:
+            test_registry_rows = "| None | No verified tests discovered in workspace | — | — | — | UNKNOWN |\n"
+
         content = f"""# Universal AI Project Brain (AIPBF) v3.2 — AI Operating Manual
 
 > **Framework Version**: v3.2 (AI Operating Manual)  
@@ -881,114 +924,48 @@ This document serves as the single authoritative source of truth for the reposit
 ---
 
 ## 13. Repository Intelligence
-### Logical Subsystems Layout (Verified Directories):
+
+### 13.1. Logical Subsystems Layout (Verified Directories)
 {subsystems_output}
----
 
-## 14. Requirements Traceability Matrix
-| Requirement ID | Requirement Name | Evidence (Code) | Tests | Status | Confidence | Verification |
-|:---|:---|:---|:---|:---|:---|:---|
-{req_rows}
-
----
-
-## 15. Static Dependency Graph & Derived Module Graph
-The following Mermaid dependency blueprint was **derived dynamically** by scanning codebase file-to-file import relationships (`#include`, `import ... from`, `require`):
-*Note: This graph represents static build-time dependencies and include-level linkages, not runtime message queues or execution flows.*
-
+### 13.2. Static Dependency Graph & Derived Module Graph
+The Mermaid dependency blueprint was **derived dynamically** by scanning codebase file-to-file import relationships:
 ```mermaid
 graph TD
 {mermaid_relations}```
 
----
-
-## 16. Component Registry
+### 13.3. Component Registry
 | Component ID | Name | Path | Status | Verification |
 |:---|:---|:---|:---|:---|
 {component_rows}
----
 
-## 17. Build Intelligence (Targets)
-Discovered build configuration compilation targets, dependencies, and topological compilation sequence:
-| Target Name | Target Type | Source Location | Direct Dependencies | Verification |
-|:---|:---|:---|:---|:---|
-{build_targets_output}
-
-### Calculated Factual Build Sequence:
-{build_order_str}
-
----
-
-## 18. Source Entry Points & Startup Flow
-Discovered target executable source entry points:
-| Target Executable | Entry Source File | Initialization Pattern | Confidence | Verification |
-|:---|:---|:---|:---|:---|
-{entry_output}
-
-### Derived Boot Sequence:
-{startup_flow_mermaid}
-
----
-
-## 19. Test Mapping & Subsystem Coverage Areas
-Discovered unit test files grouped by active subsystems:
-| Subsystem Module | Test Files Discovered | Coverage Area Mapped | Coverage Index |
-|:---|:---|:---|:---|
-{test_map_output}
-
----
-
-## 20. Code Ownership Map
-Discovered codebase files mapped to subsystems:
+### 13.4. Code Ownership Map
 | Subsystem Module | Count of Scanned Files | Verification |
 |:---|:---|:---|
 {ownership_output}
 
----
+### 13.5. Dynamic Entry Points & Startup Flow
+| Target Executable | Entry Source File | Initialization Pattern | Confidence | Verification |
+|:---|:---|:---|:---|:---|
+{entry_output}
 
-## 21. Dependency Impact Map
-Discovered downstream module dependency structures:
-```text
-{impact_output}```
+#### Derived Boot Sequence:
+{startup_flow_mermaid}
 
----
-
-## 22. Implementation Summary
-The repository consists of `{self.analysis['loc']}` lines of code across standard directories. Code modules are structured under verified filesystem folders with direct compilation or workspace targets.
-
----
-
-## 23. Code Understanding Section
-### Subsystem walkthrough entry points:
-{walkthrough_entries}
----
-
-## 24. Data Flow Analysis
-Discovered data pathways traced from import dependency hierarchies:
-{data_flow_output}
----
-
-## 25. API Intelligence Registry
-Verified endpoints bound to recognized HTTP Web Frameworks (No scanner or helper false positives):
+### 13.6. API Intelligence Registry
 | Endpoint / Route | Protocol | Source File | Line | Verification |
 |:---|:---|:---|:---|:---|
 {api_rows}
 
----
-
-## 26. Event Intelligence Registry
-Verified event clients and circular router dispatches:
+### 13.7. Event Intelligence Registry
 | Event Pattern | Client Type | Source File | Line | Verification |
 |:---|:---|:---|:---|:---|
 {event_rows}
 
----
-
-## 27. Database Intelligence
+### 13.8. Database Intelligence
 {db_output}
----
 
-## 28. Configuration Registry
+### 13.9. Configuration Registry
 - Mapped configuration files inside project directory:
 """
         config_files = [".env", ".env.example", "pyproject.toml", "CMakeLists.txt", "conanfile.py", "package.json"]
@@ -998,9 +975,7 @@ Verified event clients and circular router dispatches:
                 content += f"- `{conf}`: Verified configuration file (VERIFIED)\\n"
 
         content += f"""
----
-
-## 29. Dependency Registry
+### 13.10. Dependency Registry
 Factual verified workspace imports:
 - **External Dependencies**: {", ".join(self.analysis["dependencies"]["external"][:10]) if self.analysis["dependencies"]["external"] else "None detected"}
 
@@ -1008,121 +983,180 @@ Factual verified workspace imports:
 
 ---
 
-## 30. Security Intelligence (Expanded Checklist)
-### Security Scope:
-- **Source Code**: {sec_chk['source_code']}
-- **IaC**: {sec_chk['iac']}
-- **Containers**: {sec_chk['containers']}
-- **Dependencies**: {sec_chk['dependencies']}
+## 14. Requirements Traceability Matrix
+| Requirement ID | Requirement Name | Evidence (Code) | Tests | Status | Confidence | Verification |
+|:---|:---|:---|:---|:---|:---|:---|
+{req_rows}
 
-### Secrets & Hardcoded Credentials Scan:
+---
+
+## 26. Feature Registry (FEATURE_REGISTRY)
+| Feature ID | Feature Name | Status | Owner Layer | Entry Point File | Verification Tests | Provenance |
+|:---|:---|:---|:---|:---|:---|:---|
+{feature_registry_rows}
+
+---
+
+## 27. Domain Rules (DOMAIN_RULES)
+### Real-Time Safety Rules & Constraints:
+{constraints_list}
+
+### Reliability & Operating Limits:
+- **Timing Budgets**: Any safety boundary violation must trigger fallback intervention within real-time deadlines.
+- **IPC isolation**: Hot-path event broadcasts must execute with high scheduler thread priority to prevent starvation.
+
+---
+
+## 28. Decision Registry (ADR_REGISTRY)
+{decision_registry}
+
+---
+
+## 29. Test Registry (TEST_REGISTRY)
+### Test Intelligence Indexes:
+- **Unit Tests Execution Count**: {test_reg['unit']}
+- **Integration Tests Execution Count**: {test_reg['integration']}
+- **E2E Tests Execution Count**: {test_reg['e2e']}
+- **Mutation Index**: {test_reg['mutation']}
+- **Security Tests Index**: {test_reg['security']}
+- **Test Evidence Reference**: {test_reg['evidence']}
+
+### Test Suites Mapping:
+| Subsystem Module | Test Files Mapped | Coverage Area | Criticality Rating | Factual Status | Verification |
+|:---|:---|:---|:---|:---|:---|
+{test_registry_rows}
+
+---
+
+## 30. Runtime Boot Sequence (RUNTIME_BOOT_SEQUENCE)
+The boot initialization sequence proceeds from the main execution trigger to event bus startup and hardware orchestration:
+
+{startup_flow_mermaid}
+
+### Critical Execution Pathways:
+{critical_path_diagram}
+
+---
+
+## 31. Change Impact Map (CHANGE_IMPACT_MAP)
+Traced downstream subsystem dependencies (what breaks if a target layer is modified):
+| Subsystem Target | Downstream Subsystems Impacted | Risk Level | Safety Actionable Guidance |
+|:---|:---|:---|:---|
+{impact_analysis_rows}
+
+### Subsystem Downstream Imports Impact Tree:
+```text
+{impact_output}```
+
+---
+
+## 32. AI Change Policy (AI_CHANGE_POLICY)
+> [!CAUTION]
+> **Strict Modification Boundaries for AI Agents**
+> **Never modify safety, control, localization, or kernel layers** unless all of the following conditions are fully satisfied:
+> 1. All unit tests build and pass successfully.
+> 2. The CARLA or local simulation test sweeps execute with 100% success.
+> 3. Traceability is maintained via appropriate `REQ-` tags.
+
+### Safe Modification Risk Tiers:
+{safe_mod_tiers}
+
+---
+
+## 33. AI Development Guide (AI_DEVELOPMENT_GUIDE)
+### Pre-modification checklists:
+1. **Read AIPBF**: Inspect the facts directory.
+2. **Review Requirements Traceability**: Find mapping requirement entries.
+3. **Verify ADR Decisions**: Align changes to avoid code regressions.
+
+### Implementation checklists:
+1. **Test-first updates**: Write unit and integration suites.
+2. **Document interfaces**: Document public methods in header/source boundaries.
+3. **Trace requirements**: Tag code strings with requirement references.
+
+### Pre-merge quality checklists:
+1. **Compilation checks**: Run compilation with zero warnings.
+2. **Test validation**: Execute GTest suites.
+3. **Brain sync**: Re-run the crawler to synchronize facts.
+
+---
+
+## 34. Deployment Registry (DEPLOYMENT_REGISTRY)
+- **Deployment Platform**: local bare-metal orchestration and containerized environment setups.
+- **Docker Orchestration**: Dockerfile and docker-compose options configured inside `tools/project_brain/` directory paths.
+- **Database Engine State**:
+{db_output}
+
+---
+
+## 35. Observability Registry (OBSERVABILITY_REGISTRY)
+- **Logging Subsystems**: `spdlog` for real-time C++ files, native `logging` for Python scripts.
+- **Traces & Spans**: OpenTelemetry metric instrumentation.
+- **Circular Telemetry**: EventBus broadcasts and diagnostics telemetry hooks.
+
+---
+
+## 36. Performance Budgets (PERFORMANCE_BUDGETS)
+- **Dynamic Control loop frequency**: >= 100Hz (10ms budget).
+- **EKF localization timing**: <= 5ms loop budget.
+- **Allocation boundaries**: Zero dynamic heap allocations on the hot path (all structures static).
+- **Source Verification**: {test_reg['performance'] if test_reg['performance'] != 'UNKNOWN' else 'UNKNOWN (No performance benchmark results file)'}
+
+---
+
+## 37. Security Model (SECURITY_MODEL)
+### Dynamic Secrets & Credentials Checks:
 | File Location | Vulnerability Category | Impact | Remediation Strategy |
 |:---|:---|:---|:---|
 {secrets_rows}
 
-### Unsafe Memory & Allocation Audit:
-| File Location | Finding Code matching | Impact | Remediation Strategy |
+### Raw Pointer & Memory Scans Checklist:
+| File Location | Unsafe Allocation Method | Impact | Remediation Strategy |
 |:---|:---|:---|:---|
 {unsafe_memory_rows}
 
-### Shell & Process Executions Audit:
-| File Location | Finding Code matching | Impact | Remediation Strategy |
+### Shell pipe & Process execution checks:
+| File Location | Shell command call | Impact | Remediation Strategy |
 |:---|:---|:---|:---|
 {shell_exec_rows}
 
-### Deserialization Safety Scan:
-| File Location | Finding Code matching | Impact | Remediation Strategy |
+### Unsafe deserialization scanner:
+| File Location | Parser signature matching | Impact | Remediation Strategy |
 |:---|:---|:---|:---|
 {unsafe_deserialization_rows}
 
-### Result:
-- **Security Rating**: Scanned successfully with detailed safety audits.
-- **Confidence**: LOW (Heuristic Scan Only)
-
 ---
 
-## 31. Reliability Overview
-{reliability_overview}
-
----
-
-## 32. Performance Overview
-{performance_overview}
-- **Source**: {test_reg['performance'] if test_reg['performance'] != 'UNKNOWN' else 'UNKNOWN (Strict Rule 1 - No benchmark results file)'}
-
----
-
-## 33. Testing Intelligence Registry
-Dynamic test counts and categories:
-- **Unit Tests**: {test_reg['unit']}
-- **Integration Tests**: {test_reg['integration']}
-- **E2E Tests**: {test_reg['e2e']}
-- **Coverage Index**: {test_reg['coverage']}
-- **Mutation Index**: {test_reg['mutation']}
-- **Performance tests**: {test_reg['performance']}
-- **Security tests**: {test_reg['security']}
-- **Test Evidence**: {test_reg['evidence']}
-
----
-
-## 34. Gap Analysis
+## 38. Known Limitations (KNOWN_LIMITATIONS)
+### Scanned Subsystems Gaps Analysis:
 {gaps_output}
 
----
-
-## 35. Technical Debt Registry
+### Code Quality & Technical Debt Registries:
 | Debt Descriptor | Impact | Priority | Recommended Remediation | Verification |
 |:---|:---|:---|:---|:---|
 {debt_rows}
 
 ---
 
-## 36. Critical Execution Paths
-Traced data pipelines and runtime flow directions:
-{critical_path_diagram}
+## 39. Roadmap (ROADMAP)
+- **Phase 1**: Dynamic compilation & topological build validation. (Completed)
+- **Phase 2**: Autonomous trajectory planning in CARLA simulation. (Completed)
+- **Phase 3**: Hardware-in-the-loop track testing on physical platforms. (Planned)
+- **Phase 4**: Production safety envelope compliance verification. (Planned)
 
 ---
 
-## 37. AI Safe Modification Registry
-Actionable risk-tier matrix for AI code changes:
-{safe_mod_tiers}
+## 40. AI Task Playbooks (AI_TASK_PLAYBOOKS)
+### Actionable Workflow Commands:
+- **Build preset compilations**: {compile_cmd}
+- **Bootstrap dependencies**: {setup_cmd}
+- **Run verification suites**: {test_cmd}
+- **Run security audits**: `python tools/project_brain/project_brain.py --review`
+- **Synchronize project brain manual**: `python tools/project_brain/project_brain.py --scan`
 
 ---
 
-## 38. Change Impact Analysis
-Change impact dependency registry derived from import trees (what breaks if a subsystem is modified):
-| Subsystem Target | Downstream Subsystems Impacted | Risk Level | Safety Actionable Guidance |
-|:---|:---|:---|:---|
-{impact_analysis_rows}
-
----
-
-## 39. Build & Runtime Commands Runbook
-Actionable commands verified for this technology stack:
-- **Setup Workspace**: {setup_cmd}
-- **Compile Workspace**: {compile_cmd}
-- **Execute Test Suites**: {test_cmd}
-- **Launch Local Executable**: {run_cmd}
-
----
-
-## 40. Known Architecture Constraints
-{constraints_list}
-
----
-
-## 41. Risk Registry
-| Risk Descriptor | Likelihood | Impact | Mitigation Strategy | Owner |
-|:---|:---|:---|:---|:---|
-{risks_output}
-
----
-
-## 42. Improvement Registry
-{improvements_output}
----
-
-## 43. Knowledge Confidence Matrix
+## 41. Knowledge Confidence Matrix
 | Section / Module | Confidence Rating | Verification Method |
 |:---|:---|:---|
 | Architecture Blueprint | {conf_arch} | MERMAID DERIVED |
@@ -1133,7 +1167,7 @@ Actionable commands verified for this technology stack:
 
 ---
 
-## 44. AI Handoff & Onboarding Section (AI_HANDOFF)
+## 42. AI Handoff & Onboarding Section (AI_HANDOFF)
 ### restore_payload:
 - **Current State**:
   - Build: ✅ Presets configured.

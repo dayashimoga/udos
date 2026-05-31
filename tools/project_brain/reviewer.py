@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-UADOS — Universal AI Project Brain Framework (AIPBF) v3.0
+UADOS — Universal AI Project Brain Framework (AIPBF) v3.1
 Factual Reviewer Engine & Quality Metrics Gatekeeper
 """
 
@@ -17,7 +17,7 @@ class RepositoryReviewer:
         self.vulnerabilities = []
         self.debt_items = []
         
-        # Rigorous v3.0 Security Checklist (Scanned vs Not Scanned)
+        # Rigorous v3.1 Security Checklist
         self.security_checklist = {
             "source_code": "YES",
             "iac": "NO",
@@ -25,7 +25,7 @@ class RepositoryReviewer:
             "dependencies": "NO"
         }
 
-        # Rigorous v3.0 Test Registry (All metrics require evidence, Fix 8)
+        # Rigorous v3.1 Test Registry
         self.testing_registry = {
             "unit": "UNKNOWN",
             "integration": "UNKNOWN",
@@ -76,11 +76,16 @@ class RepositoryReviewer:
             (r'(?i)private_key\s*=\s*["\']-+BEGIN', "Private Key disclosure")
         ]
 
+        # Rigid v3.1 C++ & Dynamic Script safety scanners (Fix 7)
         unsafe_patterns = [
             (r'\beval\([^)]*\)', "Use of dynamic code execution (eval)", "High", "Security"),
-            (r'\bsystem\([^)]*\)', "Use of shell command execution (system)", "Medium", "Security"),
+            (r'\bsystem\([^)]*\)', "Use of shell command execution (system)", "High", "Security"),
+            (r'\bpopen\([^)]*\)', "Use of shell pipe execution (popen)", "Medium", "Security"),
             (r'\bstrcpy\b', "Use of unsafe buffer function (strcpy)", "Medium", "Reliability"),
-            (r'\bprintf\b', "Raw console printf instead of thread-safe logger", "Low", "Quality")
+            (r'\bprintf\b', "Raw console printf instead of thread-safe logger", "Low", "Quality"),
+            (r'\bmalloc\([^)]*\)', "Raw malloc buffer allocation (recommend std::vector or unique_ptr)", "Low", "Quality"),
+            (r'\bnew\s+\w+', "Raw pointer new allocation (recommend std::make_unique or std::make_shared)", "Low", "Quality"),
+            (r'unserialize\(|JSON\.parse\(', "Potential unsafe deserialization parser", "Low", "Security")
         ]
 
         for root, dirs, files in os.walk(self.repo_path):
@@ -154,10 +159,10 @@ class RepositoryReviewer:
                                         "confidence": "HIGH"
                                     },
                                     "category": category,
-                                    "impact": "Potential buffer overflow or execution failures.",
+                                    "impact": "Potential memory safety violation, buffer overflow, or arbitrary code execution.",
                                     "likelihood": "Medium",
                                     "exploitability": "Medium",
-                                    "remediation": "Replace with safe C++ STL or language library equivalents.",
+                                    "remediation": f"Refactor module to remove unsafe API calls. {desc}",
                                     "verification": "VERIFIED"
                                 })
 
@@ -229,7 +234,7 @@ class RepositoryReviewer:
         coverage_glob = list(self.repo_path.glob("**/coverage.xml")) + list(self.repo_path.glob("**/cobertura.xml"))
         if coverage_glob:
             relative_cov = str(coverage_glob[0].relative_to(self.repo_path)).replace("\\", "/")
-            self.testing_registry["coverage"] = f"VERIFIED: {relative_cov}"
+            self.testing_registry["evidence"] = f"File: {relative_cov}"
             try:
                 tree = ET.parse(coverage_glob[0])
                 root = tree.getroot()
@@ -259,7 +264,7 @@ class RepositoryReviewer:
                     pass
 
     def _calculate_factual_scores(self):
-        # Default scores strictly to UNKNOWN under v3.0 unless explicitly proven by parsed files
+        # Default scores strictly to UNKNOWN under v3.1 unless proven by reports
         self.metrics["security_score"] = "UNKNOWN"
         self.metrics["quality_score"] = "UNKNOWN"
         self.metrics["reliability_score"] = "UNKNOWN"

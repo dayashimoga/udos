@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-UADOS — Universal AI Project Brain Framework (AIPBF) v3.0+
+UADOS — Universal AI Project Brain Framework (AIPBF) v3.1
 Factual Repository Analyzer & Import Dependency Crawler
 """
 
@@ -50,7 +50,9 @@ class RepositoryAnalyzer:
             "requirements": [], # Dynamic Requirements Traceability list
             "data_flow": [],     # Inferred Data Flow
             "build_targets": [], # CMake / NPM script targets
-            "entry_points": [],  # Verified target executables source files
+            "target_dependencies": {}, # target name -> list of linked targets
+            "build_order": [],   # Sorted topological build targets order
+            "entry_points": [],  # Scanned main / startup entry points
             "test_map": {},      # Subsystem -> List of test files
             "ownership_map": {}  # Subsystem -> Count of code files
         }
@@ -70,6 +72,7 @@ class RepositoryAnalyzer:
         self._extract_requirements_traceability()
         self._derive_data_flow()
         self._build_test_and_ownership_maps()
+        self._calculate_build_order()
         return self.metrics
 
     def _add_fact(self, title, description, category, verification, file_path, line_num, confidence):
@@ -142,9 +145,14 @@ class RepositoryAnalyzer:
         trading_evidence = []
         auto_weights = 0
         auto_evidence = []
+        
+        # Rigid v3.1 terms checks
+        adas_weights = 0
+        adas_evidence = []
 
         trading_keys = ["backtest", "forecast", "trading", "portfolio", "ticker", "order", "exchange", "alpha", "market", "price"]
         auto_keys = ["stanley", "controller", "imu", "gps", "lidar", "radar", "camera", "fusion", "dbw", "canbus", "microkernel"]
+        adas_keys = ["lane planner", "trajectory planner", "adas", "autonomous driving", "perception stack", "carla"]
 
         for root, _, files in os.walk(self.repo_path):
             if self.is_ignored(root):
@@ -168,6 +176,18 @@ class RepositoryAnalyzer:
                     if key in file_name:
                         auto_weights += 5
                         auto_evidence.append(f"File matches key '{key}': {file}")
+                
+                # Check for explicit AD/ADAS terms
+                try:
+                    file_path = Path(root) / file
+                    if file_path.suffix.lower() in [".cpp", ".hpp", ".h", ".py", ".ts", ".md"]:
+                        content = file_path.read_text(encoding="utf-8", errors="ignore").lower()
+                        for key in adas_keys:
+                            if key in content:
+                                adas_weights += 10
+                                adas_evidence.append(f"File {file} contains term '{key}'")
+                except Exception:
+                    pass
 
         ident = self.metrics["project_identity"]
         if trading_weights > auto_weights and trading_weights > 10:
@@ -177,11 +197,19 @@ class RepositoryAnalyzer:
             ident["confidence"] = "HIGH" if trading_weights > 30 else "MEDIUM"
             ident["evidence"] = sorted(list(set(trading_evidence)))[:5]
         elif auto_weights > trading_weights and auto_weights > 10:
-            ident["type"] = "Autonomous Driving Operating System"
-            ident["domain"] = "Autonomous Vehicles & Robotic Systems"
-            ident["purpose"] = "Failsafe real-time vehicle scheduling, fusion, path planning, and envelope controls."
-            ident["confidence"] = "HIGH" if auto_weights > 30 else "MEDIUM"
-            ident["evidence"] = sorted(list(set(auto_evidence)))[:5]
+            # Under v3.1, unless explicit lane/planning/ADAS terms exist, classify as Robotics systems (Fix 1)
+            if adas_weights > 20:
+                ident["type"] = "Autonomous Driving Operating System"
+                ident["domain"] = "Autonomous Vehicles & Robotic Systems"
+                ident["purpose"] = "Failsafe real-time vehicle scheduling, fusion, path planning, and envelope controls."
+                ident["confidence"] = "HIGH"
+                ident["evidence"] = sorted(list(set(auto_evidence + adas_evidence)))[:5]
+            else:
+                ident["type"] = "Robotics / Autonomous Systems Platform"
+                ident["domain"] = "Robotics & Dynamic Systems Platform"
+                ident["purpose"] = "Failsafe real-time component scheduling, sensor fusion, and actuator controls."
+                ident["confidence"] = "MEDIUM"
+                ident["evidence"] = sorted(list(set(auto_evidence)))[:5]
         else:
             ident["type"] = "UNKNOWN"
             ident["domain"] = "UNKNOWN"
@@ -476,7 +504,7 @@ class RepositoryAnalyzer:
                     try:
                         content = file_path.read_text(encoding="utf-8", errors="ignore")
                         # Extract libraries and executables
-                        for match in re.finditer(r'add_(executable|library)\(\s*([a-zA-Z0-9_-]+)\s*([^)]*)\)', content):
+                        for match in re.finditer(r'add_(executable|library)\(\s*([a-zA-Z0-9_-]+)\s*([^)]*)\)', content, re.IGNORECASE):
                             target_type = match.group(1).upper()
                             target_name = match.group(2)
                             sources_raw = match.group(3)
@@ -491,25 +519,17 @@ class RepositoryAnalyzer:
                                 "type": target_type,
                                 "source": relative_path
                             })
-                            
-                            # Crawl exact executable source files as verified entry points
-                            if target_type == "EXECUTABLE" and sources_raw:
-                                sources = sources_raw.split()
-                                sources = [s.strip() for s in sources if s.strip() and not s.strip().startswith("$")]
-                                for src in sources:
-                                    if src.endswith((".cpp", ".cc", ".c")):
-                                        src_p = Path(root) / src
-                                        if src_p.exists():
-                                            try:
-                                                rel_src = str(src_p.relative_to(self.repo_path)).replace("\\", "/")
-                                                self.metrics["entry_points"].append({
-                                                    "name": target_name,
-                                                    "file": rel_src,
-                                                    "confidence": "HIGH",
-                                                    "verification": "VERIFIED"
-                                                })
-                                            except Exception:
-                                                pass
+
+                        # Match target_link_libraries for CMake target dependencies (Fix 5)
+                        for match in re.finditer(r'target_link_libraries\(\s*([a-zA-Z0-9_-]+)\s+([^)]+)\)', content, re.IGNORECASE):
+                            target = match.group(1)
+                            libs_raw = match.group(2)
+                            libs = libs_raw.replace("PRIVATE", "").replace("PUBLIC", "").replace("INTERFACE", "").split()
+                            libs = [l.strip() for l in libs if l.strip() and not l.strip().startswith("$") and not l.strip().startswith("{")]
+                            if libs:
+                                if target not in self.metrics["target_dependencies"]:
+                                    self.metrics["target_dependencies"][target] = []
+                                self.metrics["target_dependencies"][target].extend(libs)
                     except Exception:
                         pass
 
@@ -526,16 +546,41 @@ class RepositoryAnalyzer:
                         "type": "NPM SCRIPT",
                         "source": "package.json"
                     })
-                    # Track common script entries
-                    if script_name in ["start", "dev", "serve"]:
-                        self.metrics["entry_points"].append({
-                            "name": f"NPM {script_name}",
-                            "file": cmd,
-                            "confidence": "HIGH",
-                            "verification": "VERIFIED"
-                        })
             except Exception:
                 pass
+
+        # 3. Dynamic Startup Entry Points Discovery (int main, Kernel::start, app.listen) (Fix 4)
+        entry_patterns = [
+            (r'\bint\s+main\s*\(', "int main(int argc, char* argv[])"),
+            (r'\bKernel::start\b', "Kernel::start()"),
+            (r'\bApplication::run\b', "Application::run()"),
+            (r'\bLifecycleManager::initialize\b', "LifecycleManager::initialize()"),
+            (r'\bapp\.listen\b', "app.listen(port)")
+        ]
+        
+        for root, _, files in os.walk(self.repo_path):
+            if self.is_ignored(root):
+                continue
+            for file in files:
+                file_path = Path(root) / file
+                if file_path.suffix.lower() in [".cpp", ".hpp", ".h", ".py", ".ts", ".js"]:
+                    try:
+                        content = file_path.read_text(encoding="utf-8", errors="ignore")
+                        for pat, desc in entry_patterns:
+                            match = re.search(pat, content)
+                            if match:
+                                line_num = content[:match.start()].count("\n") + 1
+                                rel_file = str(file_path.relative_to(self.repo_path)).replace("\\", "/")
+                                self.metrics["entry_points"].append({
+                                    "name": file_path.stem,
+                                    "file": rel_file,
+                                    "line": line_num,
+                                    "pattern": desc,
+                                    "confidence": "HIGH",
+                                    "verification": "VERIFIED"
+                                })
+                    except Exception:
+                        pass
 
     def _extract_requirements_traceability(self):
         # Dynamically load and parse MASTER_REQUIREMENTS.md if it exists
@@ -740,3 +785,28 @@ class RepositoryAnalyzer:
                         self.metrics["test_map"][module] = []
                     if file not in self.metrics["test_map"][module]:
                         self.metrics["test_map"][module].append(file)
+
+    def _calculate_build_order(self):
+        # Topological Sort Build Order Based on Target Link Dependencies (Fix 5)
+        deps = self.metrics["target_dependencies"]
+        targets = [t["name"] for t in self.metrics["build_targets"] if t["type"] in ["LIBRARY", "EXECUTABLE"]]
+        
+        visited = {}
+        order = []
+        
+        def dfs_sort(node):
+            if node in visited:
+                if visited[node] == 1: # cycle detected
+                    return
+                return
+            visited[node] = 1
+            for dep in deps.get(node, []):
+                if dep in targets:
+                    dfs_sort(dep)
+            visited[node] = 2
+            order.append(node)
+            
+        for t in targets:
+            dfs_sort(t)
+            
+        self.metrics["build_order"] = order

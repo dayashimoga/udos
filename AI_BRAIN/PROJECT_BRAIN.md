@@ -1,6 +1,6 @@
-# Universal AI Project Brain (AIPBF) v3.0 — Unified Blueprint
+# Universal AI Project Brain (AIPBF) v3.1 — Unified Blueprint
 
-> **Framework Version**: v3.0 (Factual Single-File)  
+> **Framework Version**: v3.1 (Factual Single-File)  
 > **Last Synchronized**: 2026-05-31  
 > **Verification Gate**: 100% Strict Evidence-Based  
 
@@ -15,11 +15,11 @@ This document serves as the single authoritative source of truth for the reposit
 - **Primary_Purpose**: Failsafe real-time vehicle scheduling, fusion, path planning, and envelope controls.
 - **Confidence**: HIGH
 - **Evidence**:
-  - File matches key 'camera': camera_driver.cpp
-  - File matches key 'camera': camera_driver.hpp
-  - File matches key 'canbus': canbus_driver.cpp
-  - File matches key 'canbus': canbus_driver.hpp
-  - File matches key 'controller': longitudinal_controller.cpp
+  - File AIPBFv3.0_plan.md contains term 'autonomous driving'
+  - File MASTER_ARCHITECTURE.md contains term 'carla'
+  - File MASTER_COMPONENT_INDEX.md contains term 'carla'
+  - File MASTER_DECISIONS.md contains term 'carla'
+  - File MASTER_DEPENDENCIES.md contains term 'carla'
 
 ---
 
@@ -346,8 +346,9 @@ Directory:
 
 ---
 
-## 6. Architecture & Derived Dependency Graph
+## 6. Static Dependency Graph & Derived Module Graph
 The following Mermaid dependency blueprint was **derived dynamically** by scanning codebase file-to-file import relationships (`#include`, `import ... from`, `require`):
+*Note: This graph represents static build-time dependencies and include-level linkages, not runtime message queues or execution flows.*
 
 ```mermaid
 graph TD
@@ -399,191 +400,175 @@ graph TD
 ---
 
 ## 8. Build Intelligence (Targets)
-Discovered build configuration compilation targets:
-| Target Name | Target Type | Source Location | Verification |
-|:---|:---|:---|:---|
-| `uados_warnings` | LIBRARY | `CMakeLists.txt` | VERIFIED |
-| `uados_sanitizers` | LIBRARY | `CMakeLists.txt` | VERIFIED |
-| `uados_coverage` | LIBRARY | `CMakeLists.txt` | VERIFIED |
-| `uados_options` | LIBRARY | `CMakeLists.txt` | VERIFIED |
-| `uados_ctrl_brake` | LIBRARY | `control/brake/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `control/brake/CMakeLists.txt` | VERIFIED |
-| `uados_ctrl_loops` | LIBRARY | `control/loops/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `control/loops/CMakeLists.txt` | VERIFIED |
-| `test_uados_control` | EXECUTABLE | `control/loops/tests/CMakeLists.txt` | VERIFIED |
-| `uados_ctrl_steering` | LIBRARY | `control/steering/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `control/steering/CMakeLists.txt` | VERIFIED |
-| `uados_ctrl_throttle` | LIBRARY | `control/throttle/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `control/throttle/CMakeLists.txt` | VERIFIED |
-| `uados_ctrl_trans` | LIBRARY | `control/transmission/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `control/transmission/CMakeLists.txt` | VERIFIED |
-| `uados_common` | LIBRARY | `core/common/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `core/common/CMakeLists.txt` | VERIFIED |
-| `uados_common_tests` | EXECUTABLE | `core/common/tests/CMakeLists.txt` | VERIFIED |
-| `uados_event_bus` | LIBRARY | `core/event_bus/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `core/event_bus/CMakeLists.txt` | VERIFIED |
-| `test_uados_event_bus` | EXECUTABLE | `core/event_bus/tests/CMakeLists.txt` | VERIFIED |
-| `uados_health` | LIBRARY | `core/health/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `core/health/CMakeLists.txt` | VERIFIED |
-| `test_uados_health` | EXECUTABLE | `core/health/tests/CMakeLists.txt` | VERIFIED |
-| `uados_kernel` | LIBRARY | `core/kernel/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `core/kernel/CMakeLists.txt` | VERIFIED |
-| `test_uados_kernel` | EXECUTABLE | `core/kernel/tests/CMakeLists.txt` | VERIFIED |
-| `uados_lifecycle` | LIBRARY | `core/lifecycle/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `core/lifecycle/CMakeLists.txt` | VERIFIED |
-| `test_uados_lifecycle` | EXECUTABLE | `core/lifecycle/tests/CMakeLists.txt` | VERIFIED |
-| `uados_messaging` | LIBRARY | `core/messaging/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `core/messaging/CMakeLists.txt` | VERIFIED |
-| `uados_plugin` | LIBRARY | `core/plugin/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `core/plugin/CMakeLists.txt` | VERIFIED |
-| `uados_scheduler` | LIBRARY | `core/scheduler/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `core/scheduler/CMakeLists.txt` | VERIFIED |
-| `test_uados_scheduler` | EXECUTABLE | `core/scheduler/tests/CMakeLists.txt` | VERIFIED |
-| `uados_dtw_sensor` | LIBRARY | `digital_twin/sensor/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `digital_twin/sensor/CMakeLists.txt` | VERIFIED |
-| `uados_dtw_vehicle` | LIBRARY | `digital_twin/vehicle/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `digital_twin/vehicle/CMakeLists.txt` | VERIFIED |
-| `test_uados_digital_twin` | EXECUTABLE | `digital_twin/vehicle/tests/CMakeLists.txt` | VERIFIED |
-| `uados_fleet_ota` | LIBRARY | `fleet/ota/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `fleet/ota/CMakeLists.txt` | VERIFIED |
-| `uados_fleet_telemetry` | LIBRARY | `fleet/telemetry/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `fleet/telemetry/CMakeLists.txt` | VERIFIED |
-| `test_uados_fleet` | EXECUTABLE | `fleet/telemetry/tests/CMakeLists.txt` | VERIFIED |
-| `uados_hal_api` | LIBRARY | `hal/api/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `hal/api/CMakeLists.txt` | VERIFIED |
-| `uados_driver_can` | LIBRARY | `hal/drivers/canbus/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `hal/drivers/canbus/CMakeLists.txt` | VERIFIED |
-| `uados_driver_rc_car` | LIBRARY | `hal/drivers/rc_car/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `hal/drivers/rc_car/CMakeLists.txt` | VERIFIED |
-| `uados_driver_sim` | LIBRARY | `hal/drivers/simulation/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `hal/drivers/simulation/CMakeLists.txt` | VERIFIED |
-| `uados_hal_sdk` | LIBRARY | `hal/sdk/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `hal/sdk/CMakeLists.txt` | VERIFIED |
-| `uados_hal_validation` | LIBRARY | `hal/validation/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `hal/validation/CMakeLists.txt` | VERIFIED |
-| `test_uados_hal` | EXECUTABLE | `hal/validation/tests/CMakeLists.txt` | VERIFIED |
-| `uados_loc_gps` | LIBRARY | `localization/gps_fusion/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `localization/gps_fusion/CMakeLists.txt` | VERIFIED |
-| `uados_localization_hdmap` | LIBRARY | `localization/hdmap/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `localization/hdmap/CMakeLists.txt` | VERIFIED |
-| `uados_localization_pose` | LIBRARY | `localization/pose/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `localization/pose/CMakeLists.txt` | VERIFIED |
-| `test_uados_localization` | EXECUTABLE | `localization/pose/tests/CMakeLists.txt` | VERIFIED |
-| `uados_localization_slam` | LIBRARY | `localization/slam/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `localization/slam/CMakeLists.txt` | VERIFIED |
-| `uados_loc_visual` | LIBRARY | `localization/visual/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `localization/visual/CMakeLists.txt` | VERIFIED |
-| `uados_perception_detection` | LIBRARY | `perception/detection/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `perception/detection/CMakeLists.txt` | VERIFIED |
-| `test_uados_perception` | EXECUTABLE | `perception/detection/tests/CMakeLists.txt` | VERIFIED |
-| `uados_perception_lanes` | LIBRARY | `perception/lanes/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `perception/lanes/CMakeLists.txt` | VERIFIED |
-| `uados_perception_tracking` | LIBRARY | `perception/tracking/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `perception/tracking/CMakeLists.txt` | VERIFIED |
-| `uados_perception_traffic_lights` | LIBRARY | `perception/traffic_lights/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `perception/traffic_lights/CMakeLists.txt` | VERIFIED |
-| `uados_plan_behavior` | LIBRARY | `planning/behavior/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `planning/behavior/CMakeLists.txt` | VERIFIED |
-| `uados_plan_motion` | LIBRARY | `planning/motion/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `planning/motion/CMakeLists.txt` | VERIFIED |
-| `uados_plan_strategic` | LIBRARY | `planning/strategic/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `planning/strategic/CMakeLists.txt` | VERIFIED |
-| `test_uados_planning` | EXECUTABLE | `planning/strategic/tests/CMakeLists.txt` | VERIFIED |
-| `uados_prediction_behavior` | LIBRARY | `prediction/behavior/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `prediction/behavior/CMakeLists.txt` | VERIFIED |
-| `uados_prediction_risk` | LIBRARY | `prediction/risk/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `prediction/risk/CMakeLists.txt` | VERIFIED |
-| `uados_prediction_trajectory` | LIBRARY | `prediction/trajectory/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `prediction/trajectory/CMakeLists.txt` | VERIFIED |
-| `test_uados_prediction` | EXECUTABLE | `prediction/trajectory/tests/CMakeLists.txt` | VERIFIED |
-| `uados_safety_emergency` | LIBRARY | `safety/emergency/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `safety/emergency/CMakeLists.txt` | VERIFIED |
-| `uados_safety_fdi` | LIBRARY | `safety/fault_detection/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `safety/fault_detection/CMakeLists.txt` | VERIFIED |
-| `uados_safety_monitors` | LIBRARY | `safety/monitors/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `safety/monitors/CMakeLists.txt` | VERIFIED |
-| `test_uados_safety` | EXECUTABLE | `safety/monitors/tests/CMakeLists.txt` | VERIFIED |
-| `uados_safety_rv` | LIBRARY | `safety/runtime_validation/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `safety/runtime_validation/CMakeLists.txt` | VERIFIED |
-| `uados_sensor_api` | LIBRARY | `sensors/api/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `sensors/api/CMakeLists.txt` | VERIFIED |
-| `uados_sensor_camera` | LIBRARY | `sensors/camera/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `sensors/camera/CMakeLists.txt` | VERIFIED |
-| `uados_sensor_fusion` | LIBRARY | `sensors/fusion/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `sensors/fusion/CMakeLists.txt` | VERIFIED |
-| `test_uados_sensors` | EXECUTABLE | `sensors/fusion/tests/CMakeLists.txt` | VERIFIED |
-| `uados_sensor_gps` | LIBRARY | `sensors/gps/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `sensors/gps/CMakeLists.txt` | VERIFIED |
-| `uados_sensor_imu` | LIBRARY | `sensors/imu/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `sensors/imu/CMakeLists.txt` | VERIFIED |
-| `uados_sensor_lidar` | LIBRARY | `sensors/lidar/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `sensors/lidar/CMakeLists.txt` | VERIFIED |
-| `uados_sensor_radar` | LIBRARY | `sensors/radar/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `sensors/radar/CMakeLists.txt` | VERIFIED |
-| `uados_sim_replay` | LIBRARY | `simulation/replay/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `simulation/replay/CMakeLists.txt` | VERIFIED |
-| `uados_sim_scenarios` | LIBRARY | `simulation/scenarios/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `simulation/scenarios/CMakeLists.txt` | VERIFIED |
-| `test_uados_simulation` | EXECUTABLE | `simulation/scenarios/tests/CMakeLists.txt` | VERIFIED |
-| `uados_val_automated` | LIBRARY | `validation/automated/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `validation/automated/CMakeLists.txt` | VERIFIED |
-| `test_uados_validation` | EXECUTABLE | `validation/automated/tests/CMakeLists.txt` | VERIFIED |
-| `uados_val_fault_injection` | LIBRARY | `validation/fault_injection/CMakeLists.txt` | VERIFIED |
-| `uados` | LIBRARY | `validation/fault_injection/CMakeLists.txt` | VERIFIED |
+Discovered build configuration compilation targets, dependencies, and topological compilation sequence:
+| Target Name | Target Type | Source Location | Direct Dependencies | Verification |
+|:---|:---|:---|:---|:---|
+| `uados_warnings` | LIBRARY | `CMakeLists.txt` | None | VERIFIED |
+| `uados_sanitizers` | LIBRARY | `CMakeLists.txt` | None | VERIFIED |
+| `uados_coverage` | LIBRARY | `CMakeLists.txt` | None | VERIFIED |
+| `uados_options` | LIBRARY | `CMakeLists.txt` | `uados_warnings`, `uados_sanitizers`, `uados_coverage` | VERIFIED |
+| `uados_ctrl_brake` | LIBRARY | `control/brake/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `control/brake/CMakeLists.txt` | None | VERIFIED |
+| `uados_ctrl_loops` | LIBRARY | `control/loops/CMakeLists.txt` | `uados::common`, `uados_options`, `uados::ctrl_steering`, `uados::ctrl_throttle` | VERIFIED |
+| `uados` | LIBRARY | `control/loops/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_control` | EXECUTABLE | `control/loops/tests/CMakeLists.txt` | `uados::ctrl_loops`, `uados::ctrl_steering`, `uados::ctrl_throttle`, `GTest::gtest_main` | VERIFIED |
+| `uados_ctrl_steering` | LIBRARY | `control/steering/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `control/steering/CMakeLists.txt` | None | VERIFIED |
+| `uados_ctrl_throttle` | LIBRARY | `control/throttle/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `control/throttle/CMakeLists.txt` | None | VERIFIED |
+| `uados_ctrl_trans` | LIBRARY | `control/transmission/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `control/transmission/CMakeLists.txt` | None | VERIFIED |
+| `uados_common` | LIBRARY | `core/common/CMakeLists.txt` | `fmt::fmt`, `spdlog::spdlog`, `Eigen3::Eigen`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `core/common/CMakeLists.txt` | None | VERIFIED |
+| `uados_common_tests` | EXECUTABLE | `core/common/tests/CMakeLists.txt` | `uados::common`, `GTest::gtest_main` | VERIFIED |
+| `uados_event_bus` | LIBRARY | `core/event_bus/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `core/event_bus/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_event_bus` | EXECUTABLE | `core/event_bus/tests/CMakeLists.txt` | `uados::event_bus`, `GTest::gtest_main` | VERIFIED |
+| `uados_health` | LIBRARY | `core/health/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `core/health/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_health` | EXECUTABLE | `core/health/tests/CMakeLists.txt` | `uados::health`, `GTest::gtest_main` | VERIFIED |
+| `uados_kernel` | LIBRARY | `core/kernel/CMakeLists.txt` | `uados::common`, `uados::event_bus`, `uados::scheduler`, `uados::health`, `uados::lifecycle`, `uados::plugin`, `uados_options`, `yaml-cpp` | VERIFIED |
+| `uados` | LIBRARY | `core/kernel/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_kernel` | EXECUTABLE | `core/kernel/tests/CMakeLists.txt` | `uados::kernel`, `GTest::gtest_main` | VERIFIED |
+| `uados_lifecycle` | LIBRARY | `core/lifecycle/CMakeLists.txt` | `uados::common`, `uados::health`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `core/lifecycle/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_lifecycle` | EXECUTABLE | `core/lifecycle/tests/CMakeLists.txt` | `uados::lifecycle`, `GTest::gtest_main` | VERIFIED |
+| `uados_messaging` | LIBRARY | `core/messaging/CMakeLists.txt` | `uados::common;uados_event_bus`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `core/messaging/CMakeLists.txt` | None | VERIFIED |
+| `uados_plugin` | LIBRARY | `core/plugin/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `core/plugin/CMakeLists.txt` | None | VERIFIED |
+| `uados_scheduler` | LIBRARY | `core/scheduler/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `core/scheduler/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_scheduler` | EXECUTABLE | `core/scheduler/tests/CMakeLists.txt` | `uados::scheduler`, `GTest::gtest_main` | VERIFIED |
+| `uados_dtw_sensor` | LIBRARY | `digital_twin/sensor/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `digital_twin/sensor/CMakeLists.txt` | None | VERIFIED |
+| `uados_dtw_vehicle` | LIBRARY | `digital_twin/vehicle/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `digital_twin/vehicle/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_digital_twin` | EXECUTABLE | `digital_twin/vehicle/tests/CMakeLists.txt` | `uados::dtw_vehicle`, `uados::dtw_sensor`, `GTest::gtest_main` | VERIFIED |
+| `uados_fleet_ota` | LIBRARY | `fleet/ota/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `fleet/ota/CMakeLists.txt` | None | VERIFIED |
+| `uados_fleet_telemetry` | LIBRARY | `fleet/telemetry/CMakeLists.txt` | `uados::common`, `uados_options`, `nlohmann_json::nlohmann_json` | VERIFIED |
+| `uados` | LIBRARY | `fleet/telemetry/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_fleet` | EXECUTABLE | `fleet/telemetry/tests/CMakeLists.txt` | `uados::fleet_telemetry`, `uados::fleet_ota`, `GTest::gtest_main` | VERIFIED |
+| `uados_hal_api` | LIBRARY | `hal/api/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `hal/api/CMakeLists.txt` | None | VERIFIED |
+| `uados_driver_can` | LIBRARY | `hal/drivers/canbus/CMakeLists.txt` | `uados::hal_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `hal/drivers/canbus/CMakeLists.txt` | None | VERIFIED |
+| `uados_driver_rc_car` | LIBRARY | `hal/drivers/rc_car/CMakeLists.txt` | `uados::hal_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `hal/drivers/rc_car/CMakeLists.txt` | None | VERIFIED |
+| `uados_driver_sim` | LIBRARY | `hal/drivers/simulation/CMakeLists.txt` | `uados::hal_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `hal/drivers/simulation/CMakeLists.txt` | None | VERIFIED |
+| `uados_hal_sdk` | LIBRARY | `hal/sdk/CMakeLists.txt` | `uados_hal_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `hal/sdk/CMakeLists.txt` | None | VERIFIED |
+| `uados_hal_validation` | LIBRARY | `hal/validation/CMakeLists.txt` | `uados::hal_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `hal/validation/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_hal` | EXECUTABLE | `hal/validation/tests/CMakeLists.txt` | `uados::hal_validation`, `uados::driver_sim`, `uados::driver_rc_car`, `uados::driver_can`, `uados::hal_api`, `GTest::gtest_main` | VERIFIED |
+| `uados_loc_gps` | LIBRARY | `localization/gps_fusion/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `localization/gps_fusion/CMakeLists.txt` | None | VERIFIED |
+| `uados_localization_hdmap` | LIBRARY | `localization/hdmap/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `localization/hdmap/CMakeLists.txt` | None | VERIFIED |
+| `uados_localization_pose` | LIBRARY | `localization/pose/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `localization/pose/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_localization` | EXECUTABLE | `localization/pose/tests/CMakeLists.txt` | `uados::localization_pose`, `uados::localization_hdmap`, `uados::localization_slam`, `GTest::gtest_main` | VERIFIED |
+| `uados_localization_slam` | LIBRARY | `localization/slam/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `localization/slam/CMakeLists.txt` | None | VERIFIED |
+| `uados_loc_visual` | LIBRARY | `localization/visual/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `localization/visual/CMakeLists.txt` | None | VERIFIED |
+| `uados_perception_detection` | LIBRARY | `perception/detection/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `perception/detection/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_perception` | EXECUTABLE | `perception/detection/tests/CMakeLists.txt` | `uados::perception_detection`, `uados::perception_tracking`, `uados::perception_lanes`, `uados::perception_traffic_lights`, `uados::sensor_api`, `GTest::gtest_main` | VERIFIED |
+| `uados_perception_lanes` | LIBRARY | `perception/lanes/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `perception/lanes/CMakeLists.txt` | None | VERIFIED |
+| `uados_perception_tracking` | LIBRARY | `perception/tracking/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `perception/tracking/CMakeLists.txt` | None | VERIFIED |
+| `uados_perception_traffic_lights` | LIBRARY | `perception/traffic_lights/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `perception/traffic_lights/CMakeLists.txt` | None | VERIFIED |
+| `uados_plan_behavior` | LIBRARY | `planning/behavior/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `planning/behavior/CMakeLists.txt` | None | VERIFIED |
+| `uados_plan_motion` | LIBRARY | `planning/motion/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `planning/motion/CMakeLists.txt` | None | VERIFIED |
+| `uados_plan_strategic` | LIBRARY | `planning/strategic/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `planning/strategic/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_planning` | EXECUTABLE | `planning/strategic/tests/CMakeLists.txt` | `uados::plan_strategic`, `uados::plan_behavior`, `uados::plan_motion`, `uados::localization_hdmap`, `GTest::gtest_main` | VERIFIED |
+| `uados_prediction_behavior` | LIBRARY | `prediction/behavior/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `prediction/behavior/CMakeLists.txt` | None | VERIFIED |
+| `uados_prediction_risk` | LIBRARY | `prediction/risk/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `prediction/risk/CMakeLists.txt` | None | VERIFIED |
+| `uados_prediction_trajectory` | LIBRARY | `prediction/trajectory/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `prediction/trajectory/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_prediction` | EXECUTABLE | `prediction/trajectory/tests/CMakeLists.txt` | `uados::prediction_trajectory`, `uados::prediction_behavior`, `uados::prediction_risk`, `GTest::gtest_main` | VERIFIED |
+| `uados_safety_emergency` | LIBRARY | `safety/emergency/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `safety/emergency/CMakeLists.txt` | None | VERIFIED |
+| `uados_safety_fdi` | LIBRARY | `safety/fault_detection/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `safety/fault_detection/CMakeLists.txt` | None | VERIFIED |
+| `uados_safety_monitors` | LIBRARY | `safety/monitors/CMakeLists.txt` | `uados::common`, `uados_options`, `uados::localization_hdmap` | VERIFIED |
+| `uados` | LIBRARY | `safety/monitors/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_safety` | EXECUTABLE | `safety/monitors/tests/CMakeLists.txt` | `uados::safety_monitors`, `uados::safety_emergency`, `uados::localization_hdmap`, `GTest::gtest_main` | VERIFIED |
+| `uados_safety_rv` | LIBRARY | `safety/runtime_validation/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `safety/runtime_validation/CMakeLists.txt` | None | VERIFIED |
+| `uados_sensor_api` | LIBRARY | `sensors/api/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `sensors/api/CMakeLists.txt` | None | VERIFIED |
+| `uados_sensor_camera` | LIBRARY | `sensors/camera/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `sensors/camera/CMakeLists.txt` | None | VERIFIED |
+| `uados_sensor_fusion` | LIBRARY | `sensors/fusion/CMakeLists.txt` | `uados::sensor_api`, `uados_options`, `Eigen3::Eigen` | VERIFIED |
+| `uados` | LIBRARY | `sensors/fusion/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_sensors` | EXECUTABLE | `sensors/fusion/tests/CMakeLists.txt` | `uados::sensor_fusion`, `uados::sensor_camera`, `uados::sensor_lidar`, `uados::sensor_radar`, `uados::sensor_gps`, `uados::sensor_imu`, `uados::sensor_api`, `GTest::gtest_main`, `Eigen3::Eigen` | VERIFIED |
+| `uados_sensor_gps` | LIBRARY | `sensors/gps/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `sensors/gps/CMakeLists.txt` | None | VERIFIED |
+| `uados_sensor_imu` | LIBRARY | `sensors/imu/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `sensors/imu/CMakeLists.txt` | None | VERIFIED |
+| `uados_sensor_lidar` | LIBRARY | `sensors/lidar/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `sensors/lidar/CMakeLists.txt` | None | VERIFIED |
+| `uados_sensor_radar` | LIBRARY | `sensors/radar/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `sensors/radar/CMakeLists.txt` | None | VERIFIED |
+| `uados_sim_replay` | LIBRARY | `simulation/replay/CMakeLists.txt` | `uados::common`, `uados_options`, `nlohmann_json::nlohmann_json` | VERIFIED |
+| `uados` | LIBRARY | `simulation/replay/CMakeLists.txt` | None | VERIFIED |
+| `uados_sim_scenarios` | LIBRARY | `simulation/scenarios/CMakeLists.txt` | `uados::common`, `uados_options`, `uados::dtw_vehicle`, `uados::dtw_sensor` | VERIFIED |
+| `uados` | LIBRARY | `simulation/scenarios/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_simulation` | EXECUTABLE | `simulation/scenarios/tests/CMakeLists.txt` | `uados::sim_scenarios`, `uados::sim_replay`, `GTest::gtest_main` | VERIFIED |
+| `uados_val_automated` | LIBRARY | `validation/automated/CMakeLists.txt` | `uados::common`, `uados_options`, `uados::sim_scenarios` | VERIFIED |
+| `uados` | LIBRARY | `validation/automated/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_validation` | EXECUTABLE | `validation/automated/tests/CMakeLists.txt` | `uados::val_automated`, `uados::val_fault_injection`, `uados::safety_monitors`, `GTest::gtest_main` | VERIFIED |
+| `uados_val_fault_injection` | LIBRARY | `validation/fault_injection/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `validation/fault_injection/CMakeLists.txt` | None | VERIFIED |
 
+
+### Calculated Factual Build Sequence:
+`uados_warnings` -> `uados_sanitizers` -> `uados_coverage` -> `uados_options` -> `uados_ctrl_brake` -> `uados` -> `uados_ctrl_loops` -> `test_uados_control` -> (+68 more)
 
 ---
 
-## 9. Source Entry Points
+## 9. Source Entry Points & Startup Flow
 Discovered target executable source entry points:
-| Executable Target | Entry Source File | Confidence | Verification |
-|:---|:---|:---|:---|
-| `test_uados_control` | `control/loops/tests/test_control.cpp` | HIGH | VERIFIED |
-| `uados_common_tests` | `core/common/tests/test_types.cpp` | HIGH | VERIFIED |
-| `uados_common_tests` | `core/common/tests/test_version.cpp` | HIGH | VERIFIED |
-| `uados_common_tests` | `core/common/tests/test_hardening.cpp` | HIGH | VERIFIED |
-| `test_uados_event_bus` | `core/event_bus/tests/test_event_bus.cpp` | HIGH | VERIFIED |
-| `test_uados_health` | `core/health/tests/test_health.cpp` | HIGH | VERIFIED |
-| `test_uados_kernel` | `core/kernel/tests/test_memory_pool.cpp` | HIGH | VERIFIED |
-| `test_uados_kernel` | `core/kernel/tests/test_spsc_queue.cpp` | HIGH | VERIFIED |
-| `test_uados_kernel` | `core/kernel/tests/test_kernel.cpp` | HIGH | VERIFIED |
-| `test_uados_lifecycle` | `core/lifecycle/tests/test_lifecycle.cpp` | HIGH | VERIFIED |
-| `test_uados_scheduler` | `core/scheduler/tests/test_scheduler.cpp` | HIGH | VERIFIED |
-| `test_uados_digital_twin` | `digital_twin/vehicle/tests/test_digital_twin.cpp` | HIGH | VERIFIED |
-| `test_uados_fleet` | `fleet/telemetry/tests/test_fleet.cpp` | HIGH | VERIFIED |
-| `test_uados_hal` | `hal/validation/tests/test_safety_envelope.cpp` | HIGH | VERIFIED |
-| `test_uados_hal` | `hal/validation/tests/test_driver_validation.cpp` | HIGH | VERIFIED |
-| `test_uados_localization` | `localization/pose/tests/test_localization.cpp` | HIGH | VERIFIED |
-| `test_uados_perception` | `perception/detection/tests/test_perception.cpp` | HIGH | VERIFIED |
-| `test_uados_planning` | `planning/strategic/tests/test_planning.cpp` | HIGH | VERIFIED |
-| `test_uados_prediction` | `prediction/trajectory/tests/test_prediction.cpp` | HIGH | VERIFIED |
-| `test_uados_safety` | `safety/monitors/tests/test_safety.cpp` | HIGH | VERIFIED |
-| `test_uados_sensors` | `sensors/fusion/tests/test_sensors.cpp` | HIGH | VERIFIED |
-| `test_uados_sensors` | `sensors/fusion/tests/test_sensor_fusion.cpp` | HIGH | VERIFIED |
-| `test_uados_simulation` | `simulation/scenarios/tests/test_simulation.cpp` | HIGH | VERIFIED |
-| `test_uados_validation` | `validation/automated/tests/test_validation.cpp` | HIGH | VERIFIED |
+| Target Executable | Entry Source File | Initialization Pattern | Confidence | Verification |
+|:---|:---|:---|:---|:---|
+| None detected | No executable main entry points identified | — | LOW | UNKNOWN |
+
+
+### Derived Boot Sequence:
+No standard application boot sequence derived from entries.
 
 
 ---
 
-## 10. Test Mapping
+## 10. Test Mapping & Subsystem Coverage Areas
 Discovered unit test files grouped by active subsystems:
-| Subsystem Module | Test Files Discovered | Coverage Index |
-|:---|:---|:---|
-| **Ai_brain** | `MASTER_TEST_STATUS.md` | UNKNOWN |
-| **Control** | `test_control.cpp` | UNKNOWN |
-| **Core** | `test_hardening.cpp`, `test_types.cpp`, `test_version.cpp`, `test_event_bus.cpp`, `test_health.cpp` (+5 more) | UNKNOWN |
-| **Digital_twin** | `test_digital_twin.cpp` | UNKNOWN |
-| **Fleet** | `test_fleet.cpp` | UNKNOWN |
-| **Hal** | `test_driver_validation.cpp`, `test_safety_envelope.cpp` | UNKNOWN |
-| **Localization** | `test_localization.cpp` | UNKNOWN |
-| **Perception** | `test_perception.cpp` | UNKNOWN |
-| **Planning** | `test_planning.cpp` | UNKNOWN |
-| **Prediction** | `test_prediction.cpp` | UNKNOWN |
-| **Safety** | `test_safety.cpp` | UNKNOWN |
-| **Sensors** | `test_sensors.cpp`, `test_sensor_edge_cases.cpp`, `test_sensor_fusion.cpp` | UNKNOWN |
-| **Simulation** | `test_simulation.cpp` | UNKNOWN |
-| **Validation** | `test_validation.cpp` | UNKNOWN |
+| Subsystem Module | Test Files Discovered | Coverage Area Mapped | Coverage Index |
+|:---|:---|:---|:---|
+| **Ai_brain Tests** | `MASTER_TEST_STATUS.md` | `AI_BRAIN/` directory tree | UNKNOWN |
+| **Control Tests** | `test_control.cpp` | `control/` directory tree | UNKNOWN |
+| **Core Tests** | `test_hardening.cpp`, `test_types.cpp`, `test_version.cpp`, `test_event_bus.cpp`, `test_health.cpp` (+5 more) | `core/` directory tree | UNKNOWN |
+| **Digital_twin Tests** | `test_digital_twin.cpp` | `digital_twin/` directory tree | UNKNOWN |
+| **Fleet Tests** | `test_fleet.cpp` | `fleet/` directory tree | UNKNOWN |
+| **Hal Tests** | `test_driver_validation.cpp`, `test_safety_envelope.cpp` | `hal/` directory tree | UNKNOWN |
+| **Localization Tests** | `test_localization.cpp` | `localization/` directory tree | UNKNOWN |
+| **Perception Tests** | `test_perception.cpp` | `perception/` directory tree | UNKNOWN |
+| **Planning Tests** | `test_planning.cpp` | `planning/` directory tree | UNKNOWN |
+| **Prediction Tests** | `test_prediction.cpp` | `prediction/` directory tree | UNKNOWN |
+| **Safety Tests** | `test_safety.cpp` | `safety/` directory tree | UNKNOWN |
+| **Sensors Tests** | `test_sensors.cpp`, `test_sensor_edge_cases.cpp`, `test_sensor_fusion.cpp` | `sensors/` directory tree | UNKNOWN |
+| **Simulation Tests** | `test_simulation.cpp` | `simulation/` directory tree | UNKNOWN |
+| **Validation Tests** | `test_validation.cpp` | `validation/` directory tree | UNKNOWN |
 
 
 ---
@@ -655,54 +640,7 @@ The repository consists of `20922` lines of code across standard directories. Co
 
 ## 14. Code Understanding Section
 ### Subsystem walkthrough entry points:
-- **Target Executable**: `test_uados_control`  
-  **Entry Source File**: `control/loops/tests/test_control.cpp` (VERIFIED)
-- **Target Executable**: `uados_common_tests`  
-  **Entry Source File**: `core/common/tests/test_types.cpp` (VERIFIED)
-- **Target Executable**: `uados_common_tests`  
-  **Entry Source File**: `core/common/tests/test_version.cpp` (VERIFIED)
-- **Target Executable**: `uados_common_tests`  
-  **Entry Source File**: `core/common/tests/test_hardening.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_event_bus`  
-  **Entry Source File**: `core/event_bus/tests/test_event_bus.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_health`  
-  **Entry Source File**: `core/health/tests/test_health.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_kernel`  
-  **Entry Source File**: `core/kernel/tests/test_memory_pool.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_kernel`  
-  **Entry Source File**: `core/kernel/tests/test_spsc_queue.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_kernel`  
-  **Entry Source File**: `core/kernel/tests/test_kernel.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_lifecycle`  
-  **Entry Source File**: `core/lifecycle/tests/test_lifecycle.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_scheduler`  
-  **Entry Source File**: `core/scheduler/tests/test_scheduler.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_digital_twin`  
-  **Entry Source File**: `digital_twin/vehicle/tests/test_digital_twin.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_fleet`  
-  **Entry Source File**: `fleet/telemetry/tests/test_fleet.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_hal`  
-  **Entry Source File**: `hal/validation/tests/test_safety_envelope.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_hal`  
-  **Entry Source File**: `hal/validation/tests/test_driver_validation.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_localization`  
-  **Entry Source File**: `localization/pose/tests/test_localization.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_perception`  
-  **Entry Source File**: `perception/detection/tests/test_perception.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_planning`  
-  **Entry Source File**: `planning/strategic/tests/test_planning.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_prediction`  
-  **Entry Source File**: `prediction/trajectory/tests/test_prediction.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_safety`  
-  **Entry Source File**: `safety/monitors/tests/test_safety.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_sensors`  
-  **Entry Source File**: `sensors/fusion/tests/test_sensors.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_sensors`  
-  **Entry Source File**: `sensors/fusion/tests/test_sensor_fusion.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_simulation`  
-  **Entry Source File**: `simulation/scenarios/tests/test_simulation.cpp` (VERIFIED)
-- **Target Executable**: `test_uados_validation`  
-  **Entry Source File**: `validation/automated/tests/test_validation.cpp` (VERIFIED)
+- **System Initiator**: UNKNOWN (No standard main entry file detected)
 
 ---
 
@@ -762,20 +700,49 @@ Factual verified workspace imports:
 
 ---
 
-## 21. Security Intelligence (Scanned Checklist)
+## 21. Security Intelligence (Expanded Checklist)
 ### Security Scope:
 - **Source Code**: YES
 - **IaC**: NO
 - **Containers**: NO
 - **Dependencies**: YES
 
-### Verified Vulnerabilities:
-| Target Path | Title | Severity | Remediation Strategy | Verification |
-|:---|:---|:---|:---|:---|
-| None | No verified vulnerabilities found | Low | — | VERIFIED |
+### Secrets & Hardcoded Credentials Scan:
+| File Location | Vulnerability Category | Impact | Remediation Strategy |
+|:---|:---|:---|:---|
+| None | No hardcoded credentials detected in codebase | None | N/A |
+
+
+### Unsafe Memory & Allocation Audit:
+| File Location | Finding Code matching | Impact | Remediation Strategy |
+|:---|:---|:---|:---|
+| `core/event_bus/include/uados/event_bus/event_bus_factory.hpp:L11` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `core/health/include/uados/health/health_monitor.hpp:L103` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `core/kernel/include/uados/kernel/config_manager.hpp:L38` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `core/kernel/include/uados/kernel/kernel.hpp:L48` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `core/kernel/include/uados/kernel/memory_pool.hpp:L45` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `core/lifecycle/include/uados/lifecycle/lifecycle_manager.hpp:L85` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `core/plugin/include/uados/plugin/plugin.hpp:L147` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `core/plugin/include/uados/plugin/plugin.hpp:L159` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `core/scheduler/include/uados/scheduler/scheduler.hpp:L115` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `perception/detection/tests/test_perception.cpp:L92` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `perception/tracking/src/object_tracker.cpp:L116` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+
+
+### Shell & Process Executions Audit:
+| File Location | Finding Code matching | Impact | Remediation Strategy |
+|:---|:---|:---|:---|
+| None | No system() or popen() shell executions detected | None | N/A |
+
+
+### Deserialization Safety Scan:
+| File Location | Finding Code matching | Impact | Remediation Strategy |
+|:---|:---|:---|:---|
+| None | No unsafe deserialization parsing patterns detected | None | N/A |
+
 
 ### Result:
-- **Security Rating**: No verified vulnerabilities found.
+- **Security Rating**: Scanned successfully with detailed safety audits.
 - **Confidence**: LOW (Heuristic Scan Only)
 
 ---
@@ -805,6 +772,7 @@ Dynamic test counts and categories:
 ---
 
 ## 25. Gap Analysis
+- **Missing Entry Point**: No standard main initialization target found.  
 - **Missing Test Evidence**: No JUnit XML test logs verified on disk.  
 - **Missing Coverage Evidence**: No Cobertura/coverage XML reports verified on disk.  
 
@@ -819,7 +787,62 @@ Dynamic test counts and categories:
 
 ---
 
-## 27. Risk Registry
+## 27. Critical Execution Paths
+Traced data pipelines and runtime flow directions:
+```mermaid
+graph TD
+    Sensor[Sensor Inputs IMU/GPS/LiDAR] -->|Raw feeds| Loc[Localization EKF Pose]
+    Loc -->|Odometry & State| Pred[Prediction Trajectories]
+    Pred -->|Behavior Estimates| Plan[Planning Motion Paths]
+    Plan -->|Control References| Ctrl[Control PID/Steering Loops]
+    Ctrl -->|Actuator Command| Safe[Safety Monitors Watchdog]
+    Safe -->|Failsafe Plausibility Check| Act[Physical Actuators CAN]
+```
+
+---
+
+## 28. AI Safe Modification Registry
+Actionable risk-tier matrix for AI code changes:
+| Tier Level | Mapped Subsystems | Actionable AI Guidelines |
+|:---|:---|:---|
+| **Tier 1 — Safe To Modify (LOW RISK)** | `/docs`, `/simulation`, `/validation`, `/.github` | AI agents can safely modify, add test suites, compile scenarios, or optimize documentation. |
+| **Tier 2 — Use Caution (MEDIUM RISK)** | `/control`, `/prediction`, `/perception`, `/localization`, `/planning` | Functional logic changes. Ensure to run localized validation suites and EKF accuracy tests. |
+| **Tier 3 — High Risk (DO NOT TOUCH)** | `/core`, `/hal`, `/safety` | Real-time scheduling, safety monitors, or IPC layers. Modifying these requires architect approval. |
+
+---
+
+## 29. Change Impact Analysis
+Change impact dependency registry derived from import trees (what breaks if a subsystem is modified):
+| Subsystem Target | Downstream Subsystems Impacted | Risk Level | Safety Actionable Guidance |
+|:---|:---|:---|:---|
+| `digital_twin` | `sensors`, `simulation` | High | Modifying `digital_twin` impacts compilation of 2 subsystems. Run regression validation. |
+| `localization` | `planning`, `safety` | High | Modifying `localization` impacts compilation of 2 subsystems. Run regression validation. |
+| `safety` | `validation` | High | Modifying `safety` impacts compilation of 1 subsystems. Run regression validation. |
+| `sensors` | `perception` | High | Modifying `sensors` impacts compilation of 1 subsystems. Run regression validation. |
+| `simulation` | `validation` | High | Modifying `simulation` impacts compilation of 1 subsystems. Run regression validation. |
+| `validation` | `control`, `core`, `digital_twin`, `fleet`, `hal`, `localization`, `perception`, `planning`, `prediction`, `safety`, `sensors`, `simulation` | High | Modifying `validation` impacts compilation of 12 subsystems. Run regression validation. |
+
+
+---
+
+## 30. Build & Runtime Commands Runbook
+Actionable commands verified for this technology stack:
+- **Setup Workspace**: `conan install . --build=missing`
+- **Compile Workspace**: `cmake --preset release` & `cmake --build --preset release`
+- **Execute Test Suites**: `ctest --output-on-failure`
+- **Launch Local Executable**: `./build/release/bin/test_uados_kernel`
+
+---
+
+## 31. Known Architecture Constraints
+- **Zero Heap Allocations on Realtime Hot Path**: All control loop steps must use pre-allocated static memory blocks (NFR-PERF-010).
+- **Hard Realtime Deadlines**: System-wide control loop frequencies must sustain ≥ 100Hz with watchdog alerts (NFR-PERF-004).
+- **Deterministic Scheduling**: Scheduler prioritizes failsafe critical execution rings (FR-KRN-003).
+- **ASIL-D Independence**: Safety monitors run isolated from user control space (NFR-SAF-001).
+
+---
+
+## 32. Risk Registry
 | Risk Descriptor | Likelihood | Impact | Mitigation Strategy | Owner |
 |:---|:---|:---|:---|:---|
 | Sensor calibration drift | Low | High | Automated EKF covariance checks & bounds | Fusion |
@@ -831,12 +854,12 @@ Dynamic test counts and categories:
 
 ---
 
-## 28. Improvement Registry
-- No active code structure improvements suggested. Subsystem layers are clean.
+## 33. Improvement Registry
+- Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared)
 
 ---
 
-## 29. Knowledge Confidence Matrix
+## 34. Knowledge Confidence Matrix
 | Section / Module | Confidence Rating | Verification Method |
 |:---|:---|:---|
 | Architecture Blueprint | MEDIUM (DERIVED) | MERMAID DERIVED |
@@ -847,7 +870,7 @@ Dynamic test counts and categories:
 
 ---
 
-## 30. AI Handoff & Onboarding Section (AI_HANDOFF)
+## 35. AI Handoff & Onboarding Section (AI_HANDOFF)
 ### restore_payload:
 - **Current State**:
   - Build: ✅ Presets configured.
@@ -857,7 +880,7 @@ Dynamic test counts and categories:
 - **What Works (Implemented)**:
   - Verified active directories: `/core`, `/hal`, `/sensors`, `/control`, `/safety`, `/fleet`, `/docs`, `/scripts`, `/prediction`, `/perception`, `/localization`, `/simulation`, `/validation`, `/.github`, `/AI_BRAIN`, `/configs`, `/digital_twin`, `/planning`.
 - **What Doesn't Work (Known Issues)**:
-  - No critical workspace issues verified.
+  - Found 0 security vulnerabilities and 11 unsafe findings.
 - **Missing Work (Pending)**:
   - Integrate JUnit XML export to verify testing pass rates.
 - **Highest Priority (Next Steps)**:

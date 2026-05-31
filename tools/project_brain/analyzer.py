@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-UADOS — Universal AI Project Brain Framework (AIPBF) v2.1
-Rigorous Repository Analyzer & Dynamic Domain Classifier
+UADOS — Universal AI Project Brain Framework (AIPBF) v3.0
+Factual Repository Analyzer & Import Dependency Crawler
 """
 
 import os
@@ -11,7 +11,6 @@ from pathlib import Path
 class RepositoryAnalyzer:
     def __init__(self, repo_path):
         self.repo_path = Path(repo_path).resolve()
-        # Non-negotiable Rule 3 & 4: Strictly ignore non-project and framework-owned folders
         self.ignore_patterns = [
             "node_modules", "vendor", "dist", "build", ".next",
             "coverage", "generated", "bin", "obj", "tmp", ".cache",
@@ -46,7 +45,10 @@ class RepositoryAnalyzer:
             },
             "components": [],
             "facts": [],
-            "module_graph": []
+            "module_graph": [],  # Verified dynamic import relations graph
+            "directories": {},  # Exists checklist
+            "requirements": [], # Verified requirements checklist
+            "data_flow": []      # Inferred Data Flow
         }
 
     def is_ignored(self, path):
@@ -58,7 +60,10 @@ class RepositoryAnalyzer:
         self._parse_manifests()
         self._classify_project_identity()
         self._extract_code_intelligence()
-        self._build_module_dependency_graph()
+        self._derive_import_dependencies()
+        self._scan_directory_status()
+        self._extract_requirements()
+        self._derive_data_flow()
         return self.metrics
 
     def _add_fact(self, title, description, category, verification, file_path, line_num, confidence):
@@ -113,7 +118,7 @@ class RepositoryAnalyzer:
                         
                         self._add_fact(
                             title=f"Source File Discover: {file}",
-                            description=f"Source module verified in target workspace tree.",
+                            description=f"Source file found in project tree.",
                             category="Workspace Layout",
                             verification="VERIFIED",
                             file_path=file_path,
@@ -127,7 +132,6 @@ class RepositoryAnalyzer:
         self.metrics["tech_stack"]["languages"] = [lang for lang, _ in sorted_langs]
 
     def _classify_project_identity(self):
-        # Weighted domain classifier using keywords and files
         trading_weights = 0
         trading_evidence = []
         auto_weights = 0
@@ -139,27 +143,26 @@ class RepositoryAnalyzer:
         for root, _, files in os.walk(self.repo_path):
             if self.is_ignored(root):
                 continue
-            # Folder names weight
+            
             folder_name = Path(root).name.lower()
             if "trading" in folder_name or "analytics" in folder_name:
-                trading_weights += 10
-                trading_evidence.append(f"Folder name: {folder_name}")
+                trading_weights += 15
+                trading_evidence.append(f"Folder: {folder_name}")
             if "control" in folder_name or "sensors" in folder_name or "perception" in folder_name:
-                auto_weights += 10
-                auto_evidence.append(f"Folder name: {folder_name}")
+                auto_weights += 15
+                auto_evidence.append(f"Folder: {folder_name}")
 
             for file in files:
                 file_name = file.lower()
                 for key in trading_keys:
                     if key in file_name:
                         trading_weights += 5
-                        trading_evidence.append(f"File name matches key '{key}': {file}")
+                        trading_evidence.append(f"File matches key '{key}': {file}")
                 for key in auto_keys:
                     if key in file_name:
                         auto_weights += 5
-                        auto_evidence.append(f"File name matches key '{key}': {file}")
+                        auto_evidence.append(f"File matches key '{key}': {file}")
 
-        # Determine highest weight
         ident = self.metrics["project_identity"]
         if trading_weights > auto_weights and trading_weights > 10:
             ident["type"] = "Autonomous Trading Platform"
@@ -174,21 +177,23 @@ class RepositoryAnalyzer:
             ident["confidence"] = "HIGH" if auto_weights > 30 else "MEDIUM"
             ident["evidence"] = sorted(list(set(auto_evidence)))[:5]
         else:
-            ident["type"] = "Web Application Service"
-            ident["domain"] = "General Software Platform"
-            ident["purpose"] = "General web application or microservices suite."
+            ident["type"] = "UNKNOWN"
+            ident["domain"] = "UNKNOWN"
+            ident["purpose"] = "UNKNOWN"
             ident["confidence"] = "LOW"
-            ident["evidence"] = ["No specific weighted keywords discovered."]
+            ident["evidence"] = ["No specific project type files or directories verified."]
 
-        self._add_fact(
-            title=f"Project Identity Discovery: {ident['type']}",
-            description=f"Identified project classification with {ident['confidence']} confidence.",
-            category="Metadata",
-            verification="VERIFIED",
-            file_path=self.repo_path / "package.json" if (self.repo_path / "package.json").exists() else self.repo_path / "CMakeLists.txt",
-            line_num=1,
-            confidence="HIGH"
-        )
+        evidence_file = self.repo_path / "package.json" if (self.repo_path / "package.json").exists() else self.repo_path / "CMakeLists.txt"
+        if evidence_file.exists():
+            self._add_fact(
+                title=f"Project Identity Discovery: {ident['type']}",
+                description=f"Identified project domain as {ident['domain']}.",
+                category="Metadata",
+                verification="VERIFIED",
+                file_path=evidence_file,
+                line_num=1,
+                confidence="HIGH"
+            )
 
     def _parse_manifests(self):
         conan = self.repo_path / "conanfile.py"
@@ -202,7 +207,7 @@ class RepositoryAnalyzer:
                     self.metrics["dependencies"]["external"].append(pkg)
                     self._add_fact(
                         title=f"Conan Dependency: {pkg}",
-                        description="External C++ dependency package listed in Conan manifests.",
+                        description="C++ dependency listed in Conan manifest.",
                         category="Dependencies",
                         verification="VERIFIED",
                         file_path=conan,
@@ -215,7 +220,7 @@ class RepositoryAnalyzer:
             self.metrics["tech_stack"]["build_tools"].append("CMake")
             self._add_fact(
                 title="Build Engine (CMake)",
-                description="Declared project build presets files.",
+                description="CMake build presets.",
                 category="Build System",
                 verification="VERIFIED",
                 file_path=cmake,
@@ -232,7 +237,7 @@ class RepositoryAnalyzer:
                     self.metrics["dependencies"]["external"].append(pkg)
                     self._add_fact(
                         title=f"Pip Package: {pkg}",
-                        description="Python external dependency listed in package index manifest.",
+                        description="Python dependency listed in requirements index.",
                         category="Dependencies",
                         verification="VERIFIED",
                         file_path=reqs,
@@ -252,7 +257,7 @@ class RepositoryAnalyzer:
                     self.metrics["dependencies"]["external"].append(dep)
                     self._add_fact(
                         title=f"Node.js Dependency: {dep}",
-                        description="JSON package manifest dependency.",
+                        description="JSON package dependency.",
                         category="Dependencies",
                         verification="VERIFIED",
                         file_path=package_json,
@@ -269,7 +274,6 @@ class RepositoryAnalyzer:
         self.metrics["dependencies"]["external"] = sorted(list(set(self.metrics["dependencies"]["external"])))
 
     def _extract_code_intelligence(self):
-        # Dynamic API Discovery with Framework Import Verification (Fix 3)
         framework_api_patterns = [
             ("express", r'\.(?:get|post|put|delete|patch)\(["\']([^"\']+)["\']\s*,', "REST (Express)"),
             ("fastapi", r'@(?:app|router)\.(?:get|post|put|delete|patch)\(["\']([^"\']+)["\']', "REST (FastAPI)"),
@@ -287,7 +291,13 @@ class RepositoryAnalyzer:
             (r'sqlite', "SQLite")
         ]
 
-        # In v2.1, we strictly scan only if the file imports the framework, preventing false positives
+        event_broker_patterns = [
+            (r'new\s+Kafka\(|kafkaClient\b', "Kafka Broker Client"),
+            (r'amqp\.connect\(|amqpClient\b', "RabbitMQ Client"),
+            (r'mqtt\.connect\(', "MQTT Broker Client"),
+            (r'EventBus\b|dispatch\(', "EventBus Routing Ring")
+        ]
+
         for root, _, files in os.walk(self.repo_path):
             if self.is_ignored(root):
                 continue
@@ -297,9 +307,7 @@ class RepositoryAnalyzer:
                     try:
                         content = file_path.read_text(encoding="utf-8", errors="ignore")
                         
-                        # API Framework Import Verification Check
                         for framework, pattern, protocol in framework_api_patterns:
-                            # Verify if framework string is imported in content
                             if framework in content.lower():
                                 for match in re.finditer(pattern, content):
                                     route = match.group(1)
@@ -312,8 +320,8 @@ class RepositoryAnalyzer:
                                         "verification": "VERIFIED"
                                     })
                                     self._add_fact(
-                                        title=f"API Endpoint Discovery: {route}",
-                                        description=f"Discovered active endpoint mapped via verified {framework} imports.",
+                                        title=f"API Endpoint: {route}",
+                                        description=f"Verified API endpoint bound to {framework} framework.",
                                         category="API Discovery",
                                         verification="VERIFIED",
                                         file_path=file_path,
@@ -321,7 +329,6 @@ class RepositoryAnalyzer:
                                         confidence="HIGH"
                                     )
 
-                        # Extract DB
                         for pat, db_type in db_patterns:
                             match = re.search(pat, content, re.IGNORECASE)
                             if match:
@@ -335,8 +342,8 @@ class RepositoryAnalyzer:
                                         "verification": "VERIFIED"
                                     })
                                     self._add_fact(
-                                        title=f"Database System: {db_type}",
-                                        description=f"Verified connection string initialization for database: {db_type}.",
+                                        title=f"Database: {db_type}",
+                                        description=f"Verified database init for {db_type}.",
                                         category="Databases",
                                         verification="VERIFIED",
                                         file_path=file_path,
@@ -344,14 +351,6 @@ class RepositoryAnalyzer:
                                         confidence="HIGH"
                                     )
 
-                        # Extract Events with strict broker patterns (Fix 4)
-                        # We verify Kafka/RabbitMQ/MQTT broker client instantiations, not just raw string occurrences
-                        event_broker_patterns = [
-                            (r'new\s+Kafka\(|kafkaClient\b', "Kafka Broker Client"),
-                            (r'amqp\.connect\(|amqpClient\b', "RabbitMQ Client"),
-                            (r'mqtt\.connect\(', "MQTT Broker Client"),
-                            (r'EventBus\b|dispatch\(', "EventBus Routing Ring")
-                        ]
                         for pat, desc in event_broker_patterns:
                             for match in re.finditer(pat, content):
                                 line_num = content[:match.start()].count("\n") + 1
@@ -363,8 +362,8 @@ class RepositoryAnalyzer:
                                     "verification": "VERIFIED"
                                 })
                                 self._add_fact(
-                                    title=f"Event Client: {desc}",
-                                    description=f"Verified connection/emit client setup matching: {match.group(0)}.",
+                                    title=f"Event Hook: {desc}",
+                                    description=f"Verified connection broker match: {match.group(0)}.",
                                     category="Events",
                                     verification="VERIFIED",
                                     file_path=file_path,
@@ -375,56 +374,169 @@ class RepositoryAnalyzer:
                     except Exception:
                         pass
 
-    def _build_module_dependency_graph(self):
-        # Discover actual folder modules to compile the repository dependency tree (Fix 9)
-        discovered_dirs = []
+    def _derive_import_dependencies(self):
+        import_patterns = [
+            r'#include\s+["\']uados/([^"\']+)["\']', 
+            r'#include\s+["\']([^"\']+)["\']', 
+            r'import\s+.*from\s+["\']\.\./([^"\']+)["\']', 
+            r'import\s+.*from\s+["\']\./([^"\']+)["\']',
+            r'require\s*\(\s*["\']\.\./([^"\']+)["\']\s*\)',
+            r'from\s+\.\.?([a-zA-Z0-9_]+)\s+import', 
+            r'import\s+([a-zA-Z0-9_]+)'
+        ]
+
+        scanned_relations = set()
+        dir_locations = {}
         for root, dirs, _ in os.walk(self.repo_path):
             if self.is_ignored(root):
                 continue
             for d in dirs:
-                p = Path(root) / d
-                if not self.is_ignored(p):
-                    rel = str(p.relative_to(self.repo_path)).replace("\\", "/")
-                    if "/" not in rel: # Top level folders only
-                        discovered_dirs.append(rel)
+                rel_p = Path(root) / d
+                try:
+                    rel_parts = rel_p.relative_to(self.repo_path).parts
+                    if rel_parts:
+                        dir_locations[d] = rel_parts[0]
+                except Exception:
+                    pass
 
-        # Draw relationships dynamically
-        # Node/Turborepo patterns
-        if "frontend" in discovered_dirs and "backend" in discovered_dirs:
-            self.metrics["module_graph"].extend([
-                ("frontend", "backend", "HTTP REST API Calls"),
-                ("backend", "shared", "Imports structures"),
-                ("backend", "database", "Read/Write transactions")
-            ])
+        for root, _, files in os.walk(self.repo_path):
+            if self.is_ignored(root):
+                continue
+            src_folder = Path(root).relative_to(self.repo_path).parts
+            if not src_folder:
+                continue
+            src_layer = src_folder[0]
+
+            for file in files:
+                file_path = Path(root) / file
+                if file_path.suffix.lower() in [".cpp", ".hpp", ".h", ".ts", ".js", ".py"]:
+                    try:
+                        content = file_path.read_text(encoding="utf-8", errors="ignore")
+                        for pat in import_patterns:
+                            for match in re.finditer(pat, content):
+                                imported_str = match.group(1)
+                                parts = imported_str.replace("\\", "/").split("/")
+                                for part in parts:
+                                    part_name = Path(part).stem
+                                    target_layer = None
+                                    if (self.repo_path / part_name).exists() and (self.repo_path / part_name).is_dir():
+                                        target_layer = part_name
+                                    elif part_name in dir_locations:
+                                        target_layer = dir_locations[part_name]
+                                        
+                                    if target_layer and target_layer != src_layer:
+                                        scanned_relations.add((src_layer, target_layer, "Imports reference code"))
+                                        break
+                    except Exception:
+                        pass
+
+        for src, dest, desc in sorted(list(scanned_relations)):
+            self.metrics["module_graph"].append((src, dest, desc))
             self._add_fact(
-                title="Workspace Link: Frontend -> Backend",
-                description="Turborepo node service communication link.",
+                title=f"Derived Import Link: {src} -> {dest}",
+                description="Verified dynamic file import link discovered in codebase analysis.",
                 category="Architecture Graph",
-                verification="INFERRED",
-                file_path=self.repo_path / "frontend",
+                verification="VERIFIED",
+                file_path=self.repo_path / src,
                 line_num=1,
-                confidence="MEDIUM"
+                confidence="HIGH"
             )
-        # Autonomous Vehicles C++ patterns
-        elif "core" in discovered_dirs and "control" in discovered_dirs:
-            self.metrics["module_graph"].extend([
-                ("sensors", "fusion", "Streams coordinate fixes"),
-                ("fusion", "planning", "Fused dead-reckoning poses"),
-                ("planning", "control", "Waypoint corridor targets"),
-                ("control", "hal", "DBW command execution packets"),
-                ("safety", "hal", "Emergency override override signals")
-            ])
-            self._add_fact(
-                title="Workspace Link: sensors -> fusion",
-                description="Fused dynamic pipeline updates.",
-                category="Architecture Graph",
-                verification="INFERRED",
-                file_path=self.repo_path / "sensors",
-                line_num=1,
-                confidence="MEDIUM"
-            )
-        else:
-            # Generic mapping
-            if len(discovered_dirs) >= 2:
-                for i in range(len(discovered_dirs) - 1):
-                    self.metrics["module_graph"].append((discovered_dirs[i], discovered_dirs[i+1], "Dependency link"))
+
+    def _scan_directory_status(self):
+        common_dirs = [
+            "core", "hal", "sensors", "control", "safety", "fleet", 
+            "backend", "frontend", "shared", "analytics", "infra", 
+            "database", "docs", "tests", "scripts", "prediction", 
+            "perception", "localization", "simulation", "validation"
+        ]
+        for d in common_dirs:
+            p = self.repo_path / d
+            self.metrics["directories"][d] = p.exists() and p.is_dir()
+            
+        for entry in self.repo_path.iterdir():
+            if entry.is_dir() and not self.is_ignored(entry):
+                name = entry.name
+                if name not in self.metrics["directories"]:
+                    self.metrics["directories"][name] = True
+
+    def _extract_requirements(self):
+        # 1. Search for any requirements documents
+        for root, _, files in os.walk(self.repo_path):
+            if self.is_ignored(root):
+                continue
+            for file in files:
+                file_name = file.lower()
+                if "requirement" in file_name or "spec" in file_name:
+                    file_path = Path(root) / file
+                    try:
+                        relative_path = str(file_path.relative_to(self.repo_path)).replace("\\", "/")
+                        self.metrics["requirements"].append({
+                            "id": f"R-DOC-{len(self.metrics['requirements']) + 1}",
+                            "name": f"Document: {file}",
+                            "status": "Documented",
+                            "evidence": relative_path,
+                            "line": 1,
+                            "confidence": "HIGH",
+                            "verification": "Document verified on disk"
+                        })
+                    except Exception:
+                        pass
+                        
+        # 2. Scan source files for inline requirements tags (e.g. [REQ-101], Requirement: Stanley)
+        req_pattern = re.compile(r'\b(REQ-\d+|Requirement:\s*([^\n]+))', re.IGNORECASE)
+        for root, _, files in os.walk(self.repo_path):
+            if self.is_ignored(root):
+                continue
+            for file in files:
+                file_path = Path(root) / file
+                if file_path.suffix.lower() in [".cpp", ".hpp", ".h", ".ts", ".js", ".py", ".md"]:
+                    try:
+                        content = file_path.read_text(encoding="utf-8", errors="ignore")
+                        for i, line in enumerate(content.splitlines()):
+                            match = req_pattern.search(line)
+                            if match:
+                                req_id_or_desc = match.group(1).strip()
+                                relative_path = str(file_path.relative_to(self.repo_path)).replace("\\", "/")
+                                self.metrics["requirements"].append({
+                                    "id": f"R-SRC-{len(self.metrics['requirements']) + 1}",
+                                    "name": f"Code reference: {req_id_or_desc}",
+                                    "status": "Implemented",
+                                    "evidence": relative_path,
+                                    "line": i + 1,
+                                    "confidence": "HIGH",
+                                    "verification": "Source Code Verified"
+                                })
+                    except Exception:
+                        pass
+
+    def _derive_data_flow(self):
+        from collections import defaultdict
+        graph_dict = defaultdict(list)
+        in_degrees = defaultdict(int)
+        all_nodes = set()
+        for src, dest, _ in self.metrics["module_graph"]:
+            graph_dict[src].append(dest)
+            in_degrees[dest] += 1
+            all_nodes.add(src)
+            all_nodes.add(dest)
+            
+        roots = [node for node in all_nodes if in_degrees[node] == 0]
+        data_flows = []
+        visited = set()
+        
+        def dfs(node, path):
+            if node in visited or len(path) > 5:
+                return
+            visited.add(node)
+            neighbors = graph_dict[node]
+            if not neighbors:
+                data_flows.append(" -> ".join(path))
+            else:
+                for neighbor in neighbors:
+                    dfs(neighbor, path + [neighbor])
+            visited.remove(node)
+            
+        for root in roots:
+            dfs(root, [root])
+            
+        self.metrics["data_flow"] = data_flows

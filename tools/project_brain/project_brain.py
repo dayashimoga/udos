@@ -79,7 +79,7 @@ def main():
         print(f"Error: Target path '{args.path}' does not exist!")
         sys.exit(1)
 
-    print("====== Universal AI Project Brain Framework (AIPBF) v2.0 ======")
+    print("====== Universal AI Project Brain Framework (AIPBF) v3.0 ======")
     print(f"Target Repository: {repo_path}")
     print("===============================================================")
 
@@ -134,7 +134,7 @@ def main():
         generator.generate_all()
         print("[AIPBF] Documentation system synchronizations complete!")
 
-    print("\n====== AIPBF v2.0 Execution Complete! ======")
+    print("\n====== AIPBF v3.0 Execution Complete! ======")
 
 if __name__ == "__main__":
     main()

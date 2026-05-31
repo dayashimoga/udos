@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-UADOS — Universal AI Project Brain Framework (AIPBF) v2.1
-Rigorous Quality Reviewer & Factual Security Auditor
+UADOS — Universal AI Project Brain Framework (AIPBF) v3.0
+Factual Reviewer Engine & Quality Metrics Gatekeeper
 """
 
 import os
 import re
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 class RepositoryReviewer:
@@ -16,7 +17,7 @@ class RepositoryReviewer:
         self.vulnerabilities = []
         self.debt_items = []
         
-        # Rigorous v2.1 Security Checklist parameters (Fix 7)
+        # Rigorous v3.0 Security Checklist (Scanned vs Not Scanned)
         self.security_checklist = {
             "source_code": "YES",
             "iac": "NO",
@@ -24,7 +25,7 @@ class RepositoryReviewer:
             "dependencies": "NO"
         }
 
-        # Rigorous v2.1 Test Registry metrics (Fix 8)
+        # Rigorous v3.0 Test Registry (All metrics require evidence, Fix 8)
         self.testing_registry = {
             "unit": "UNKNOWN",
             "integration": "UNKNOWN",
@@ -32,7 +33,9 @@ class RepositoryReviewer:
             "coverage": "UNKNOWN",
             "mutation": "UNKNOWN",
             "performance": "UNKNOWN",
-            "security": "UNKNOWN"
+            "security": "UNKNOWN",
+            "pass_rate": "UNKNOWN",
+            "evidence": "N/A"
         }
         
         self.metrics = {
@@ -45,8 +48,8 @@ class RepositoryReviewer:
         self.ignore_patterns = [
             "node_modules", "vendor", "dist", "build", ".next",
             "coverage", "generated", "bin", "obj", "tmp", ".cache",
-            "target", "out", ".git", "third_party", "tools/project_brain",
-            "tools/analysis"
+            "target", "out", ".git", "third_party", "tools", "analysis",
+            "project_brain"
         ]
 
     def is_ignored(self, path):
@@ -56,6 +59,7 @@ class RepositoryReviewer:
     def review(self):
         self._audit_codebase()
         self._evaluate_testing_evidence()
+        self._verify_operational_benchmarks()
         self._calculate_factual_scores()
         return {
             "scores": self.metrics,
@@ -79,12 +83,10 @@ class RepositoryReviewer:
             (r'\bprintf\b', "Raw console printf instead of thread-safe logger", "Low", "Quality")
         ]
 
-        # Crawl codebase
-        for root, _, files in os.walk(self.repo_path):
+        for root, dirs, files in os.walk(self.repo_path):
             if self.is_ignored(root):
                 continue
             
-            # Decide Security checklist indicators dynamically (Fix 7)
             for file in files:
                 file_name = file.lower()
                 if file_name.endswith((".tf", ".tfvars")) or "terraform" in file_name:
@@ -100,10 +102,8 @@ class RepositoryReviewer:
                     try:
                         content = file_path.read_text(encoding="utf-8", errors="ignore")
                         lines = content.splitlines()
-
                         relative_path = str(file_path.relative_to(self.repo_path)).replace("\\", "/")
 
-                        # Heuristic Large Files (Complexity)
                         if len(lines) > 800:
                             self.debt_items.append({
                                 "title": "Large Source File Complexity",
@@ -120,7 +120,6 @@ class RepositoryReviewer:
                                 }
                             })
 
-                        # Secrets Audit
                         for pat, title in secret_patterns:
                             matches = re.finditer(pat, content)
                             for match in matches:
@@ -141,7 +140,6 @@ class RepositoryReviewer:
                                     "verification": "VERIFIED"
                                 })
 
-                        # Quality & Reliability Audit
                         for pat, desc, severity, category in unsafe_patterns:
                             matches = re.finditer(pat, content)
                             for match in matches:
@@ -167,12 +165,11 @@ class RepositoryReviewer:
                         pass
 
     def _evaluate_testing_evidence(self):
-        # Build factual counts under test files (Fix 8)
         unit_cnt = 0
         integration_cnt = 0
         e2e_cnt = 0
 
-        for root, _, files in os.walk(self.repo_path):
+        for root, dirs, files in os.walk(self.repo_path):
             if self.is_ignored(root):
                 continue
             for file in files:
@@ -181,7 +178,6 @@ class RepositoryReviewer:
                     file_path = Path(root) / file
                     try:
                         content = file_path.read_text(encoding="utf-8", errors="ignore")
-                        # Heuristic classifications of C++, python or JS test libraries
                         if "gtest" in content or "pytest" in content or "unittest" in content or "jest" in content:
                             if "integration" in file_name or "integration" in content.lower():
                                 integration_cnt += 1
@@ -192,32 +188,79 @@ class RepositoryReviewer:
                     except Exception:
                         pass
 
-        # Update test registry only if verified test files exist
         if unit_cnt > 0: self.testing_registry["unit"] = f"{unit_cnt} Verified suites"
         if integration_cnt > 0: self.testing_registry["integration"] = f"{integration_cnt} Verified suites"
         if e2e_cnt > 0: self.testing_registry["e2e"] = f"{e2e_cnt} Verified suites"
 
-        # Check for coverage report file mappings (Rule 1)
-        coverage_files = ["coverage.xml", "lcov.info", "cobertura.xml", "index.html"]
-        for f in coverage_files:
-            p = self.repo_path / f
-            if p.exists():
-                # Factual verification
-                self.testing_registry["coverage"] = "VERIFIED"
+        # Check for junit XML or coverage report files inside target workspace
+        junit_glob = list(self.repo_path.glob("**/junit.xml")) + list(self.repo_path.glob("**/test-results.xml"))
+        if junit_glob:
+            relative_report = str(junit_glob[0].relative_to(self.repo_path)).replace("\\", "/")
+            self.testing_registry["evidence"] = f"File: {relative_report}"
+            try:
+                tree = ET.parse(junit_glob[0])
+                root = tree.getroot()
+                tests = 0
+                failures = 0
+                errors = 0
+                
+                if root.tag == "testsuite":
+                    tests = int(root.attrib.get("tests", 0))
+                    failures = int(root.attrib.get("failures", 0))
+                    errors = int(root.attrib.get("errors", 0))
+                elif root.tag == "testsuites":
+                    tests = int(root.attrib.get("tests", 0))
+                    failures = int(root.attrib.get("failures", 0))
+                    errors = int(root.attrib.get("errors", 0))
+                    for ts in root.findall(".//testsuite"):
+                        tests += int(ts.attrib.get("tests", 0))
+                        failures += int(ts.attrib.get("failures", 0))
+                        errors += int(ts.attrib.get("errors", 0))
+                        
+                if tests > 0:
+                    passed = tests - failures - errors
+                    pass_rate = (passed / tests) * 100
+                    self.testing_registry["pass_rate"] = f"{pass_rate:.1f}%"
+                else:
+                    self.testing_registry["pass_rate"] = "UNKNOWN"
+            except Exception:
+                self.testing_registry["pass_rate"] = "UNKNOWN"
+            
+        coverage_glob = list(self.repo_path.glob("**/coverage.xml")) + list(self.repo_path.glob("**/cobertura.xml"))
+        if coverage_glob:
+            relative_cov = str(coverage_glob[0].relative_to(self.repo_path)).replace("\\", "/")
+            self.testing_registry["coverage"] = f"VERIFIED: {relative_cov}"
+            try:
+                tree = ET.parse(coverage_glob[0])
+                root = tree.getroot()
+                line_rate = root.attrib.get("line-rate")
+                if line_rate:
+                    cov_pct = float(line_rate) * 100
+                    self.testing_registry["coverage"] = f"{cov_pct:.1f}% (VERIFIED from {relative_cov})"
+                else:
+                    self.testing_registry["coverage"] = "UNKNOWN"
+            except Exception:
+                self.testing_registry["coverage"] = "UNKNOWN"
+
+    def _verify_operational_benchmarks(self):
+        perf_glob = list(self.repo_path.glob("**/benchmark_results.json")) + list(self.repo_path.glob("**/perf_report.md"))
+        if perf_glob:
+            relative_perf = str(perf_glob[0].relative_to(self.repo_path)).replace("\\", "/")
+            self.testing_registry["performance"] = f"VERIFIED: {relative_perf}"
+            
+            if perf_glob[0].suffix.lower() == ".json":
+                import json
+                try:
+                    data = json.loads(perf_glob[0].read_text(encoding="utf-8", errors="ignore"))
+                    latency = data.get("latency_ms") or data.get("average_latency") or data.get("latency")
+                    if latency:
+                        self.testing_registry["performance"] = f"{latency}ms (VERIFIED from {relative_perf})"
+                except Exception:
+                    pass
 
     def _calculate_factual_scores(self):
-        # Deduction-based quality heuristics
-        crit_vulns = len(self.vulnerabilities)
-        high_findings = sum(1 for f in self.findings if f["severity"] == "High")
-        med_findings = sum(1 for f in self.findings if f["severity"] == "Medium")
-        low_findings = sum(1 for f in self.findings if f["severity"] == "Low")
-
-        self.metrics["security_score"] = str(max(0, 100 - (crit_vulns * 25) - (high_findings * 15) - (med_findings * 5)))
-
-        large_files = len(self.debt_items)
-        self.metrics["quality_score"] = str(max(0, 100 - (large_files * 10) - (low_findings * 2)))
-
-        unsafe_funcs = sum(1 for f in self.findings if f["category"] == "Reliability")
-        self.metrics["reliability_score"] = str(max(0, 100 - (unsafe_funcs * 10)))
-
-        self.metrics["complexity_score"] = str(min(100, 10 + (large_files * 15) + (len(self.findings) * 2)))
+        # Default scores strictly to UNKNOWN under v3.0 unless explicitly proven by parsed files
+        self.metrics["security_score"] = "UNKNOWN"
+        self.metrics["quality_score"] = "UNKNOWN"
+        self.metrics["reliability_score"] = "UNKNOWN"
+        self.metrics["complexity_score"] = "UNKNOWN"

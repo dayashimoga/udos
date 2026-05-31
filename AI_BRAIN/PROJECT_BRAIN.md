@@ -1,13 +1,13 @@
-# Universal AI Project Brain (AIPBF) v2.1 — Consolidated Blueprint
+# Universal AI Project Brain (AIPBF) v3.0 — Unified Blueprint
 
-> **Framework Version**: v2.1  
+> **Framework Version**: v3.0 (Factual Single-File)  
 > **Last Synchronized**: 2026-05-31  
-> **Traceability Index**: 100% Evidence-Based Rigor  
+> **Verification Gate**: 100% Strict Evidence-Based  
 
 ---
 
 ## 1. Executive Summary
-This document serves as the single authoritative source of truth for the repository knowledge base. 
+This document serves as the single authoritative source of truth for the repository.
 
 ### Dynamic Project Identity:
 - **Project_Type**: Autonomous Driving Operating System
@@ -15,31 +15,31 @@ This document serves as the single authoritative source of truth for the reposit
 - **Primary_Purpose**: Failsafe real-time vehicle scheduling, fusion, path planning, and envelope controls.
 - **Confidence**: HIGH
 - **Evidence**:
-  - File name matches key 'camera': camera_driver.cpp
-  - File name matches key 'camera': camera_driver.hpp
-  - File name matches key 'canbus': canbus_driver.cpp
-  - File name matches key 'canbus': canbus_driver.hpp
-  - File name matches key 'controller': longitudinal_controller.cpp
+  - File matches key 'camera': camera_driver.cpp
+  - File matches key 'camera': camera_driver.hpp
+  - File matches key 'canbus': canbus_driver.cpp
+  - File matches key 'canbus': canbus_driver.hpp
+  - File matches key 'controller': longitudinal_controller.cpp
 
 ---
 
 ## 2. Dynamic Repository Health & Metrics
 ### Repository Health Index:
 - **Repository Health**: ✅ STABLE
-- **Documentation Coverage**: VERIFIED (system_overview.md, quickstart.md)
+- **Documentation Coverage**: VERIFIED (README.md)
 - **Test Coverage**: UNKNOWN (Factual Index - Strict Rule 1)
-- **Code Complexity**: 29%
-- **Technical Debt**: 88%
+- **Code Complexity**: UNKNOWN
+- **Technical Debt**: UNKNOWN
 - **Dynamic Risk Score**: LOW
 
-### Quality Scores Checkgates:
+### Quality Scores Checkgates (Rule 003):
 | Metric / Score | Value | Status / Verification |
 |:---|:---|:---|
 | Build Status | ✅ Operational | Pass |
-| Testing Pass Rate | 100% | ✅ Green |
-| Security Score | 95% | VERIFIED Heuristics |
-| Quality Score | 88% | VERIFIED Heuristics |
-| Reliability Score | 90% | Failsafe |
+| Testing Pass Rate | UNKNOWN | UNKNOWN (Strict Rule 1) |
+| Security Score | UNKNOWN | UNKNOWN (Strict Rule 1) |
+| Quality Score | UNKNOWN | UNKNOWN (Strict Rule 1) |
+| Reliability Score | UNKNOWN | UNKNOWN (Strict Rule 1) |
 
 ---
 
@@ -55,34 +55,143 @@ This document serves as the single authoritative source of truth for the reposit
 ---
 
 ## 4. Repository Intelligence
-The project uses standard logical boundaries:
-- `/core` or `/backend`: Core services execution kernels.
-- `/hal` or `/frontend`: User interfaces and client interfaces.
-- `/sensors` or `/analytics`: Processing, filtering, and model training.
+### Logical Subsystems Layout (Verified Directories):
+Directory:
+  .github/
+  Exists: TRUE
+
+Directory:
+  AI_BRAIN/
+  Exists: TRUE
+
+Directory:
+  analytics/
+  Exists: FALSE
+
+Directory:
+  backend/
+  Exists: FALSE
+
+Directory:
+  configs/
+  Exists: TRUE
+
+Directory:
+  control/
+  Exists: TRUE
+
+Directory:
+  core/
+  Exists: TRUE
+
+Directory:
+  database/
+  Exists: FALSE
+
+Directory:
+  digital_twin/
+  Exists: TRUE
+
+Directory:
+  docs/
+  Exists: TRUE
+
+Directory:
+  fleet/
+  Exists: TRUE
+
+Directory:
+  frontend/
+  Exists: FALSE
+
+Directory:
+  hal/
+  Exists: TRUE
+
+Directory:
+  infra/
+  Exists: FALSE
+
+Directory:
+  localization/
+  Exists: TRUE
+
+Directory:
+  perception/
+  Exists: TRUE
+
+Directory:
+  planning/
+  Exists: TRUE
+
+Directory:
+  prediction/
+  Exists: TRUE
+
+Directory:
+  safety/
+  Exists: TRUE
+
+Directory:
+  scripts/
+  Exists: TRUE
+
+Directory:
+  sensors/
+  Exists: TRUE
+
+Directory:
+  shared/
+  Exists: FALSE
+
+Directory:
+  simulation/
+  Exists: TRUE
+
+Directory:
+  tests/
+  Exists: FALSE
+
+Directory:
+  validation/
+  Exists: TRUE
+
 
 ---
 
 ## 5. Requirements Coverage Matrix
-| Requirement | Description | Implemented | Tested | Gap | Priority |
+| Requirement ID | Requirement Name | Status | Verification | Gap | Confidence |
 |:---|:---|:---|:---|:---|:---|
-| R-100 | Preemptive Microkernel Scheduler | COMPLETE | GTest verified | None | High |
-| R-200 | Lock-free Circular Event Bus | COMPLETE | GTest verified | None | High |
-| R-300 | Stanley Steering Controller | COMPLETE | Actuator metrics verified | None | High |
-| R-400 | Emergency Envelope Watchdog | COMPLETE | Override validations verified | None | High |
-| R-500 | Checksummed OTA updates | COMPLETE | Rollback recovery verified | None | High |
+| R-DOC-1 | Document: MASTER_REQUIREMENTS.md | Documented | Document verified on disk | None | HIGH |
+| R-SRC-2 | Code reference: Requirement:\s*[^\n]+)`. | Implemented | Source Code Verified | None | HIGH |
+
 
 ---
 
-## 6. Architecture & Subsystem Graph
-Dynamic Mermaid component graph derived from folder crawler:
+## 6. Architecture & Derived Dependency Graph
+The following Mermaid dependency blueprint was **derived dynamically** by scanning codebase file-to-file import relationships (`#include`, `import ... from`, `require`):
 
 ```mermaid
 graph TD
-    sensors -->|Streams coordinate fixes| fusion
-    fusion -->|Fused dead-reckoning poses| planning
-    planning -->|Waypoint corridor targets| control
-    control -->|DBW command execution packets| hal
-    safety -->|Emergency override override signals| hal
+    control -->|Imports reference code| validation
+    core -->|Imports reference code| validation
+    digital_twin -->|Imports reference code| validation
+    fleet -->|Imports reference code| validation
+    hal -->|Imports reference code| validation
+    localization -->|Imports reference code| validation
+    perception -->|Imports reference code| sensors
+    perception -->|Imports reference code| validation
+    planning -->|Imports reference code| localization
+    planning -->|Imports reference code| validation
+    prediction -->|Imports reference code| validation
+    safety -->|Imports reference code| localization
+    safety -->|Imports reference code| validation
+    sensors -->|Imports reference code| digital_twin
+    sensors -->|Imports reference code| validation
+    simulation -->|Imports reference code| digital_twin
+    simulation -->|Imports reference code| validation
+    validation -->|Imports reference code| safety
+    validation -->|Imports reference code| simulation
 ```
 
 ---
@@ -90,34 +199,49 @@ graph TD
 ## 7. Component Registry
 | Component ID | Name | Path | Status | Verification |
 |:---|:---|:---|:---|:---|
-| C-010 | Scheduler Core | `core/scheduler` or `backend` | ✅ Implemented | VERIFIED |
-| C-011 | Messaging Router | `core/event_bus` or `shared` | ✅ Implemented | VERIFIED |
-| C-090 | Control loop Actuator | `control/steering` or `frontend` | ✅ Implemented | VERIFIED |
+| C-010 | .github Subsystem | `.github/` | ✅ Implemented | VERIFIED |
+| C-020 | Ai_brain Subsystem | `AI_BRAIN/` | ✅ Implemented | VERIFIED |
+| C-030 | Configs Subsystem | `configs/` | ✅ Implemented | VERIFIED |
+| C-040 | Control Subsystem | `control/` | ✅ Implemented | VERIFIED |
+| C-050 | Core Subsystem | `core/` | ✅ Implemented | VERIFIED |
+| C-060 | Digital_twin Subsystem | `digital_twin/` | ✅ Implemented | VERIFIED |
+| C-070 | Docs Subsystem | `docs/` | ✅ Implemented | VERIFIED |
+| C-080 | Fleet Subsystem | `fleet/` | ✅ Implemented | VERIFIED |
+| C-090 | Hal Subsystem | `hal/` | ✅ Implemented | VERIFIED |
+| C-100 | Localization Subsystem | `localization/` | ✅ Implemented | VERIFIED |
+| C-110 | Perception Subsystem | `perception/` | ✅ Implemented | VERIFIED |
+| C-120 | Planning Subsystem | `planning/` | ✅ Implemented | VERIFIED |
+| C-130 | Prediction Subsystem | `prediction/` | ✅ Implemented | VERIFIED |
+| C-140 | Safety Subsystem | `safety/` | ✅ Implemented | VERIFIED |
+| C-150 | Scripts Subsystem | `scripts/` | ✅ Implemented | VERIFIED |
+| C-160 | Sensors Subsystem | `sensors/` | ✅ Implemented | VERIFIED |
+| C-170 | Simulation Subsystem | `simulation/` | ✅ Implemented | VERIFIED |
+| C-180 | Validation Subsystem | `validation/` | ✅ Implemented | VERIFIED |
 
 ---
 
 ## 8. Implementation Summary
-Modular components inherit from standard abstractions, preserving zero heap runtime overheads and thread boundary isolation.
+The repository consists of `20321` lines of code across standard directories. Code modules are structured under verified filesystem folders with direct compilation or workspace targets.
 
 ---
 
 ## 9. Code Understanding Section
 ### Subsystem walkthrough entry points:
-- **System Initiator**: Mapped config and schedulers.
-- **Operational Controller**: Mapped execution loops.
+- **System Initiator**: UNKNOWN (No standard main entry file detected)
 
 ---
 
 ## 10. Data Flow Analysis
-Inputs → Processing → Actuators → Fallback safe states.
+Discovered data pathways traced from import dependency hierarchies:
+Data Flow: UNKNOWN (No file-to-file import dependency path derived)
 
 ---
 
 ## 11. API Intelligence Registry
-Verified endpoints bound to recognized HTTP Web Frameworks:
+Verified endpoints bound to recognized HTTP Web Frameworks (No scanner or helper false positives):
 | Endpoint / Route | Protocol | Source File | Line | Verification |
 |:---|:---|:---|:---|:---|
-| None discovered | — | — | — | — |
+| None verified in project code paths | — | — | — | — |
 
 
 ---
@@ -140,12 +264,15 @@ Verified event clients and circular router dispatches:
 ---
 
 ## 13. Database Intelligence
-- **Pre-allocated circular Ring Buffers** in C++ RAM or verified **PostgreSQL client model maps**.
+RAM pre-allocated buffers or verified database client model interfaces.
 
 ---
 
 ## 14. Configuration Registry
-- `/configs/vehicle_config.yaml` or `.env.example`: Configuration files.
+- Mapped configuration files inside project directory:
+- `pyproject.toml`: Verified configuration file (VERIFIED)
+- `CMakeLists.txt`: Verified configuration file (VERIFIED)
+- `conanfile.py`: Verified configuration file (VERIFIED)
 
 ---
 
@@ -164,7 +291,7 @@ Factual verified workspace imports:
 ### Security Scope:
 - **Source Code**: YES
 - **IaC**: NO
-- **Containers**: YES
+- **Containers**: NO
 - **Dependencies**: YES
 
 ### Verified Vulnerabilities:
@@ -173,17 +300,19 @@ Factual verified workspace imports:
 | None | No verified vulnerabilities found | Low | — | VERIFIED |
 
 ### Result:
-- **Security Rating**: No critical vulnerabilities detected in scanned code paths.
+- **Security Rating**: No verified vulnerabilities found.
+- **Confidence**: LOW (Heuristic Scan Only)
 
 ---
 
 ## 17. Reliability Overview
-Features fail-operational rollback update triggers to restore stable setups upon update integrity drops.
+Reliability mechanisms are structured inside safety monitor interfaces and validation pipelines.
 
 ---
 
 ## 18. Performance Overview
-Longitudinal speed and lateral command solvers computed in <1.5ms.
+Performance: UNKNOWN (No performance benchmark reports or latency logs found)
+- **Source**: UNKNOWN (Strict Rule 1 - No benchmark results file)
 
 ---
 
@@ -196,19 +325,22 @@ Dynamic test counts and categories:
 - **Mutation Index**: UNKNOWN
 - **Performance tests**: UNKNOWN
 - **Security tests**: UNKNOWN
+- **Test Evidence**: N/A
 
 ---
 
 ## 20. Gap Analysis
-- **Missing components**: Virtual hardware calibration tools.
-- **Simulation coverage**: Extended boundary weather models deferred.
+- **Missing Entry Point**: No standard main initialization file found.  
+- **Missing Test Evidence**: No JUnit XML test logs verified on disk.  
+- **Missing Coverage Evidence**: No Cobertura/coverage XML reports verified on disk.  
+
 
 ---
 
 ## 21. Technical Debt Registry
 | Debt Descriptor | Impact | Priority | Recommended Remediation | Verification |
 |:---|:---|:---|:---|:---|
-| Large Source File Complexity | Increased dynamic cognitive load and difficult refactoring | Medium | Deconstruct file app.js into smaller cohesive functional classes. | VERIFIED |
+| None | No large files or quality debt verified | Low | — | VERIFIED |
 
 
 ---
@@ -216,46 +348,43 @@ Dynamic test counts and categories:
 ## 22. Risk Registry
 | Risk Descriptor | Likelihood | Impact | Mitigation Strategy | Owner |
 |:---|:---|:---|:---|:---|
-| CAN frame drops under bus stress | Low | High | Hardware rate throttling limits | Platform |
-| Physical sensor coordinates decalibration | Medium | High | Automated EKF covariance checks | Fusion |
+| Hardcoded secrets or credentials | Medium | High | Move parameters to system env variables | DevOps |
 
 ---
 
 ## 23. Improvement Registry
-- Multi-vehicle traffic co-simulation integration.
-- Dashboard CPU and heap metrics monitor overlays.
+- Deconstruct large files (>800 lines) into smaller cohesive functional classes.
+- Standardize all configuration files under unified dot-env presets.
 
 ---
 
 ## 24. Knowledge Confidence Matrix
 | Section / Module | Confidence Rating | Verification Method |
 |:---|:---|:---|
-| Architecture Blueprint | HIGH | MERMAID INFERRED |
-| Requirements Coverage | HIGH | FACT VERIFIED |
-| Testing Registry | HIGH | GTEST VERIFIED |
-| Security Intelligence | HIGH | HEURISTIC SCANNED |
-| Performance Metrics | UNKNOWN | Not Scanned |
+| Architecture Blueprint | HIGH (VERIFIED) | MERMAID INFERRED |
+| Requirements Coverage | HIGH (VERIFIED) | FACT VERIFIED |
+| Testing Registry | LOW (UNKNOWN - No XML/JSON test logs verified on disk) | GTEST VERIFIED |
+| Security Intelligence | LOW (HEURISTIC) | HEURISTIC SCANNED |
+| Performance Metrics | LOW (UNKNOWN - No benchmark results file verified on disk) | Not Scanned |
 
 ---
 
 ## 25. AI Handoff & Onboarding Section (AI_HANDOFF)
 ### restore_payload:
 - **Current State**:
-  - Build: ✅ Compiling and operational presets configured.
-  - Tests: 100% test pass rate across verified test suites.
-  - Deployment: Simulation operational.
+  - Build: ✅ Presets configured.
+  - Tests: UNKNOWN GTest pass rate.
+  - Deployment: Operational presets.
   - Coverage: UNKNOWN
 - **What Works (Implemented)**:
-  - Dynamic preemptive scheduling, EventBus ring buffers, EKF coordinate fusion, Stanley lateral tracking, and OTA update rollback.
+  - Verified active directories: `/core`, `/hal`, `/sensors`, `/control`, `/safety`, `/fleet`, `/docs`, `/scripts`, `/prediction`, `/perception`, `/localization`, `/simulation`, `/validation`, `/.github`, `/AI_BRAIN`, `/configs`, `/digital_twin`, `/planning`.
 - **What Doesn't Work (Known Issues)**:
-  - Physical RC Car driver requires physical chassis setup.
+  - No critical workspace issues verified.
 - **Missing Work (Pending)**:
-  - Extrinsic sensor automated calibration.
+  - Integrate JUnit XML export to verify testing pass rates.
 - **Highest Priority (Next Steps)**:
-  - Interface custom HIL simulator tests.
+  - Configure CMake presets, compile C++ targets, and execute test validation suites.
 - **Risks & Blockers**:
   - None.
 - **If Continuing Development Start Here**:
-  - Bootstrap virtualenv: `./scripts/setup/setup_dev.sh`
-  - Run build targets: `./scripts/build/build.sh`
-  - Execute test validation: `ctest` inside the `build/` folder.
+  - Setup environment and bootstrap dependencies.

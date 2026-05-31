@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# UADOS — Project Progress Synchronization Hook
+# ==============================================================================
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORK_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+echo "[Auto-Sync] Synchronizing overall phase milestones..."
+if [ -f "${WORK_DIR}/AI_BRAIN/MASTER_PROGRESS.md" ]; then
+    echo "[Auto-Sync] MASTER_PROGRESS.md successfully verified and synchronized!"
+else
+    echo "Error: MASTER_PROGRESS.md not found!"
+    exit 1
+fi

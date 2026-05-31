@@ -1,0 +1,28 @@
+name: UADOS Documentation & Project Brain Sync
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  sync-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Execute Code Understanding Engine
+        run: |
+          chmod +x ./scripts/update-project-brain
+          ./scripts/update-project-brain
+
+      - name: Verify Documentation Synchronized
+        run: |
+          git diff --exit-code AI_BRAIN/PROJECT_BRAIN.md CODE_UNDERSTANDING.md AI_CONTEXT_PACKAGE.md || (echo "Error: Generated docs are out of sync! Please run update-project-brain locally." && exit 1)

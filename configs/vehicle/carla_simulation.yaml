@@ -1,0 +1,148 @@
+# UADOS Vehicle Configuration — CARLA Simulation
+# This configuration is used when running against the CARLA simulator
+
+vehicle:
+  name: "carla_ego_vehicle"
+  driver: "uados::hal::CARLADriver"
+  platform: "simulation"
+
+  connection:
+    host: "localhost"
+    port: 2000
+    timeout_ms: 5000
+
+  capabilities:
+    max_steering_angle_deg: 70.0
+    max_speed_ms: 50.0          # ~180 km/h
+    max_acceleration_ms2: 4.0
+    max_deceleration_ms2: 8.0
+    wheelbase_m: 2.875
+    track_width_m: 1.6
+
+  spawn:
+    map: "Town03"
+    spawn_point: 0              # Spawn point index (0 = default)
+    vehicle_type: "vehicle.tesla.model3"
+
+sensors:
+  - id: "front_camera"
+    type: camera
+    driver: "uados::sensors::CARLACamera"
+    params:
+      resolution: [1920, 1080]
+      fov_deg: 90
+      fps: 30
+    mount:
+      position: [2.0, 0.0, 1.5]        # x, y, z in vehicle frame (m)
+      rotation: [0.0, 0.0, 0.0]        # roll, pitch, yaw (deg)
+
+  - id: "rear_camera"
+    type: camera
+    driver: "uados::sensors::CARLACamera"
+    params:
+      resolution: [1280, 720]
+      fov_deg: 110
+      fps: 15
+    mount:
+      position: [-1.0, 0.0, 1.5]
+      rotation: [0.0, 0.0, 180.0]
+
+  - id: "top_lidar"
+    type: lidar
+    driver: "uados::sensors::CARLALiDAR"
+    params:
+      channels: 64
+      range_m: 100.0
+      points_per_second: 300000
+      rotation_frequency_hz: 10
+      upper_fov_deg: 10.0
+      lower_fov_deg: -30.0
+    mount:
+      position: [0.0, 0.0, 2.4]
+      rotation: [0.0, 0.0, 0.0]
+
+  - id: "front_radar"
+    type: radar
+    driver: "uados::sensors::CARLARadar"
+    params:
+      horizontal_fov_deg: 30
+      vertical_fov_deg: 10
+      range_m: 200.0
+      points_per_second: 1500
+    mount:
+      position: [3.5, 0.0, 0.5]
+      rotation: [0.0, 0.0, 0.0]
+
+  - id: "gnss"
+    type: gps
+    driver: "uados::sensors::CARLAGPS"
+    params:
+      noise_alt_stddev: 0.0
+      noise_lat_stddev: 0.0
+      noise_lon_stddev: 0.0
+    mount:
+      position: [0.0, 0.0, 2.0]
+
+  - id: "imu"
+    type: imu
+    driver: "uados::sensors::CARLAIMU"
+    params:
+      noise_accel_stddev: 0.01
+      noise_gyro_stddev: 0.001
+    mount:
+      position: [0.0, 0.0, 0.0]
+
+scheduler:
+  perception:
+    priority: 8
+    period_ms: 100
+  localization:
+    priority: 8
+    period_ms: 50
+  prediction:
+    priority: 7
+    period_ms: 100
+  planning:
+    priority: 9
+    period_ms: 50
+  control:
+    priority: 10
+    period_ms: 10
+  safety:
+    priority: 11        # Highest priority
+    period_ms: 10
+  recording:
+    priority: 3
+    period_ms: 100
+
+safety:
+  envelope:
+    max_speed_ms: 30.0
+    max_acceleration_ms2: 3.0
+    max_deceleration_ms2: 6.0
+    max_lateral_accel_ms2: 2.5
+    max_yaw_rate_rads: 0.5
+    min_following_distance_m: 5.0
+    min_obstacle_clearance_m: 1.5
+    max_steering_rate_rads: 0.5
+
+  watchdog:
+    perception_timeout_ms: 500
+    planning_timeout_ms: 200
+    control_timeout_ms: 50
+    localization_timeout_ms: 200
+
+logging:
+  level: info            # trace, debug, info, warn, error, critical
+  pattern: "[%Y-%m-%d %H:%M:%S.%f] [%^%l%$] [%n] [tid:%t] %v"
+  file:
+    enabled: true
+    path: "logs/uados.log"
+    max_size_mb: 100
+    max_files: 10
+
+recording:
+  enabled: true
+  output_dir: "recordings/"
+  compress: true
+  sensors: ["front_camera", "top_lidar", "front_radar", "gnss", "imu"]

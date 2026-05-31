@@ -1,0 +1,227 @@
+# ============================================================================
+# UADOS CI/CD Pipeline
+# Build, lint, test, and coverage for all platforms
+# ============================================================================
+
+name: UADOS CI
+
+on:
+  push:
+    branches: [main, develop, "release/**"]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CONAN_HOME: ${{ github.workspace }}/.conan2
+  BUILD_TYPE: Release
+
+jobs:
+  # --------------------------------------------------------------------------
+  # C++ Build & Test
+  # --------------------------------------------------------------------------
+  cpp-build:
+    name: "C++ Build (${{ matrix.os }}, ${{ matrix.compiler }})"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            compiler: gcc-13
+            cc: gcc-13
+            cxx: g++-13
+          - os: ubuntu-24.04
+            compiler: clang-17
+            cc: clang-17
+            cxx: clang++-17
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ${{ matrix.cc }} ${{ matrix.cxx || '' }} \
+            cmake ninja-build \
+            python3-pip python3-venv
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Conan
+        run: |
+          pip install conan
+          conan profile detect --force
+
+      - name: Cache Conan packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CONAN_HOME }}
+          key: conan-${{ matrix.os }}-${{ matrix.compiler }}-${{ hashFiles('conanfile.py') }}
+          restore-keys: |
+            conan-${{ matrix.os }}-${{ matrix.compiler }}-
+
+      - name: Install dependencies
+        run: |
+          conan install . \
+            --output-folder=build \
+            --build=missing \
+            -s compiler=${{ matrix.cc == 'gcc-13' && 'gcc' || 'clang' }} \
+            -s compiler.version=${{ matrix.cc == 'gcc-13' && '13' || '17' }} \
+            -s compiler.cppstd=20 \
+            -s build_type=${{ env.BUILD_TYPE }}
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+
+      - name: Configure
+        run: |
+          cmake --preset conan-release \
+            -DUADOS_BUILD_TESTS=ON \
+            -DUADOS_BUILD_BENCHMARKS=OFF
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+
+      - name: Build
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} -j $(nproc)
+
+      - name: Test
+        working-directory: build
+        run: ctest --output-on-failure --timeout 120 -j $(nproc)
+
+  # --------------------------------------------------------------------------
+  # C++ Lint
+  # --------------------------------------------------------------------------
+  cpp-lint:
+    name: "C++ Lint (clang-tidy)"
+    runs-on: ubuntu-24.04
+    needs: cpp-build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run clang-tidy
+        run: |
+          sudo apt-get update && sudo apt-get install -y clang-tidy-17
+          find core hal sensors -name '*.cpp' -o -name '*.hpp' | \
+            xargs clang-tidy-17 -p build --warnings-as-errors='*'
+
+  # --------------------------------------------------------------------------
+  # C++ Coverage
+  # --------------------------------------------------------------------------
+  cpp-coverage:
+    name: "C++ Coverage"
+    runs-on: ubuntu-24.04
+    needs: cpp-build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build with coverage
+        run: |
+          pip install conan
+          conan install . --output-folder=build --build=missing -o enable_coverage=True
+          cmake --preset conan-release -DUADOS_ENABLE_COVERAGE=ON -DUADOS_BUILD_TESTS=ON
+          cmake --build build -j $(nproc)
+
+      - name: Run tests
+        working-directory: build
+        run: ctest --output-on-failure -j $(nproc)
+
+      - name: Generate coverage report
+        run: |
+          sudo apt-get install -y lcov
+          lcov --capture --directory build --output-file coverage.info
+          lcov --remove coverage.info '/usr/*' '*/tests/*' '*/third_party/*' \
+            --output-file coverage.filtered.info
+          lcov --list coverage.filtered.info
+
+      - name: Check coverage threshold
+        run: |
+          COVERAGE=$(lcov --summary coverage.filtered.info 2>&1 | \
+            grep 'lines' | awk '{print $2}' | tr -d '%')
+          echo "Coverage: ${COVERAGE}%"
+          if (( $(echo "$COVERAGE < 90" | bc -l) )); then
+            echo "::error::Coverage ${COVERAGE}% is below 90% threshold"
+            exit 1
+          fi
+
+  # --------------------------------------------------------------------------
+  # Python Lint & Test
+  # --------------------------------------------------------------------------
+  python:
+    name: "Python Lint & Test"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]"
+
+      - name: Lint (ruff)
+        run: ruff check tools/ scripts/
+
+      - name: Format check (black)
+        run: black --check tools/ scripts/
+
+      - name: Type check (mypy)
+        run: mypy tools/ --ignore-missing-imports
+
+      - name: Test (pytest)
+        run: pytest --cov-fail-under=90
+
+  # --------------------------------------------------------------------------
+  # Documentation
+  # --------------------------------------------------------------------------
+  docs:
+    name: "Documentation"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check markdown
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: "**/*.md"
+          config: ".markdownlint.yml"
+
+      - name: Build Sphinx docs
+        run: |
+          pip install sphinx sphinx-rtd-theme myst-parser
+          cd docs && make html
+
+  # --------------------------------------------------------------------------
+  # Security Scan
+  # --------------------------------------------------------------------------
+  security:
+    name: "Security Scan"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: cpp, python
+
+      - name: Build for CodeQL
+        run: |
+          pip install conan
+          conan install . --output-folder=build --build=missing
+          cmake --preset conan-release
+          cmake --build build -j $(nproc)
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3

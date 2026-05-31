@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Universal AI Project Brain Framework (AIPBF) Onboarding Installer
+# ==============================================================================
+# Bootstraps the framework, verifies environment configs, and initializes
+# repository audits and synchronizations.
+# ==============================================================================
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORK_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+echo "====== AIPBF Installer Bootstrapping ======"
+echo "Target Workspace: ${WORK_DIR}"
+echo "==========================================="
+
+# 1. Detect Python3
+if ! command -v python3 &> /dev/null; then
+    echo "Error: python3 is required but could not be located in PATH."
+    exit 1
+fi
+
+# 2. Check dependencies
+echo "[Install] Checking python libraries..."
+# The framework is lightweight and has zero external dependencies! 
+# Standard libraries (pathlib, argparse, re, json, datetime) are always present.
+
+# 3. Create hooks or trigger first scan
+echo "[Install] Running initial repository crawling analysis..."
+python3 "${WORK_DIR}/tools/project_brain/project_brain.py" --init --scan --path "${WORK_DIR}"
+
+# 4. Inject Git pre-commit hook automatically to ensure PROJECT_BRAIN is never stale!
+HOOK_FILE="${WORK_DIR}/.git/hooks/pre-commit"
+if [ -d "${WORK_DIR}/.git" ]; then
+    echo "[Install] Injecting automated Git pre-commit hook to prevent stale docs..."
+    cat << 'EOF' > "${HOOK_FILE}"
+#!/usr/bin/env bash
+# AIPBF Pre-Commit Auto-Sync Hook
+python3 tools/project_brain/project_brain.py --scan
+git add AI_BRAIN/PROJECT_BRAIN.md CODE_UNDERSTANDING.md AI_CONTEXT_PACKAGE.md
+EOF
+    chmod +x "${HOOK_FILE}"
+    echo "[Install] Pre-commit hook successfully established!"
+fi
+
+echo "====== AIPBF Onboarding Completed Successfully! ======"
+echo "Master document generated at: /AI_BRAIN/PROJECT_BRAIN.md"

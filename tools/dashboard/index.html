@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UADOS — Digital Twin & Simulation Platform</title>
+    
+    <!-- Modern Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Outfit:wght@100..900&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Vanilla CSS link -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="cyber-grid-bg"></div>
+    <div class="glow-orb glow-orb-1"></div>
+    <div class="glow-orb glow-orb-2"></div>
+
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo-container">
+                    <div class="logo-icon"><i data-lucide="cpu"></i></div>
+                    <div class="logo-text">
+                        <h1>UADOS</h1>
+                        <span>Universal Autonomous Driving Operating System</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="header-middle">
+                <div class="platform-selector">
+                    <button class="platform-btn active" data-platform="sim" onclick="setPlatform('sim')">
+                        <i data-lucide="clapperboard"></i> CARLA SIMULATOR
+                    </button>
+                    <button class="platform-btn" data-platform="rc" onclick="setPlatform('rc')">
+                        <i data-lucide="toy-brick"></i> SUB-SCALE 1/10 RC CAR
+                    </button>
+                    <button class="platform-btn" data-platform="prod" onclick="setPlatform('prod')">
+                        <i data-lucide="cable-car"></i> PRODUCTION VEHICLE
+                    </button>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="status-badge nominal" id="system-status-badge">
+                    <span class="pulse-dot"></span>
+                    <span id="system-status-text">SYSTEM NOMINAL</span>
+                </div>
+                <div class="version-tag">v0.1.0</div>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <main class="app-main">
+            <!-- LEFT COLUMN: HARDWARE & SAFETY -->
+            <section class="column col-left">
+                <!-- HARDWARE CONTROL CENTER -->
+                <div class="card glass">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i data-lucide="sliders"></i>
+                            <h2>Hardware Control Center</h2>
+                        </div>
+                        <span class="badge" id="driver-mode-badge">AUTONOMOUS</span>
+                    </div>
+                    <div class="card-content">
+                        <!-- Mode Selector -->
+                        <div class="control-row">
+                            <label>Control Mode</label>
+                            <div class="segmented-control">
+                                <button class="segment-btn active" id="mode-auto" onclick="setControlMode('auto')">Auto</button>
+                                <button class="segment-btn" id="mode-manual" onclick="setControlMode('manual')">Teleop</button>
+                            </div>
+                        </div>
+
+                        <!-- Steer limits display -->
+                        <div class="actuator-limits-box">
+                            <div class="limit-item">
+                                <span class="limit-label">Steer Boundary</span>
+                                <span class="limit-val" id="limit-steer-label">±25.0°</span>
+                            </div>
+                            <div class="limit-item">
+                                <span class="limit-label">Velocity Ceiling</span>
+                                <span class="limit-val" id="limit-speed-label">25.0 m/s</span>
+                            </div>
+                        </div>
+
+                        <!-- Manual Actuators Sliders (teleoperation) -->
+                        <div class="slider-group" id="manual-controls" style="opacity: 0.5; pointer-events: none;">
+                            <div class="slider-container">
+                                <div class="slider-label-row">
+                                    <label><i data-lucide="compass"></i> Steering Input</label>
+                                    <span class="slider-value" id="val-steer">0.0°</span>
+                                </div>
+                                <input type="range" min="-25" max="25" step="0.5" value="0" class="cyber-range" id="input-steer" oninput="updateManualInput()">
+                                <div class="slider-ticks"><span>-25°</span><span>0°</span><span>25°</span></div>
+                            </div>
+
+                            <div class="slider-container">
+                                <div class="slider-label-row">
+                                    <label><i data-lucide="gauge"></i> Throttle Drive</label>
+                                    <span class="slider-value" id="val-throttle">0%</span>
+                                </div>
+                                <input type="range" min="0" max="100" step="1" value="0" class="cyber-range" id="input-throttle" oninput="updateManualInput()">
+                                <div class="slider-ticks"><span>0%</span><span>50%</span><span>100%</span></div>
+                            </div>
+
+                            <div class="slider-container">
+                                <div class="slider-label-row">
+                                    <label><i data-lucide="zap-off"></i> Braking Pressure</label>
+                                    <span class="slider-value" id="val-brake">0%</span>
+                                </div>
+                                <input type="range" min="0" max="100" step="1" value="0" class="cyber-range" id="input-brake" oninput="updateManualInput()">
+                                <div class="slider-ticks"><span>0%</span><span>50%</span><span>100%</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SAFETY PLATFORM MONITOR (ASIL-B) -->
+                <div class="card glass safety-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i data-lucide="shield-alert" class="safety-icon"></i>
+                            <h2>Safety Platform Monitor <span class="asil-badge">ASIL-B</span></h2>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <!-- Invariant Check Gates -->
+                        <div class="gates-grid">
+                            <div class="gate-item pass" id="gate-speed">
+                                <i data-lucide="check-circle-2"></i>
+                                <span>Speed Ceiling Check</span>
+                            </div>
+                            <div class="gate-item pass" id="gate-decel">
+                                <i data-lucide="check-circle-2"></i>
+                                <span>Absolute Decel Check</span>
+                            </div>
+                            <div class="gate-item pass" id="gate-steer">
+                                <i data-lucide="check-circle-2"></i>
+                                <span>Steer Limit Envelope</span>
+                            </div>
+                            <div class="gate-item pass" id="gate-lateral">
+                                <i data-lucide="check-circle-2"></i>
+                                <span>ODD Lateral Bound</span>
+                            </div>
+                            <div class="gate-item pass" id="gate-clearance">
+                                <i data-lucide="check-circle-2"></i>
+                                <span>Ego Clearance Gate</span>
+                            </div>
+                            <div class="gate-item pass" id="gate-bos">
+                                <i data-lucide="check-circle-2"></i>
+                                <span>BOS Interlock Check</span>
+                            </div>
+                        </div>
+
+                        <!-- ERS State Machine -->
+                        <div class="ers-box">
+                            <span class="section-subtitle">Emergency Response System (ERS)</span>
+                            <div class="ers-states">
+                                <div class="ers-state-indicator active" id="ers-safe">
+                                    <i data-lucide="shield-check"></i>
+                                    <span>SAFE</span>
+                                </div>
+                                <div class="ers-state-indicator" id="ers-mrc">
+                                    <i data-lucide="alert-triangle"></i>
+                                    <span>ACTIVE MRC</span>
+                                </div>
+                                <div class="ers-state-indicator" id="ers-lock">
+                                    <i data-lucide="lock"></i>
+                                    <span>SAFESTATE LOCK</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Safety Injection Buttons -->
+                        <div class="safety-actions">
+                            <button class="btn btn-warning" onclick="injectFault('steer_drift')">
+                                <i data-lucide="zap"></i> Inject Steer Drift
+                            </button>
+                            <button class="btn btn-warning" onclick="injectFault('sensor_spike')">
+                                <i data-lucide="zap"></i> Invalidate Lidar
+                            </button>
+                            <button class="btn btn-danger" onclick="triggerActiveMRC()">
+                                <i data-lucide="octagon-alert"></i> Manual Active MRC
+                            </button>
+                            <button class="btn btn-secondary" onclick="resetSafetyMonitor()">
+                                <i data-lucide="refresh-cw"></i> Reset Safety Hub
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MIDDLE COLUMN: 3D DIGITAL TWIN SIMULATION -->
+            <section class="column col-middle">
+                <div class="card glass sim-viewport-card">
+                    <div class="viewport-header">
+                        <div class="telemetry-bar">
+                            <div class="telemetry-cell">
+                                <span class="label">VELOCITY</span>
+                                <span class="val font-mono" id="tel-velocity">0.0 m/s</span>
+                            </div>
+                            <div class="telemetry-cell">
+                                <span class="label">STEER ANGLE</span>
+                                <span class="val font-mono" id="tel-steer">0.0°</span>
+                            </div>
+                            <div class="telemetry-cell">
+                                <span class="label">SLIP ANGLE (β)</span>
+                                <span class="val font-mono" id="tel-slip">0.00°</span>
+                            </div>
+                            <div class="telemetry-cell">
+                                <span class="label">YAW RATE</span>
+                                <span class="val font-mono" id="tel-yaw">0.0°/s</span>
+                            </div>
+                            <div class="telemetry-cell">
+                                <span class="label">GPS Tangent</span>
+                                <span class="val font-mono" id="tel-gps">0.00, 0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- The Canvas Container -->
+                    <div class="simulation-canvas-container">
+                        <canvas id="simulation-canvas"></canvas>
+                        
+                        <!-- HUD overlay elements -->
+                        <div class="hud-overlay overlay-top-left">
+                            <span class="hud-stat"><i data-lucide="navigation"></i> HEADING: <span id="hud-heading">0.0°</span></span>
+                            <span class="hud-stat"><i data-lucide="route"></i> WAYPOINT CURVATURE: <span id="hud-curvature">0.000</span></span>
+                        </div>
+                        <div class="hud-overlay overlay-top-right">
+                            <span class="hud-stat"><i data-lucide="satellite"></i> EKF POSE FUSION: <span class="hud-ok">ACTIVE</span></span>
+                            <span class="hud-stat"><i data-lucide="radio"></i> STANLEY ERROR: <span id="hud-stanley-err">0.00m</span></span>
+                        </div>
+                        
+                        <!-- Floating controls -->
+                        <div class="hud-floating-controls">
+                            <button class="hud-ctrl-btn" onclick="toggleSimPlay()" id="btn-sim-play" title="Pause/Play Simulation">
+                                <i data-lucide="pause"></i>
+                            </button>
+                            <button class="hud-ctrl-btn" onclick="resetVehiclePosition()" title="Reset Vehicle">
+                                <i data-lucide="rotate-ccw"></i>
+                            </button>
+                            <button class="hud-ctrl-btn" onclick="toggleSensorVis()" id="btn-sensor-vis" title="Toggle Sensor Projection Layers">
+                                <i data-lucide="eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT COLUMN: TELEMETRY, OTA & PROFILER -->
+            <section class="column col-right">
+                <!-- FLEET TELEMETRY & OTA OPERATIONS -->
+                <div class="card glass">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i data-lucide="send"></i>
+                            <h2>Fleet & OTA Operations Center</h2>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <!-- Cell packaging diagnostics -->
+                        <div class="fleet-metrics-box">
+                            <div class="metric-mini">
+                                <span class="lbl">Cell Coverage</span>
+                                <span class="vld nominal"><i data-lucide="signal"></i> 4G / 5G</span>
+                            </div>
+                            <div class="metric-mini">
+                                <span class="lbl">Format Std</span>
+                                <span class="vld">ISO-8601 JSON</span>
+                            </div>
+                            <div class="metric-mini">
+                                <span class="lbl">Diagnostics Pack</span>
+                                <span class="vld" id="ota-diagnostics-badge">NOMINAL</span>
+                            </div>
+                        </div>
+
+                        <!-- OTA Package Manager -->
+                        <div class="ota-updater-box">
+                            <span class="section-subtitle"><i data-lucide="download-cloud"></i> Software Deployment Suite</span>
+                            <div class="ota-inputs">
+                                <div class="input-row">
+                                    <label for="ota-version">Target Version</label>
+                                    <input type="text" id="ota-version" value="0.2.0" class="cyber-input" placeholder="e.g. 0.2.0">
+                                </div>
+                                <div class="input-row">
+                                    <label for="ota-checksum">DJB2 Checksum</label>
+                                    <input type="text" id="ota-checksum" value="208752391" class="cyber-input" placeholder="e.g. 208752391">
+                                </div>
+                                <div class="ota-btn-row">
+                                    <button class="btn btn-primary" onclick="triggerOTAUpdate()">Deploy OTA Update</button>
+                                    <button class="btn btn-secondary" onclick="simulateOTAFailure()">Simulate Corrupt OTA</button>
+                                </div>
+                            </div>
+                            
+                            <!-- OTA Progress Bar -->
+                            <div class="ota-progress-container" id="ota-progress-container" style="display: none;">
+                                <div class="ota-progress-header">
+                                    <span id="ota-step-label">VERIFYING SIGNATURES...</span>
+                                    <span id="ota-progress-percent">0%</span>
+                                </div>
+                                <div class="ota-progress-bar-bg">
+                                    <div class="ota-progress-bar-fill" id="ota-progress-fill" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REAL-TIME HARDENING PROFILER -->
+                <div class="card glass hardening-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i data-lucide="activity"></i>
+                            <h2>Production Hardening Profiler</h2>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="profiler-hud">
+                            <div class="prof-stat">
+                                <span class="lbl">SCHEDULER ITERATION</span>
+                                <span class="val font-mono">10.0 ms</span>
+                            </div>
+                            <div class="prof-stat">
+                                <span class="lbl">LOOP JITTER BOUNDS</span>
+                                <span class="val font-mono text-cyan" id="prof-jitter">0.12 ms</span>
+                            </div>
+                            <div class="prof-stat">
+                                <span class="lbl">HEAP FOOTPRINT</span>
+                                <span class="val font-mono text-cyan" id="prof-leak">14.2 MB</span>
+                            </div>
+                            <div class="prof-stat">
+                                <span class="lbl">EXECUTION LATENCY</span>
+                                <span class="val font-mono text-cyan" id="prof-latency">182 µs</span>
+                            </div>
+                        </div>
+
+                        <!-- Loop Timing Jitter Graph -->
+                        <div class="graph-container">
+                            <div class="graph-label-overlay">Scheduler Loop Jitter (Jitter Gate: 2.0ms)</div>
+                            <canvas id="jitter-graph"></canvas>
+                        </div>
+
+                        <!-- Real-time structured log console -->
+                        <div class="console-box">
+                            <div class="console-header">
+                                <span>Structured System Logs</span>
+                                <div class="console-filters">
+                                    <button class="filter-btn active" data-filter="all" onclick="setConsoleFilter('all')">ALL</button>
+                                    <button class="filter-btn" data-filter="info" onclick="setConsoleFilter('info')">INFO</button>
+                                    <button class="filter-btn" data-filter="warn" onclick="setConsoleFilter('warn')">WARN</button>
+                                    <button class="filter-btn" data-filter="error" onclick="setConsoleFilter('error')">ERR</button>
+                                </div>
+                            </div>
+                            <div class="console-body font-mono" id="system-console">
+                                <!-- Dynamic logs filled by app.js -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+# UADOS Vehicle Configuration — 1/10 Scale RC Car
+# Physical test platform for validation before production vehicle
+
+vehicle:
+  name: "rc_car_traxxas"
+  driver: "uados::hal::RCCarDriver"
+  platform: "rc_car"
+
+  connection:
+    serial_port: "/dev/ttyACM0"  # Arduino/Teensy USB serial
+    baud_rate: 115200
+    timeout_ms: 100
+
+  capabilities:
+    max_steering_angle_deg: 35.0
+    max_speed_ms: 8.0             # ~29 km/h (1/10 scale)
+    max_acceleration_ms2: 5.0
+    max_deceleration_ms2: 10.0
+    wheelbase_m: 0.325            # Traxxas Slash wheelbase
+    track_width_m: 0.295
+
+  hardware:
+    steering_servo:
+      channel: 0
+      min_pwm: 1000
+      max_pwm: 2000
+      center_pwm: 1500
+      invert: false
+    esc:
+      channel: 1
+      min_pwm: 1000              # Full reverse
+      max_pwm: 2000              # Full forward
+      neutral_pwm: 1500
+      arm_sequence: true         # ESC requires arming
+
+sensors:
+  - id: "front_depth_camera"
+    type: camera
+    driver: "uados::sensors::RealSenseCamera"
+    params:
+      resolution: [640, 480]
+      fps: 30
+      depth_enabled: true
+      depth_resolution: [640, 480]
+      depth_fps: 30
+    mount:
+      position: [0.15, 0.0, 0.12]     # Front-center, 12cm high
+      rotation: [0.0, 0.0, 0.0]
+
+  - id: "planar_lidar"
+    type: lidar
+    driver: "uados::sensors::RPLiDARDriver"
+    params:
+      model: "A1"                      # RPLiDAR A1 (indoor)
+      serial_port: "/dev/ttyUSB0"
+      baud_rate: 115200
+      scan_frequency_hz: 5.5
+      range_m: 12.0
+    mount:
+      position: [0.0, 0.0, 0.15]      # Center, top-mounted
+      rotation: [0.0, 0.0, 0.0]
+
+  - id: "gps"
+    type: gps
+    driver: "uados::sensors::UBloxGPS"
+    params:
+      serial_port: "/dev/ttyACM1"
+      baud_rate: 115200
+      protocol: "UBX"
+      rate_hz: 10
+    mount:
+      position: [0.0, 0.0, 0.15]
+
+  - id: "imu"
+    type: imu
+    driver: "uados::sensors::BNO055Driver"
+    params:
+      i2c_bus: 1
+      i2c_address: 0x28
+      mode: "NDOF"                     # 9-DOF fusion mode
+      rate_hz: 100
+    mount:
+      position: [0.0, 0.0, 0.05]      # Center, low
+
+scheduler:
+  perception:
+    priority: 8
+    period_ms: 200                     # Slower than sim (limited compute)
+  localization:
+    priority: 8
+    period_ms: 100
+  planning:
+    priority: 9
+    period_ms: 100
+  control:
+    priority: 10
+    period_ms: 20                      # 50 Hz control loop
+  safety:
+    priority: 11
+    period_ms: 20
+
+safety:
+  envelope:
+    max_speed_ms: 5.0                  # Conservative for RC car
+    max_acceleration_ms2: 3.0
+    max_deceleration_ms2: 8.0
+    max_lateral_accel_ms2: 2.0
+    max_yaw_rate_rads: 1.0
+    min_following_distance_m: 0.5      # Scaled for 1/10
+    min_obstacle_clearance_m: 0.3
+    max_steering_rate_rads: 1.0
+
+  watchdog:
+    perception_timeout_ms: 1000
+    planning_timeout_ms: 500
+    control_timeout_ms: 100
+    serial_timeout_ms: 200
+
+  hardware_failsafe:
+    enabled: true
+    signal_loss_action: "neutral"      # ESC goes neutral on signal loss
+    watchdog_timeout_ms: 500
+
+  geofence:
+    enabled: true
+    center_lat: 0.0                    # Set for your test area
+    center_lon: 0.0
+    radius_m: 50.0                     # 50m geofence radius
+
+logging:
+  level: debug
+  pattern: "[%Y-%m-%d %H:%M:%S.%f] [%^%l%$] [%n] [tid:%t] %v"
+
+recording:
+  enabled: true
+  output_dir: "recordings/rc_car/"
+  compress: false                      # Avoid CPU overhead on Jetson
+  sensors: ["front_depth_camera", "planar_lidar", "gps", "imu"]
+
+network:
+  telemetry:
+    enabled: true
+    host: "192.168.1.100"              # Ground station IP
+    port: 8080
+    protocol: "websocket"
+    rate_hz: 10

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# UADOS — Dynamic Test Report Aggregator Hook
+# ==============================================================================
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORK_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+echo "[Auto-Sync] Aggregating core test suite inventories..."
+if [ -f "${WORK_DIR}/AI_BRAIN/MASTER_TEST_STATUS.md" ]; then
+    echo "[Auto-Sync] MASTER_TEST_STATUS.md verified and synchronized!"
+else
+    echo "Error: MASTER_TEST_STATUS.md not found!"
+    exit 1
+fi

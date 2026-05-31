@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# UADOS — Project Brain Sync Automation Hook
+# ==============================================================================
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORK_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+echo "[Auto-Sync] Running Project Brain Sync..."
+python3 "${WORK_DIR}/tools/analysis/doc_generator.py"
+echo "[Auto-Sync] Project Brain Sync complete!"

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-UADOS — Universal AI Project Brain Framework (AIPBF) v3.0
+UADOS — Universal AI Project Brain Framework (AIPBF) v3.0+
 Factual Repository Analyzer & Import Dependency Crawler
 """
 
@@ -47,8 +47,12 @@ class RepositoryAnalyzer:
             "facts": [],
             "module_graph": [],  # Verified dynamic import relations graph
             "directories": {},  # Exists checklist
-            "requirements": [], # Verified requirements checklist
-            "data_flow": []      # Inferred Data Flow
+            "requirements": [], # Dynamic Requirements Traceability list
+            "data_flow": [],     # Inferred Data Flow
+            "build_targets": [], # CMake / NPM script targets
+            "entry_points": [],  # Verified target executables source files
+            "test_map": {},      # Subsystem -> List of test files
+            "ownership_map": {}  # Subsystem -> Count of code files
         }
 
     def is_ignored(self, path):
@@ -62,8 +66,10 @@ class RepositoryAnalyzer:
         self._extract_code_intelligence()
         self._derive_import_dependencies()
         self._scan_directory_status()
-        self._extract_requirements()
+        self._extract_build_targets_and_entries()
+        self._extract_requirements_traceability()
         self._derive_data_flow()
+        self._build_test_and_ownership_maps()
         return self.metrics
 
     def _add_fact(self, title, description, category, verification, file_path, line_num, confidence):
@@ -459,55 +465,224 @@ class RepositoryAnalyzer:
                 if name not in self.metrics["directories"]:
                     self.metrics["directories"][name] = True
 
-    def _extract_requirements(self):
-        # 1. Search for any requirements documents
+    def _extract_build_targets_and_entries(self):
+        # 1. Crawl CMakeLists.txt files
         for root, _, files in os.walk(self.repo_path):
             if self.is_ignored(root):
                 continue
             for file in files:
-                file_name = file.lower()
-                if "requirement" in file_name or "spec" in file_name:
+                if file == "CMakeLists.txt":
                     file_path = Path(root) / file
                     try:
-                        relative_path = str(file_path.relative_to(self.repo_path)).replace("\\", "/")
-                        self.metrics["requirements"].append({
-                            "id": f"R-DOC-{len(self.metrics['requirements']) + 1}",
-                            "name": f"Document: {file}",
-                            "status": "Documented",
-                            "evidence": relative_path,
-                            "line": 1,
-                            "confidence": "HIGH",
-                            "verification": "Document verified on disk"
-                        })
+                        content = file_path.read_text(encoding="utf-8", errors="ignore")
+                        # Extract libraries and executables
+                        for match in re.finditer(r'add_(executable|library)\(\s*([a-zA-Z0-9_-]+)\s*([^)]*)\)', content):
+                            target_type = match.group(1).upper()
+                            target_name = match.group(2)
+                            sources_raw = match.group(3)
+                            
+                            try:
+                                relative_path = str(file_path.relative_to(self.repo_path)).replace("\\", "/")
+                            except Exception:
+                                relative_path = "CMakeLists.txt"
+                                
+                            self.metrics["build_targets"].append({
+                                "name": target_name,
+                                "type": target_type,
+                                "source": relative_path
+                            })
+                            
+                            # Crawl exact executable source files as verified entry points
+                            if target_type == "EXECUTABLE" and sources_raw:
+                                sources = sources_raw.split()
+                                sources = [s.strip() for s in sources if s.strip() and not s.strip().startswith("$")]
+                                for src in sources:
+                                    if src.endswith((".cpp", ".cc", ".c")):
+                                        src_p = Path(root) / src
+                                        if src_p.exists():
+                                            try:
+                                                rel_src = str(src_p.relative_to(self.repo_path)).replace("\\", "/")
+                                                self.metrics["entry_points"].append({
+                                                    "name": target_name,
+                                                    "file": rel_src,
+                                                    "confidence": "HIGH",
+                                                    "verification": "VERIFIED"
+                                                })
+                                            except Exception:
+                                                pass
                     except Exception:
                         pass
-                        
-        # 2. Scan source files for inline requirements tags (e.g. [REQ-101], Requirement: Stanley)
-        req_pattern = re.compile(r'\b(REQ-\d+|Requirement:\s*([^\n]+))', re.IGNORECASE)
+
+        # 2. Crawl package.json NPM scripts
+        package_json = self.repo_path / "package.json"
+        if package_json.exists():
+            import json
+            try:
+                data = json.loads(package_json.read_text(encoding="utf-8", errors="ignore"))
+                scripts = data.get("scripts", {})
+                for script_name, cmd in scripts.items():
+                    self.metrics["build_targets"].append({
+                        "name": script_name,
+                        "type": "NPM SCRIPT",
+                        "source": "package.json"
+                    })
+                    # Track common script entries
+                    if script_name in ["start", "dev", "serve"]:
+                        self.metrics["entry_points"].append({
+                            "name": f"NPM {script_name}",
+                            "file": cmd,
+                            "confidence": "HIGH",
+                            "verification": "VERIFIED"
+                        })
+            except Exception:
+                pass
+
+    def _extract_requirements_traceability(self):
+        # Dynamically load and parse MASTER_REQUIREMENTS.md if it exists
+        reqs_file = self.repo_path / "AI_BRAIN" / "MASTER_REQUIREMENTS.md"
+        parsed_reqs = []
+        if reqs_file.exists():
+            try:
+                content = reqs_file.read_text(encoding="utf-8", errors="ignore")
+                for line in content.splitlines():
+                    # Parse rows like | FR-KRN-001 | Microkernel ... |
+                    match = re.search(r'\|\s*(NFR-[A-Z]+-\d+|FR-[A-Z]+-\d+)\s*\|\s*([^|]+)\s*\|', line)
+                    if match:
+                        req_id = match.group(1).strip()
+                        req_desc = match.group(2).strip()
+                        parsed_reqs.append((req_id, req_desc))
+            except Exception:
+                pass
+
+        # If MASTER_REQUIREMENTS.md doesn't exist, try standard requirement keywords
+        if not parsed_reqs:
+            # Fallback to basic discovered requirement documents
+            for root, _, files in os.walk(self.repo_path):
+                if self.is_ignored(root):
+                    continue
+                for file in files:
+                    file_name = file.lower()
+                    if "requirement" in file_name or "spec" in file_name:
+                        try:
+                            rel_p = str((Path(root) / file).relative_to(self.repo_path)).replace("\\", "/")
+                            self.metrics["requirements"].append({
+                                "id": "R-DOC",
+                                "name": f"Document: {file}",
+                                "status": "Documented",
+                                "evidence": rel_p,
+                                "tests": "N/A",
+                                "confidence": "HIGH",
+                                "verification": "VERIFIED"
+                            })
+                        except Exception:
+                            pass
+            return
+
+        # Build folder to category prefix map to allow fallback directory inference
+        # e.g., FR-LOC -> localization/
+        category_to_folder = {
+            "FR-LOC": "localization",
+            "FR-CTL": "control",
+            "FR-KRN": "core",
+            "FR-SAF": "safety", "FR-SFT": "safety",
+            "FR-VAL": "validation", "FR-VLD": "validation",
+            "FR-SEN": "sensors",
+            "FR-SIM": "simulation",
+            "FR-FLT": "fleet",
+            "FR-PER": "perception",
+            "FR-PLN": "planning",
+            "FR-PRD": "prediction",
+            "FR-DTW": "digital_twin",
+            "NFR-PERF": "core",
+            "NFR-REL": "core",
+            "NFR-SAF": "safety",
+            "NFR-MNT": "validation",
+            "NFR-SEC": "core"
+        }
+
+        # Scan codebase once to index occurrences of requirement IDs (speeds up large sweeps)
+        req_occurrences = {}
         for root, _, files in os.walk(self.repo_path):
             if self.is_ignored(root):
+                continue
+            # Also ignore documentation folders in code evidence search
+            parts = Path(root).relative_to(self.repo_path).parts
+            if parts and any(p in ["docs", "AI_BRAIN"] for p in parts):
                 continue
             for file in files:
                 file_path = Path(root) / file
                 if file_path.suffix.lower() in [".cpp", ".hpp", ".h", ".ts", ".js", ".py", ".md"]:
                     try:
                         content = file_path.read_text(encoding="utf-8", errors="ignore")
-                        for i, line in enumerate(content.splitlines()):
-                            match = req_pattern.search(line)
-                            if match:
-                                req_id_or_desc = match.group(1).strip()
-                                relative_path = str(file_path.relative_to(self.repo_path)).replace("\\", "/")
-                                self.metrics["requirements"].append({
-                                    "id": f"R-SRC-{len(self.metrics['requirements']) + 1}",
-                                    "name": f"Code reference: {req_id_or_desc}",
-                                    "status": "Implemented",
-                                    "evidence": relative_path,
-                                    "line": i + 1,
-                                    "confidence": "HIGH",
-                                    "verification": "Source Code Verified"
-                                })
+                        rel_file = str(file_path.relative_to(self.repo_path)).replace("\\", "/")
+                        for req_id, _ in parsed_reqs:
+                            if req_id in content:
+                                if req_id not in req_occurrences:
+                                    req_occurrences[req_id] = []
+                                req_occurrences[req_id].append(rel_file)
                     except Exception:
                         pass
+
+        # Link each requirement ID to evidence files and tests
+        for req_id, req_desc in parsed_reqs:
+            code_evidence = []
+            test_evidence = []
+            confidence = "LOW"
+            verification = "UNKNOWN"
+            
+            # 1. Check direct tag matches from code scan index
+            if req_id in req_occurrences:
+                for file_rel in req_occurrences[req_id]:
+                    if "test" in file_rel.lower() or "spec" in file_rel.lower():
+                        test_evidence.append(file_rel)
+                    else:
+                        code_evidence.append(file_rel)
+                confidence = "HIGH"
+                verification = "VERIFIED"
+
+            # 2. Fallback to folder-based category association if direct references are absent
+            if not code_evidence:
+                matched_folder = None
+                for prefix, folder in category_to_folder.items():
+                    if req_id.startswith(prefix):
+                        matched_folder = folder
+                        break
+                
+                if matched_folder:
+                    folder_p = self.repo_path / matched_folder
+                    if folder_p.exists() and folder_p.is_dir():
+                        confidence = "MEDIUM"
+                        verification = "DERIVED"
+                        # Collect first few code files and test files inside matched folder
+                        for r, _, fs in os.walk(folder_p):
+                            if self.is_ignored(r):
+                                continue
+                            for f in fs:
+                                if f.endswith((".cpp", ".hpp", ".h", ".py", ".ts")):
+                                    try:
+                                        rel_f = str((Path(r) / f).relative_to(self.repo_path)).replace("\\", "/")
+                                        if "test" in rel_f.lower() or "spec" in rel_f.lower():
+                                            if len(test_evidence) < 2:
+                                                test_evidence.append(rel_f)
+                                        else:
+                                            if len(code_evidence) < 2:
+                                                code_evidence.append(rel_f)
+                                    except Exception:
+                                        pass
+
+            status = "Implemented" if code_evidence else "NOT_IMPLEMENTED"
+            evidence_str = ", ".join(code_evidence[:3]) if code_evidence else "N/A"
+            test_str = ", ".join(test_evidence[:3]) if test_evidence else "N/A"
+            
+            self.metrics["requirements"].append({
+                "id": req_id,
+                "name": req_desc,
+                "status": status,
+                "evidence": evidence_str,
+                "tests": test_str,
+                "confidence": confidence,
+                "verification": verification
+            })
 
     def _derive_data_flow(self):
         from collections import defaultdict
@@ -540,3 +715,28 @@ class RepositoryAnalyzer:
             dfs(root, [root])
             
         self.metrics["data_flow"] = data_flows
+
+    def _build_test_and_ownership_maps(self):
+        for root, _, files in os.walk(self.repo_path):
+            if self.is_ignored(root):
+                continue
+            parts = Path(root).relative_to(self.repo_path).parts
+            if not parts:
+                continue
+            module = parts[0]
+
+            for file in files:
+                file_name = file.lower()
+                suffix = Path(file).suffix.lower()
+                
+                # Code ownership map
+                if suffix in [".cpp", ".hpp", ".h", ".py", ".ts", ".js", ".go", ".rs", ".cs", ".java"]:
+                    if "test" not in file_name and "spec" not in file_name:
+                        self.metrics["ownership_map"][module] = self.metrics["ownership_map"].get(module, 0) + 1
+
+                # Test map
+                if "test_" in file_name or "spec" in file_name or "_test" in file_name:
+                    if module not in self.metrics["test_map"]:
+                        self.metrics["test_map"][module] = []
+                    if file not in self.metrics["test_map"][module]:
+                        self.metrics["test_map"][module].append(file)

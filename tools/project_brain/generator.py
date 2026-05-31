@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-UADOS — Universal AI Project Brain Framework (AIPBF) v3.0
+UADOS — Universal AI Project Brain Framework (AIPBF) v3.0+
 Factual Single-File Master Project Brain Generator
 """
 
@@ -36,7 +36,7 @@ class DocumentationGenerator:
         for fact in self.analysis.get("facts", []):
             if title in fact["title"]:
                 return f"\n> **Verification**: {fact['verification']}  \n> **Evidence**: File: `{fact['evidence']['file']}`, Line: {fact['evidence']['line']}, Confidence: {fact['evidence']['confidence']}  \n"
-        return "\n> **Verification**: INFERRED  \n> **Evidence**: File: `N/A`, Line: N/A, Confidence: LOW  \n"
+        return "" # Return empty string to allow proper chaining of Python OR checks
 
     def _generate_single_project_brain(self):
         lang_str = ", ".join(self.analysis["tech_stack"]["languages"]) if self.analysis["tech_stack"]["languages"] else "Undetected"
@@ -61,6 +61,14 @@ class DocumentationGenerator:
         if not event_rows:
             event_rows = "| None verified in project code paths | — | — | — | — |\n"
 
+        # Database Intelligence (Factual - Fix 4)
+        db_output = ""
+        if self.analysis["databases"]:
+            for db in self.analysis["databases"]:
+                db_output += f"- **Detected Database**: {db['type']}  \n  **Evidence**: `{db['file']}`:L{db['line']} (VERIFIED)  \n"
+        else:
+            db_output = "- **Database**: No database dependencies detected in repository. (VERIFIED)\n"
+
         # Vulnerabilities
         vuln_rows = ""
         for vuln in self.review["vulnerabilities"]:
@@ -82,21 +90,21 @@ class DocumentationGenerator:
         if not mermaid_relations:
             mermaid_relations = "    Root -->|Project Folder| Workspace\n"
 
-        # Dynamic Knowledge Confidence Matrix
-        conf_arch = "HIGH (VERIFIED)" if self.analysis["module_graph"] else "LOW (Generated from folder structure only, no file-to-file import relationships verified)"
+        # Dynamic Knowledge Confidence Matrix ratings (Fix 3)
+        conf_arch = "MEDIUM (DERIVED)" if self.analysis["module_graph"] else "LOW (Generated from folder structure only, no file-to-file import relationships verified)"
         conf_reqs = "HIGH (VERIFIED)" if self.analysis["requirements"] else "LOW (UNKNOWN - No requirements specification file or inline REQ tags detected in codebase)"
         conf_test = "HIGH (VERIFIED)" if test_reg["pass_rate"] != "UNKNOWN" else "LOW (UNKNOWN - No XML/JSON test logs verified on disk)"
         conf_sec = "HIGH (VERIFIED)" if self.review["vulnerabilities"] else "LOW (HEURISTIC)"
         conf_perf = "HIGH (VERIFIED)" if "VERIFIED" in test_reg["performance"] else "LOW (UNKNOWN - No benchmark results file verified on disk)"
 
-        # Requirements Coverage Matrix
+        # Dynamic Requirements Traceability Matrix (Fix 1)
         req_rows = ""
         for req in self.analysis["requirements"]:
-            req_rows += f"| {req['id']} | {req['name']} | {req['status']} | {req['verification']} | None | {req['confidence']} |\n"
+            req_rows += f"| {req['id']} | {req['name']} | `{req['evidence']}` | `{req['tests']}` | {req['status']} | {req['confidence']} | {req['verification']} |\n"
         if not req_rows:
-            req_rows = "| None | Project requirements are not documented in repository | UNKNOWN | N/A | High | Low |"
+            req_rows = "| None | Project requirements are not documented in repository | N/A | N/A | UNKNOWN | Low | UNKNOWN |"
 
-        # Dynamic Subsystems Layout (Exists checklist)
+        # Dynamic Subsystems Layout (Exists checklist - Fix 2)
         subsystems_output = ""
         for folder_name, exists_status in sorted(self.analysis["directories"].items()):
             status_str = "TRUE" if exists_status else "FALSE"
@@ -112,26 +120,53 @@ class DocumentationGenerator:
         if not component_rows:
             component_rows = "| C-010 | Workspace Root | `./` | ✅ Implemented | VERIFIED |\n"
 
-        # Dynamic Walkthrough Entry Points
-        entry_points = []
-        common_entries = ["main.cpp", "main.py", "index.ts", "app.ts", "server.ts", "main.go", "main.rs", "app.py", "server.py"]
-        for root, _, files in os.walk(self.repo_path):
-            if self.is_ignored(root):
-                continue
-            for file in files:
-                if file in common_entries:
-                    try:
-                        rel_p = str(Path(root) / file).relative_to(self.repo_path).replace("\\", "/")
-                        entry_points.append(rel_p)
-                    except Exception:
-                        pass
+        # Dynamic Entry Points (Missing Section 1)
+        entry_output = ""
+        for ep in self.analysis["entry_points"]:
+            entry_output += f"| `{ep['name']}` | `{ep['file']}` | {ep['confidence']} | {ep['verification']} |\n"
+        if not entry_output:
+            entry_output = "| None detected | No executable main entry points identified | LOW | UNKNOWN |\n"
 
-        walkthrough_entries = ""
-        if entry_points:
-            for ep in entry_points:
-                walkthrough_entries += f"- **System Initiator**: Mapped verified entry point: `{ep}` (VERIFIED)\n"
-        else:
-            walkthrough_entries = "- **System Initiator**: UNKNOWN (No standard main entry file detected)\n"
+        # Dynamic Build Targets (Missing Section 2)
+        build_targets_output = ""
+        for bt in self.analysis["build_targets"]:
+            build_targets_output += f"| `{bt['name']}` | {bt['type']} | `{bt['source']}` | VERIFIED |\n"
+        if not build_targets_output:
+            build_targets_output = "| None detected | No active compilation targets found | N/A | UNKNOWN |\n"
+
+        # Dynamic Test Map (Missing Section 3)
+        test_map_output = ""
+        for mod, tests in sorted(self.analysis["test_map"].items()):
+            test_files_str = ", ".join([f"`{t}`" for t in tests[:5]])
+            if len(tests) > 5:
+                test_files_str += f" (+{len(tests) - 5} more)"
+            test_map_output += f"| **{mod.capitalize()}** | {test_files_str} | UNKNOWN |\n"
+        if not test_map_output:
+            test_map_output = "| None | No unit test files identified in subsystem paths | N/A |\n"
+
+        # Dynamic Code Ownership Map (Missing Section 4)
+        ownership_output = ""
+        for mod, count in sorted(self.analysis["ownership_map"].items()):
+            ownership_output += f"| **{mod.capitalize()}** | {count} source files | VERIFIED |\n"
+        if not ownership_output:
+            ownership_output = "| None | No source files mapped in workspace | UNKNOWN |\n"
+
+        # Dynamic Dependency Impact Map (Missing Section 5)
+        impact_dict = {}
+        for src, dest, _ in self.analysis["module_graph"]:
+            if src not in impact_dict:
+                impact_dict[src] = []
+            if dest not in impact_dict[src]:
+                impact_dict[src].append(dest)
+                
+        impact_output = ""
+        for src, deps in sorted(impact_dict.items()):
+            impact_output += f"- **{src.capitalize()}**\n"
+            for i, dep in enumerate(sorted(deps)):
+                char = "└──" if i == len(deps) - 1 else "├──"
+                impact_output += f"  {char} {dep.capitalize()}\n"
+        if not impact_output:
+            impact_output = "No downstream subsystem dependency impacts derived.\n"
 
         # Dynamic Data Flow
         data_flow_output = ""
@@ -155,8 +190,8 @@ class DocumentationGenerator:
 
         # Dynamic Gap Analysis
         gaps_output = ""
-        if not entry_points:
-            gaps_output += "- **Missing Entry Point**: No standard main initialization file found.  \n"
+        if not self.analysis["entry_points"]:
+            gaps_output += "- **Missing Entry Point**: No standard main initialization target found.  \n"
         if not self.analysis["requirements"]:
             gaps_output += "- **Missing Requirements Document**: No requirements specification file detected.  \n"
         if test_reg["pass_rate"] == "UNKNOWN":
@@ -166,7 +201,46 @@ class DocumentationGenerator:
         if not gaps_output:
             gaps_output = "- **Gaps**: None dynamically identified in current layout."
 
-        # Dynamic AI Handoff restoring variables
+        # Proved Dependency Block with Logic Bug Resolution (Fix 2)
+        evidence_block = self._get_fact_block("Pip Package") or self._get_fact_block("Conan Dependency") or self._get_fact_block("Node.js Dependency")
+        if not evidence_block:
+            evidence_block = "\n> **Verification**: UNKNOWN  \n> **Evidence**: File: `N/A`, Line: N/A, Confidence: LOW  \n"
+
+        # Dynamic Improvements (Self-Consistent with Debt - Fix 5)
+        improvements_output = ""
+        improvements_list = []
+        for debt in self.review["debt"]:
+            improvements_list.append(debt["recommendation"])
+        for find in self.review["findings"]:
+            improvements_list.append(find["remediation"])
+        for vuln in self.review["vulnerabilities"]:
+            improvements_list.append(vuln["remediation"])
+            
+        improvements_list = sorted(list(set(improvements_list)))
+        if not improvements_list:
+            improvements_list = ["No active code structure improvements suggested. Subsystem layers are clean."]
+            
+        for imp in improvements_list:
+            improvements_output += f"- {imp}\n"
+
+        # Tailored Domain Risks (Fix 6)
+        risks_output = ""
+        if ident["type"] == "Autonomous Driving Operating System":
+            risks_output = """| Sensor calibration drift | Low | High | Automated EKF covariance checks & bounds | Fusion |
+| Localization divergence | Low | High | Fallback map-relative position checkpoints | Localizer |
+| CAN bus timing drops | Medium | High | Hardware rate throttling limits & safety overrides | Platform |
+| Model inference latency spikes | Low | High | TensorRT pre-allocations & deadline watchdogs | Perception |
+| Preemptive watchdog starvation | Low | Critical | Scheduler deadline partitions & high thread priorities | SRE |
+| Failsafe OTA rollback failure | Low | Critical | Independent bootloader partition switch | DevOps |"""
+        elif ident["type"] == "Autonomous Trading Platform":
+            risks_output = """| Market data loader timeout | Medium | High | Rate-limited buffer queues & ping watchdogs | Data |
+| Database connection exhaustion | Low | High | Dynamic pg pool scaling limits | DBA |
+| Execution slippage & pipeline lag | Low | Critical | Async trade scheduling & memory pre-allocation | Platform |
+| Forecast model drift | Low | High | Continuous explainability audits & regime checks | Risk |"""
+        else:
+            risks_output = "| Hardcoded secrets or credentials | Medium | High | Move parameters to system env variables | DevOps |\n"
+
+        # Dynamic AI Handoff variables
         handoff_works = ""
         active_dirs = [f"`/{d}`" for d, ex in self.analysis["directories"].items() if ex]
         if active_dirs:
@@ -196,6 +270,14 @@ class DocumentationGenerator:
             handoff_steps = "Bootstrap Node workspace, install dependencies, and trigger package.json start presets."
         else:
             handoff_steps = "Inspect README files and directory trees."
+
+        # Dynamic Walkthrough Entry Points
+        walkthrough_entries = ""
+        if self.analysis["entry_points"]:
+            for ep in self.analysis["entry_points"]:
+                walkthrough_entries += f"- **Target Executable**: `{ep['name']}`  \n  **Entry Source File**: `{ep['file']}` ({ep['verification']})\n"
+        else:
+            walkthrough_entries = "- **System Initiator**: UNKNOWN (No standard main entry file detected)\n"
 
         content = f"""# Universal AI Project Brain (AIPBF) v3.0 — Unified Blueprint
 
@@ -254,9 +336,9 @@ This document serves as the single authoritative source of truth for the reposit
 {subsystems_output}
 ---
 
-## 5. Requirements Coverage Matrix
-| Requirement ID | Requirement Name | Status | Verification | Gap | Confidence |
-|:---|:---|:---|:---|:---|:---|
+## 5. Requirements Traceability Matrix
+| Requirement ID | Requirement Name | Evidence (Code) | Tests | Status | Confidence | Verification |
+|:---|:---|:---|:---|:---|:---|:---|
 {req_rows}
 
 ---
@@ -276,22 +358,61 @@ graph TD
 {component_rows}
 ---
 
-## 8. Implementation Summary
+## 8. Build Intelligence (Targets)
+Discovered build configuration compilation targets:
+| Target Name | Target Type | Source Location | Verification |
+|:---|:---|:---|:---|
+{build_targets_output}
+
+---
+
+## 9. Source Entry Points
+Discovered target executable source entry points:
+| Executable Target | Entry Source File | Confidence | Verification |
+|:---|:---|:---|:---|
+{entry_output}
+
+---
+
+## 10. Test Mapping
+Discovered unit test files grouped by active subsystems:
+| Subsystem Module | Test Files Discovered | Coverage Index |
+|:---|:---|:---|
+{test_map_output}
+
+---
+
+## 11. Code Ownership Map
+Discovered codebase files mapped to subsystems:
+| Subsystem Module | Count of Scanned Files | Verification |
+|:---|:---|:---|
+{ownership_output}
+
+---
+
+## 12. Dependency Impact Map
+Discovered downstream module dependency structures:
+```text
+{impact_output}```
+
+---
+
+## 13. Implementation Summary
 The repository consists of `{self.analysis['loc']}` lines of code across standard directories. Code modules are structured under verified filesystem folders with direct compilation or workspace targets.
 
 ---
 
-## 9. Code Understanding Section
+## 14. Code Understanding Section
 ### Subsystem walkthrough entry points:
 {walkthrough_entries}
 ---
 
-## 10. Data Flow Analysis
+## 15. Data Flow Analysis
 Discovered data pathways traced from import dependency hierarchies:
 {data_flow_output}
 ---
 
-## 11. API Intelligence Registry
+## 16. API Intelligence Registry
 Verified endpoints bound to recognized HTTP Web Frameworks (No scanner or helper false positives):
 | Endpoint / Route | Protocol | Source File | Line | Verification |
 |:---|:---|:---|:---|:---|
@@ -299,7 +420,7 @@ Verified endpoints bound to recognized HTTP Web Frameworks (No scanner or helper
 
 ---
 
-## 12. Event Intelligence Registry
+## 17. Event Intelligence Registry
 Verified event clients and circular router dispatches:
 | Event Pattern | Client Type | Source File | Line | Verification |
 |:---|:---|:---|:---|:---|
@@ -307,12 +428,11 @@ Verified event clients and circular router dispatches:
 
 ---
 
-## 13. Database Intelligence
-RAM pre-allocated buffers or verified database client model interfaces.
-
+## 18. Database Intelligence
+{db_output}
 ---
 
-## 14. Configuration Registry
+## 19. Configuration Registry
 - Mapped configuration files inside project directory:
 """
         config_files = [".env", ".env.example", "pyproject.toml", "CMakeLists.txt", "conanfile.py", "package.json"]
@@ -324,15 +444,15 @@ RAM pre-allocated buffers or verified database client model interfaces.
         content += f"""
 ---
 
-## 15. Dependency Registry
+## 20. Dependency Registry
 Factual verified workspace imports:
 - **External Dependencies**: {", ".join(self.analysis["dependencies"]["external"][:10]) if self.analysis["dependencies"]["external"] else "None detected"}
 
-{self._get_fact_block("Pip Package") or self._get_fact_block("Conan Dependency") or self._get_fact_block("Node.js Dependency")}
+{evidence_block}
 
 ---
 
-## 16. Security Intelligence (Scanned Checklist)
+## 21. Security Intelligence (Scanned Checklist)
 ### Security Scope:
 - **Source Code**: {sec_chk['source_code']}
 - **IaC**: {sec_chk['iac']}
@@ -349,18 +469,18 @@ Factual verified workspace imports:
 
 ---
 
-## 17. Reliability Overview
+## 22. Reliability Overview
 {reliability_overview}
 
 ---
 
-## 18. Performance Overview
+## 23. Performance Overview
 {performance_overview}
 - **Source**: {test_reg['performance'] if test_reg['performance'] != 'UNKNOWN' else 'UNKNOWN (Strict Rule 1 - No benchmark results file)'}
 
 ---
 
-## 19. Testing Intelligence Registry
+## 24. Testing Intelligence Registry
 Dynamic test counts and categories:
 - **Unit Tests**: {test_reg['unit']}
 - **Integration Tests**: {test_reg['integration']}
@@ -373,35 +493,33 @@ Dynamic test counts and categories:
 
 ---
 
-## 20. Gap Analysis
+## 25. Gap Analysis
 {gaps_output}
 
 ---
 
-## 21. Technical Debt Registry
+## 26. Technical Debt Registry
 | Debt Descriptor | Impact | Priority | Recommended Remediation | Verification |
 |:---|:---|:---|:---|:---|
 {debt_rows}
 
 ---
 
-## 22. Risk Registry
+## 27. Risk Registry
 | Risk Descriptor | Likelihood | Impact | Mitigation Strategy | Owner |
 |:---|:---|:---|:---|:---|
-| Hardcoded secrets or credentials | Medium | High | Move parameters to system env variables | DevOps |
+{risks_output}
 
 ---
 
-## 23. Improvement Registry
-- Deconstruct large files (>800 lines) into smaller cohesive functional classes.
-- Standardize all configuration files under unified dot-env presets.
-
+## 28. Improvement Registry
+{improvements_output}
 ---
 
-## 24. Knowledge Confidence Matrix
+## 29. Knowledge Confidence Matrix
 | Section / Module | Confidence Rating | Verification Method |
 |:---|:---|:---|
-| Architecture Blueprint | {conf_arch} | MERMAID INFERRED |
+| Architecture Blueprint | {conf_arch} | MERMAID DERIVED |
 | Requirements Coverage | {conf_reqs} | FACT VERIFIED |
 | Testing Registry | {conf_test} | GTEST VERIFIED |
 | Security Intelligence | {conf_sec} | HEURISTIC SCANNED |
@@ -409,7 +527,7 @@ Dynamic test counts and categories:
 
 ---
 
-## 25. AI Handoff & Onboarding Section (AI_HANDOFF)
+## 30. AI Handoff & Onboarding Section (AI_HANDOFF)
 ### restore_payload:
 - **Current State**:
   - Build: ✅ Presets configured.

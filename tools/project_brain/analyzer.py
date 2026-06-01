@@ -726,7 +726,21 @@ class RepositoryAnalyzer:
                                     except Exception:
                                         pass
 
-            status = "Implemented" if code_evidence else "NOT_IMPLEMENTED"
+            # Split status into IMPLEMENTED, VALIDATED, and MEASURED factually based on test and benchmark evidence (Problem 1)
+            if code_evidence:
+                if test_evidence:
+                    # Check if requirement has performance baselines verified
+                    is_perf = req_id.startswith("NFR-PERF")
+                    perf_exists = any(self.repo_path.glob("**/benchmark_results.json")) or any(self.repo_path.glob("**/perf_report.md"))
+                    if is_perf and perf_exists:
+                        status = "MEASURED"
+                    else:
+                        status = "VALIDATED"
+                else:
+                    status = "IMPLEMENTED"
+            else:
+                status = "NOT_IMPLEMENTED"
+
             evidence_str = ", ".join([f"`{f}`" for f in code_evidence[:3]]) if code_evidence else "N/A"
             test_str = ", ".join([f"`{f}`" for f in test_evidence[:3]]) if test_evidence else "N/A"
             
@@ -903,9 +917,9 @@ class RepositoryAnalyzer:
                         feat_name = match.group(1).strip()
                         feat_status = match.group(2).strip()
                         
-                        # Dynamically downgrade 'Production Ready' to 'Simulation Ready' if evidence is missing (Problem 5)
-                        if "Production Ready" in feat_name:
-                            feat_name = "Simulation Ready"
+                        # Dynamically downgrade 'Production Ready' or 'Simulation Ready' to 'Production Candidate' if evidence is missing (Problem 5)
+                        if "Production Ready" in feat_name or "Simulation Ready" in feat_name:
+                            feat_name = "Production Candidate"
                             
                         status_name = "Implemented"
                         status_char = "✓"

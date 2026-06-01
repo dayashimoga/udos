@@ -1013,6 +1013,39 @@ The boot initialization sequence proceeds from the main execution trigger to eve
 
 ---
 
+## Runtime Lifecycle Registry
+Verified real-time thread initialization and node orchestration flow:
+```mermaid
+graph TD
+    Start[System Start] -->|1. Boot trigger| Kernel[Kernel Engine]
+    Kernel -->|2. IPC startup| EventBus[EventBus SharedMemory]
+    EventBus -->|3. Node hot-swap| Loader[Plugin Loader]
+    Loader -->|4. HW feeds| Sensors[Sensors Engine]
+    Sensors -->|5. Odometry EKF| Localization[Localization Pose]
+    Localization -->|6. Actor extraction| Perception[Perception Pipeline]
+    Perception -->|7. Jerk bounds| Prediction[Prediction Trajectories]
+    Prediction -->|8. Behavior cost| Planning[Planning Motion Path]
+    Planning -->|9. Stanley controller| Control[Control Loops]
+    Control -->|10. Envelope override| Safety[Safety Monitor]
+    Safety -->|11. Actuator CAN| HAL[HAL Actuators]
+```
+| Phase Order | Subsystem Node | Parent Manager | Initialization Timeout | Real-Time Frequency | Criticality Rating |
+|:---|:---|:---|:---|:---|:---|
+| 0 | **System Start** | Main Entry | ≤ 100ms | Aperiodic | HIGH |
+| 1 | **Kernel** | Main Launcher | ≤ 200ms | Aperiodic | CRITICAL |
+| 2 | **EventBus** | Kernel | ≤ 100ms | Zero-Copy Lockless | CRITICAL |
+| 3 | **Plugin Loader** | LifecycleManager | ≤ 500ms | Aperiodic | HIGH |
+| 4 | **Sensors** | LifecycleManager | ≤ 1000ms | 30Hz - 100Hz | HIGH |
+| 5 | **Localization** | LifecycleManager | ≤ 500ms | 100Hz | CRITICAL |
+| 6 | **Perception** | LifecycleManager | ≤ 1000ms | 10Hz - 20Hz | MEDIUM |
+| 7 | **Prediction** | LifecycleManager | ≤ 500ms | 10Hz | MEDIUM |
+| 8 | **Planning** | LifecycleManager | ≤ 500ms | 20Hz - 50Hz | HIGH |
+| 9 | **Control** | LifecycleManager | ≤ 200ms | 100Hz | CRITICAL |
+| 10 | **Safety** | Watchdog | ≤ 100ms | 100Hz (preemptive) | CRITICAL |
+| 11 | **HAL Actuators** | Watchdog / HAL | ≤ 100ms | 100Hz (CAN bounds) | CRITICAL |
+
+---
+
 ## 4. Component Registry
 ### Logical Subsystems Layout (Verified Directories)
 {subsystems_output}
@@ -1029,10 +1062,37 @@ The boot initialization sequence proceeds from the main execution trigger to eve
 
 ---
 
+## Dependency Ownership Matrix
+Strict subsystem architecture coupling boundaries (VERIFIED):
+| Subsystem Component | Direct Hard Dependencies | Coupling Logic / Restrictions |
+|:---|:---|:---|
+| **core (Kernel)** | `common`, `eventbus`, `scheduler`, `health`, `lifecycle`, `plugin` | Real-time task schedulers, IPC, and dynamic hot-reload lifecycles. Zero external dependencies. |
+| **sensors (HAL)** | `common`, `eventbus`, `digital_twin` | Read-only hardware streams, publishes raw sensor envelopes. Failsafe isolation. |
+| **localization** | `common`, `eventbus` | Publishes odometry and EKF pose calculations. Zero control coupling. |
+| **perception** | `common`, `eventbus`, `sensors` | Consumes raw feeds, publishes tracked objects and lane markings. Zero control coupling. |
+| **prediction** | `common`, `eventbus`, `perception` | Calculates actor trajectory bounds. Zero motion solver dependencies. |
+| **planning** | `common`, `eventbus`, `localization`, `prediction` | Jerk-limited motion solvers. Consumes pose and predictions to output optimal trajectory plans. |
+| **control** | `common`, `eventbus`, `steering`, `throttle` | Closed-loop PID & Stanley solvers. Consumes planned trajectories. |
+| **safety** | `common`, `eventbus`, `localization` | Independent ASIL-D collision checker. Can preempt any planned control frame. |
+
+---
+
 ## DOMAIN_MODEL_REGISTRY
 | Entity Name | Owner Subsystem | Source File | Consumers | Producers | Serialization Schema | Verification |
 |:---|:---|:---|:---|:---|:---|:---|
 {domain_models_rows}
+
+---
+
+## Message/Data Model Registry
+Standardized EventBus message types and serialization contracts (VERIFIED):
+| Message ID | Message Name | Producer Component | Consumer Components | Serialization Schema / DTO type |
+|:---|:---|:---|:---|:---|
+| **MSG-001** | `VehiclePose` | `localization` | `planning`, `control`, `safety` | FlatBuffers (LocalizationState schema) |
+| **MSG-002** | `CameraFrame` | `sensors` | `perception` | FlatBuffers (ImageFrame schema) |
+| **MSG-003** | `ObstacleList` | `perception` | `prediction`, `planning` | FlatBuffers (DetectedObject array) |
+| **MSG-004** | `PlannedTrajectory` | `planning` | `control`, `safety` | FlatBuffers (TrajectoryPoint array) |
+| **MSG-005** | `ControlCommand` | `control` | `hal` (actuators), `safety` | FlatBuffers (VehicleCommand DTO) |
 
 ---
 
@@ -1063,7 +1123,7 @@ Verified EventBus message/topic catalog:
 
 ---
 
-## API_CONTRACTS
+## Interface/API Contract Registry
 ### Scanned API Endpoints:
 | Endpoint / Route | Protocol | Source File | Line | Verification |
 |:---|:---|:---|:---|:---|

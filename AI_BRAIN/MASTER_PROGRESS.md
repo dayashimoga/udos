@@ -69,7 +69,7 @@
 | M12 | Full Simulation Suite | 12 | ✅ Achieved | 2026-05-30 |
 | M13 | Validation Complete | 13 | ✅ Achieved | 2026-05-30 |
 | M14 | Fleet Connected | 14 | ✅ Achieved | 2026-05-30 |
-| M15 | Simulation Ready | 15 | ✅ Achieved | 2026-05-30 |
+| M15 | Production Candidate | 15 | ✅ Achieved | 2026-05-30 |
 
 > **Note**: M11 (RC Car Autonomous) is partially achieved — driver and HAL code exists but requires physical hardware validation.
 

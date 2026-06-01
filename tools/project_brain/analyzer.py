@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-UADOS — Universal AI Project Brain Framework (AIPBF) v3.2
+UADOS — Universal AI Project Brain Framework (AIPBF) v4.0
 Factual Repository Analyzer & Import Dependency Crawler
+With Change Impact Matrix & Architecture Drift Detection
 """
 
 import os
@@ -61,7 +62,8 @@ class RepositoryAnalyzer:
             "domain_models": [], # Struct/class definitions discovered in headers
             "message_catalog": [], # Publish/subscribe topic patterns
             "ai_models": [],     # AI/ML model loading patterns
-            "config_files": []   # All configuration files discovered
+            "config_files": [],  # All configuration files discovered
+            "change_impact_matrix": {}  # Architecture drift detection & impact analysis
         }
 
     def is_ignored(self, path):
@@ -87,6 +89,7 @@ class RepositoryAnalyzer:
         self._extract_message_catalog()
         self._extract_ai_models()
         self._extract_config_registry()
+        self._build_change_impact_matrix()
         return self.metrics
 
     def _add_fact(self, title, description, category, verification, file_path, line_num, confidence):
@@ -1210,3 +1213,118 @@ class RepositoryAnalyzer:
                         pass
 
         self.metrics["config_files"] = sorted(self.metrics["config_files"], key=lambda x: x["path"])
+
+    def _build_change_impact_matrix(self):
+        """Build architecture drift detection and change impact analysis."""
+        # Declared dependency ownership matrix (from architecture spec)
+        ident_type = self.metrics["project_identity"]["type"]
+        declared_dependencies = {}
+
+        if ident_type in ["Autonomous Driving Operating System", "Robotics / Autonomous Systems Platform"]:
+            declared_dependencies = {
+                "core": ["common", "eventbus"],
+                "sensors": ["common", "eventbus", "digital_twin"],
+                "localization": ["common", "eventbus"],
+                "perception": ["common", "eventbus", "sensors"],
+                "prediction": ["common", "eventbus", "perception"],
+                "planning": ["common", "eventbus", "localization", "prediction"],
+                "control": ["common", "eventbus"],
+                "safety": ["common", "eventbus", "localization"],
+            }
+        elif ident_type == "Autonomous Trading Platform":
+            declared_dependencies = {
+                "core": ["common", "eventbus"],
+                "feed": ["common", "eventbus"],
+                "forecast": ["common", "eventbus", "feed"],
+                "backtest": ["common", "eventbus", "forecast"],
+                "risk": ["common", "eventbus"],
+                "broker": ["common", "eventbus", "risk"],
+            }
+
+        # Build actual dependencies from module graph
+        actual_dependencies = {}
+        for src, dest, _ in self.metrics["module_graph"]:
+            if src not in actual_dependencies:
+                actual_dependencies[src] = []
+            if dest not in actual_dependencies[src]:
+                actual_dependencies[src].append(dest)
+
+        # Forward impact: if module X changes, what downstream modules are affected
+        forward_impact = {}
+        for src, dest, _ in self.metrics["module_graph"]:
+            if src not in forward_impact:
+                forward_impact[src] = []
+            if dest not in forward_impact[src]:
+                forward_impact[src].append(dest)
+
+        # Backward impact: which upstream modules does module X depend on
+        backward_impact = {}
+        for src, dest, _ in self.metrics["module_graph"]:
+            if dest not in backward_impact:
+                backward_impact[dest] = []
+            if src not in backward_impact[dest]:
+                backward_impact[dest].append(src)
+
+        # Detect tier boundary violations
+        tier1_safe = {"docs", "simulation", "validation", "tests", ".github"}
+        tier2_caution = {"planning", "control", "prediction", "perception", "localization", "analytics"}
+        tier3_critical = {"core", "safety", "kernel", "hal", "shared"}
+
+        violations = []
+        for src, dest, _ in self.metrics["module_graph"]:
+            # Check if a lower-tier module imports from a higher-tier module (upward dependency)
+            src_tier = 3 if src in tier3_critical else (2 if src in tier2_caution else 1)
+            dest_tier = 3 if dest in tier3_critical else (2 if dest in tier2_caution else 1)
+
+            # Tier 1 should not depend on Tier 2/3 core modules directly
+            if src_tier == 1 and dest_tier == 3:
+                violations.append({
+                    "source": src,
+                    "target": dest,
+                    "rule": f"Tier 1 ({src}) depends on Tier 3 critical module ({dest})",
+                    "severity": "HIGH"
+                })
+
+        # Enhance requirements with linked ADR and feature data
+        dec_list = self.metrics.get("decisions", [])
+        for req in self.metrics["requirements"]:
+            # Link requirements to ADRs by keyword matching
+            req_name_lower = req["name"].lower()
+            for dec in dec_list:
+                dec_title_lower = dec["title"].lower()
+                # Match by shared keywords
+                shared_words = set(req_name_lower.split()) & set(dec_title_lower.split())
+                if len(shared_words) >= 2:  # At least 2 shared significant words
+                    req["linked_adr"] = dec["id"]
+                    break
+
+            # Link to feature registry by subsystem match
+            req_id = req["id"]
+            if "PER" in req_id:
+                req["linked_feature"] = "F-001"
+                req["change_impact"] = ["planning", "prediction"]
+            elif "LOC" in req_id:
+                req["linked_feature"] = "F-003"
+                req["change_impact"] = ["planning", "control"]
+            elif "PLN" in req_id:
+                req["linked_feature"] = "F-004"
+                req["change_impact"] = ["control", "safety"]
+            elif "CTL" in req_id or "CTRL" in req_id:
+                req["linked_feature"] = "F-004"
+                req["change_impact"] = ["hal", "safety"]
+            elif "SAF" in req_id:
+                req["linked_feature"] = "F-006"
+                req["change_impact"] = ["control", "hal"]
+            elif "KRN" in req_id:
+                req["linked_feature"] = "F-005"
+                req["change_impact"] = ["all"]
+            elif "PERF" in req_id:
+                req["change_impact"] = ["control", "planning"]
+
+        self.metrics["change_impact_matrix"] = {
+            "declared_dependencies": declared_dependencies,
+            "actual_dependencies": actual_dependencies,
+            "forward_impact": forward_impact,
+            "backward_impact": backward_impact,
+            "violations": violations
+        }

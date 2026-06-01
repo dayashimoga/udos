@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-UADOS — Universal AI Project Brain Framework (AIPBF) v3.1
+UADOS — Universal AI Project Brain Framework (AIPBF) v4.0
 Factual Reviewer Engine & Quality Metrics Gatekeeper
 """
 

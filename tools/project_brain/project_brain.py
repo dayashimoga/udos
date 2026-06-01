@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Universal AI Project Brain Framework (AIPBF) v2.0 — CLI & Self-Healing Quality Gate
+Universal AI Project Brain Framework (AIPBF) v4.0 — CLI & Self-Healing Quality Gate
+
+Generates 15 mandatory documents under /AI_BRAIN:
+  PROJECT_BRAIN.md, AI_HANDOFF.md, AI_CONTEXT.md,
+  MASTER_REQUIREMENTS.md, MASTER_SECURITY.md, MASTER_TESTING.md,
+  MASTER_DEPENDENCIES.md, MASTER_COMPONENT_INDEX.md, MASTER_DECISIONS.md,
+  MASTER_KNOWLEDGE_GRAPH.md, MASTER_RISKS.md, MASTER_PROGRESS.md,
+  MASTER_ROADMAP.md, MASTER_VALIDATION_STATUS.md, MASTER_ARCHITECTURE.md
 """
 
 import sys
@@ -55,7 +62,7 @@ class SelfHealingQualityGate:
                 raise ValueError(f"QualityGate Violation: Duplicate audit finding detected: {sig}")
             finding_sigs.add(sig)
 
-        print("[QualityGate] All v2.0 self-healing validation rules passed successfully!")
+        print("[QualityGate] All v4.0 self-healing validation rules passed successfully!")
         return True
 
     def heal(self):
@@ -66,8 +73,8 @@ class SelfHealingQualityGate:
         print("[QualityGate] Auto-healed metadata anomalies successfully.")
 
 def main():
-    parser = argparse.ArgumentParser(description="Universal AI Project Brain Framework (AIPBF) v2.0 CLI")
-    parser.add_argument("--scan", action="store_true", help="Scan repository and auto-generate/update PROJECT_BRAIN.md")
+    parser = argparse.ArgumentParser(description="Universal AI Project Brain Framework (AIPBF) v4.0 CLI")
+    parser.add_argument("--scan", action="store_true", help="Scan repository and auto-generate 15-file AI_BRAIN document set")
     parser.add_argument("--review", action="store_true", help="Perform static security, reliability, and code quality audit")
     parser.add_argument("--init", action="store_true", help="Initialize the AI_BRAIN and docs folders in target repository")
     parser.add_argument("--path", type=str, default=".", help="Repository root path to analyze")
@@ -79,9 +86,9 @@ def main():
         print(f"Error: Target path '{args.path}' does not exist!")
         sys.exit(1)
 
-    print("====== Universal AI Project Brain Framework (AIPBF) v3.3 ======")
+    print("====== Universal AI Project Brain Framework (AIPBF) v4.0 ======")
     print(f"Target Repository: {repo_path}")
-    print("===============================================================")
+    print("================================================================")
 
     if args.init:
         print("[AIPBF] Initializing project folder architecture...")
@@ -129,12 +136,12 @@ def main():
         print("====================================")
 
     if args.scan or args.init or not (args.review):
-        print("\n[AIPBF] Rendering Markdown master guides...")
+        print("\n[AIPBF] Rendering 15-file document set...")
         generator = DocumentationGenerator(repo_path, analysis_data, review_data)
         generator.generate_all()
         print("[AIPBF] Documentation system synchronizations complete!")
 
-    print("\n====== AIPBF v3.3 Execution Complete! ======")
+    print("\n====== AIPBF v4.0 Execution Complete! ======")
 
 if __name__ == "__main__":
     main()

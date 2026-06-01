@@ -1,117 +1,122 @@
-# UADOS — Master Validation Status
+# Master Validation Status (AIPBF v4.0)
 
-> **Version**: 0.1.0  
-> **Status**: Active  
-> **Last Updated**: 2026-05-31  
-> **Owner**: UADOS Architecture Team
+> **Generated**: 2026-06-01
+> **Purpose**: Change Impact Engine output, Architecture Drift Detection, Validation Rules
 
 ---
 
-## Validation Evidence Inventory
+## Architecture Drift Detection
 
-### Simulation Validation
+| Subsystem | Declared Dependencies | Actual Dependencies | Status |
+|:---|:---|:---|:---|
+| `control` | common, eventbus | validation | DRIFT (undeclared: validation) |
+| `core` | common, eventbus | validation | DRIFT (undeclared: validation) |
+| `localization` | common, eventbus | validation | DRIFT (undeclared: validation) |
+| `perception` | common, eventbus, sensors | sensors, validation | DRIFT (undeclared: validation) |
+| `planning` | common, eventbus, localization, prediction | localization, validation | DRIFT (undeclared: validation) |
+| `prediction` | common, eventbus, perception | validation | DRIFT (undeclared: validation) |
+| `safety` | common, eventbus, localization | localization, validation | DRIFT (undeclared: validation) |
+| `sensors` | common, digital_twin, eventbus | digital_twin, validation | DRIFT (undeclared: validation) |
 
-| ID | Scenario Category | Scenarios Defined | Scenarios Passed | Pass Rate | Phase | Notes |
-|----|------------------|:---:|:---:|:---:|:---:|-------|
-| SV-001 | Lane Following (Cruise) | 1 | 1 | 100% | 13 | AutomatedValidator cruise scenario |
-| SV-002 | Intersection Handling | — | — | — | 8+ | Behavior planner FSM covers yield logic |
-| SV-003 | Pedestrian Crossing | — | — | — | 5+ | Object detection + risk estimation |
-| SV-004 | Emergency Braking | 1 | 1 | 100% | 13 | AutomatedValidator emergency override |
-| SV-005 | Stop Line Compliance | 1 | 1 | 100% | 13 | AutomatedValidator stop-line scenario |
-| SV-006 | Highway Merge | — | — | — | 8+ | Strategic planner routing supports this |
-| SV-007 | Construction Zone | — | — | — | 8+ | ODD boundary detection in safety monitor |
-| SV-008 | Adverse Weather | — | — | — | 11+ | Weather Twin not implemented (C-114) |
-| SV-009 | Night Driving | — | — | — | 5+ | Camera driver synthetic mode only |
-| SV-010 | Multi-Vehicle Interaction | — | — | — | 7+ | Trajectory prediction covers lead vehicles |
-
-### RC Car Validation
-
-| ID | Test Category | Tests Defined | Tests Passed | Pass Rate | Notes |
-|----|--------------|:---:|:---:|:---:|-------|
-| RC-001 | Basic Motion Control | — | — | — | PWM driver implemented, requires hardware |
-| RC-002 | Obstacle Avoidance | — | — | — | Safety envelope validated in simulation |
-| RC-003 | Lane Following | — | — | — | Stanley controller tested in simulation |
-| RC-004 | Speed Control | — | — | — | PID controller tested in simulation |
-| RC-005 | Emergency Stop | — | — | — | ERS FSM validated in simulation |
-| RC-006 | Sensor Fusion | — | — | — | EKF fusion validated with synthetic data |
-| RC-007 | GPS Navigation | — | — | — | Pose estimator validated in simulation |
-| RC-008 | Autonomous Circuit | — | — | — | Requires physical hardware |
-
-> **Note**: All RC car validation requires physical 1/10 scale RC car hardware (Jetson Orin Nano, RealSense, RPLiDAR). Software is ready but hardware validation is pending.
-
-### Safety Validation
-
-| ID | Category | Evidence Type | Status | Coverage |
-|----|----------|--------------|:---:|----------|
-| SAF-001 | Fault Detection | FaultInjector test results | ✅ | Speed spikes, localization drift, actuator conflicts |
-| SAF-002 | Emergency Response | ERS state machine unit tests | ✅ | SAFE → MRC → LOCK transitions validated |
-| SAF-003 | Safety Envelope | Safety envelope unit tests | ✅ | BOS interlocks, steer limits, speed ceilings |
-| SAF-004 | ODD Monitoring | Cross-track error boundary tests | ✅ | Lateral and heading error bounds enforced |
-| SAF-005 | Graceful Degradation | Control loop fallback trajectory | ✅ | Fallback decel verified to apply ≥0.8 brake |
-| SAF-006 | Hazard Mitigation | HARA coverage evidence | 🟡 | Covered by design in MASTER_RISKS.md |
 
 ---
 
-## Readiness Assessment
+## Forward Impact Analysis
 
-### Readiness Levels
+If module X changes, these downstream modules are affected:
 
-| Level | Name | Description | Evidence Required |
-|-------|------|-------------|------------------|
-| RL-0 | Concept | Architecture and requirements only | Phase 0 documents |
-| RL-1 | Foundation | Build system and infrastructure operational | CI passing, docs generating |
-| RL-2 | Kernel Operational | Core platform running | Kernel tests passing, benchmarks met |
-| RL-3 | Simulation Capable | Full pipeline in simulation | CARLA integration, scenario suite |
-| RL-4 | RC Validated | Physical platform validated | RC car test suite passing |
-| RL-5 | Safety Validated | Safety systems verified | Fault injection, hazard coverage |
-| RL-6 | Fleet Ready | Multi-vehicle capable | Fleet telemetry, OTA verified |
-| RL-7 | Pre-Production | All quality gates met | 24h stress test, security audit |
+| Module Changed | Affected Downstream | Impact Description |
+|:---|:---|:---|
+| `aipbf_export` | `core` | 1 downstream modules affected |
+| `control` | `validation` | 1 downstream modules affected |
+| `core` | `validation` | 1 downstream modules affected |
+| `digital_twin` | `validation` | 1 downstream modules affected |
+| `fleet` | `validation` | 1 downstream modules affected |
+| `hal` | `validation` | 1 downstream modules affected |
+| `localization` | `validation` | 1 downstream modules affected |
+| `perception` | `sensors`, `validation` | 2 downstream modules affected |
+| `planning` | `localization`, `validation` | 2 downstream modules affected |
+| `prediction` | `validation` | 1 downstream modules affected |
+| `safety` | `localization`, `validation` | 2 downstream modules affected |
+| `sensors` | `digital_twin`, `validation` | 2 downstream modules affected |
+| `simulation` | `digital_twin`, `validation` | 2 downstream modules affected |
+| `validation` | `safety`, `simulation` | 2 downstream modules affected |
 
-### Current Readiness
-
-| Level | Status | Evidence |
-|-------|:---:|----------|
-| RL-0 | ✅ Complete | 11 AI_BRAIN master documents |
-| RL-1 | ✅ Complete | CMake build system, CI/CD pipeline, conanfile.py |
-| RL-2 | ✅ Complete | Kernel tests passing, event bus, scheduler, health monitor |
-| RL-3 | ✅ Complete | Full pipeline: sensors → perception → planning → control → safety |
-| RL-4 | 🟡 Partial | RC car driver implemented; awaiting hardware validation |
-| RL-5 | ✅ Complete | Fault injection suite, ERS FSM, safety monitor invariants |
-| RL-6 | ✅ Complete | Fleet telemetry JSON packaging, OTA SemVer/DJB2 validated |
-| RL-7 | 🟡 Partial | ResourceProfiler exists; 24h stress test on target HW pending |
 
 ---
 
-## Known Limitations
+## Tier Boundary Violations
 
-| ID | Limitation | Impact | Mitigation Plan | Phase |
-|----|-----------|--------|----------------|:---:|
-| L-001 | InferenceEngine uses mock ONNX outputs | Cannot classify real camera frames | Replace with real ONNX model when `UADOS_BUILD_PERCEPTION=ON` | 5 |
-| L-002 | HDMapEngine loads hardcoded mock topology | Only supports 5 mock lanelets | Load real Lanelet2 `.osm` files via config path | 6 |
-| L-003 | TrafficLightDetector simulates state cycling | Cannot detect real traffic lights | Requires ONNX traffic light classifier model | 5 |
-| L-004 | CAN bus driver uses mock SocketCAN channel | Cannot control real DBW vehicles | Requires Linux + physical CAN adapter | 3 |
-| L-005 | All sensor drivers produce synthetic data | Not connected to real hardware | Expected for simulation-first; switch to real drivers on deployment | 4 |
-| L-006 | No classification, segmentation, or sign recognition | Perception gaps for complex scenes | Deferred to future ML model integration | 5 |
-| L-007 | Web dashboard runs client-side only | Cannot receive live C++ telemetry | WebSocket bridge required for real-time integration | — |
+| Source Module | Target Module | Violated Rule | Severity |
+|:---|:---|:---|:---|
+| `aipbf_export` | `core` | Tier 1 (aipbf_export) depends on Tier 3 critical module (core) | HIGH |
+| `validation` | `safety` | Tier 1 (validation) depends on Tier 3 critical module (safety) | HIGH |
+
 
 ---
 
-## Failure Mode Database
+## Knowledge Confidence Matrix
 
-| ID | Failure Mode | Detected By | Response | Validated | Phase |
-|----|-------------|-------------|----------|:---:|:---:|
-| FM-001 | Speed ceiling exceeded | SafetyMonitor | Log violation, clamp command | ✅ | 10 |
-| FM-002 | Steering saturation | SafetyMonitor | Clamp to mechanical limit | ✅ | 10 |
-| FM-003 | BOS interlock (simultaneous throttle+brake) | SafetyMonitor | Cut throttle, apply brake | ✅ | 10 |
-| FM-004 | ODD lateral error boundary | SafetyMonitor / ControlLoop | Emergency stop override | ✅ | 10 |
-| FM-005 | Heading error boundary | ControlLoop | Emergency stop override | ✅ | 9 |
-| FM-006 | Sensor speed spike | FaultInjector → SafetyMonitor | ERS Active MRC deceleration | ✅ | 13 |
-| FM-007 | Localization drift | FaultInjector → SafetyMonitor | ERS Active MRC deceleration | ✅ | 13 |
-| FM-008 | Conflicting actuator commands | FaultInjector → SafetyMonitor | BOS interlock trigger | ✅ | 13 |
-| FM-009 | OTA package checksum failure | OTAManager | Rollback to stable v0.1.0 | ✅ | 14 |
-| FM-010 | OTA version downgrade attempt | OTAManager | Reject deployment | ✅ | 14 |
-| FM-011 | Empty trajectory in control loop | ControlLoop | Safe stop (brake=1.0) | ✅ | 9 |
+| Section / Module | Confidence Rating | Verification Method |
+|:---|:---|:---|
+| Architecture Blueprint | MEDIUM (DERIVED) | MERMAID DERIVED |
+| Requirements Coverage | HIGH (VERIFIED) | FACT VERIFIED |
+| Testing Registry | LOW (UNKNOWN) | GTEST VERIFIED |
+| Security Intelligence | LOW (HEURISTIC) | HEURISTIC SCANNED |
+| Performance Metrics | LOW (UNKNOWN) | Not Scanned |
+| Domain Models | HIGH (VERIFIED) | STRUCT SCAN |
+| Message Catalog | LOW (No pub/sub patterns found) | PATTERN SCAN |
+| Boot Flow | HIGH (VERIFIED) | ENTRY SCAN |
+| AI/ML Models | HIGH (VERIFIED) | FRAMEWORK SCAN |
 
 ---
 
-*End of Master Validation Status*
+## CONFIGURATION_SCHEMA
+
+| Configuration File | Type | Secrets Detected | Verification |
+|:---|:---|:---|:---|
+| `.github/workflows/ci.yml` | YAML | No | VERIFIED |
+| `.github/workflows/docs-sync.yml` | YAML | No | VERIFIED |
+| `configs/vehicle/carla_simulation.yaml` | YAML | No | VERIFIED |
+| `configs/vehicle/rc_car.yaml` | YAML | No | VERIFIED |
+| `pyproject.toml` | TOML | No | VERIFIED |
+
+### Configuration Parameters Schema
+| Config Parameter | Type | Default Value | Validation Rule | Subsystem Impact |
+|:---|:---|:---|:---|:---|
+| `control.steering.p_gain` | Float | `0.85` | `0.1 <= P <= 3.0` | Stanley steering lateral controller loops |
+| `control.speed.max_velocity` | Float | `15.0 m/s` | `V_MAX <= 25.0` | Longitudinal PID velocity controller limits |
+| `localization.ekf.noise_covariance` | FloatArray | `[0.01, 0.01]` | Non-zero diagonal elements | EKF sensor fusion convergence bounds |
+| `safety.envelope.margin_seconds` | Float | `1.5s` | `0.8 <= margin <= 3.0` | Time-to-collision safety override envelope |
+| `sensors.camera.frame_rate` | Integer | `30` | `10 <= fps <= 60` | Camera acquisition and perception pipe inputs |
+
+---
+
+## PERFORMANCE_BUDGETS
+
+| Subsystem Layer | Latency Budget | CPU Core Limit | Memory Pool Allocation | ASIL Target |
+|:---|:---|:---|:---|:---|
+| **Core Kernel / EventBus** | <= 1ms | Core 0 (Dedicated) | 16 MB (Static lockless) | ASIL-D |
+| **Sensors & Driver HAL** | <= 5ms | Core 1 | 32 MB (Static ring buffer)| ASIL-B |
+| **Localization (EKF)** | <= 10ms | Core 2 | 64 MB | ASIL-B |
+| **Perception (LiDAR/Cam)**| <= 50ms | Core 3 (GPU bound) | 256 MB (TensorRT) | ASIL-B |
+| **Planning & Behaviors** | <= 20ms | Core 4 | 128 MB | ASIL-B |
+| **Control Loop (Stanley)** | <= 5ms | Core 5 | 8 MB | ASIL-C |
+| **Safety Envelope Monitor**| <= 2ms | Core 0 (Dedicated) | 4 MB (Isolated memory) | ASIL-D |
+
+---
+
+## Validation Rules
+
+AI must never:
+- Delete Architecture
+- Modify Public Contracts
+- Remove Tests
+- Remove Security Controls
+- Modify Database Schema
+
+without updating:
+- Requirements
+- Architecture
+- Tests
+- Deployment

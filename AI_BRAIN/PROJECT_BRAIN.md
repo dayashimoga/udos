@@ -1,7 +1,7 @@
 # Universal AI Project Brain (AIPBF) v3.2 — AI Operating Manual
 
 > **Framework Version**: v3.2 (AI Operating Manual)  
-> **Last Synchronized**: 2026-05-31  
+> **Last Synchronized**: 2026-06-01  
 > **Verification Gate**: 100% Strict Evidence-Based  
 
 ---
@@ -29,6 +29,7 @@ The following Mermaid dependency blueprint was **derived dynamically** by scanni
 
 ```mermaid
 graph TD
+    aipbf_export -->|Imports reference code| core
     control -->|Imports reference code| validation
     core -->|Imports reference code| validation
     digital_twin -->|Imports reference code| validation
@@ -79,6 +80,10 @@ Directory:
 
 Directory:
   AI_BRAIN/
+  Exists: TRUE
+
+Directory:
+  aipbf_export/
   Exists: TRUE
 
 Directory:
@@ -180,27 +185,29 @@ Directory:
 |:---|:---|:---|:---|:---|
 | C-010 | .github Subsystem | `.github/` | ✅ Implemented | VERIFIED |
 | C-020 | Ai_brain Subsystem | `AI_BRAIN/` | ✅ Implemented | VERIFIED |
-| C-030 | Configs Subsystem | `configs/` | ✅ Implemented | VERIFIED |
-| C-040 | Control Subsystem | `control/` | ✅ Implemented | VERIFIED |
-| C-050 | Core Subsystem | `core/` | ✅ Implemented | VERIFIED |
-| C-060 | Digital_twin Subsystem | `digital_twin/` | ✅ Implemented | VERIFIED |
-| C-070 | Docs Subsystem | `docs/` | ✅ Implemented | VERIFIED |
-| C-080 | Fleet Subsystem | `fleet/` | ✅ Implemented | VERIFIED |
-| C-090 | Hal Subsystem | `hal/` | ✅ Implemented | VERIFIED |
-| C-100 | Localization Subsystem | `localization/` | ✅ Implemented | VERIFIED |
-| C-110 | Perception Subsystem | `perception/` | ✅ Implemented | VERIFIED |
-| C-120 | Planning Subsystem | `planning/` | ✅ Implemented | VERIFIED |
-| C-130 | Prediction Subsystem | `prediction/` | ✅ Implemented | VERIFIED |
-| C-140 | Safety Subsystem | `safety/` | ✅ Implemented | VERIFIED |
-| C-150 | Scripts Subsystem | `scripts/` | ✅ Implemented | VERIFIED |
-| C-160 | Sensors Subsystem | `sensors/` | ✅ Implemented | VERIFIED |
-| C-170 | Simulation Subsystem | `simulation/` | ✅ Implemented | VERIFIED |
-| C-180 | Validation Subsystem | `validation/` | ✅ Implemented | VERIFIED |
+| C-030 | Aipbf_export Subsystem | `aipbf_export/` | ✅ Implemented | VERIFIED |
+| C-040 | Configs Subsystem | `configs/` | ✅ Implemented | VERIFIED |
+| C-050 | Control Subsystem | `control/` | ✅ Implemented | VERIFIED |
+| C-060 | Core Subsystem | `core/` | ✅ Implemented | VERIFIED |
+| C-070 | Digital_twin Subsystem | `digital_twin/` | ✅ Implemented | VERIFIED |
+| C-080 | Docs Subsystem | `docs/` | ✅ Implemented | VERIFIED |
+| C-090 | Fleet Subsystem | `fleet/` | ✅ Implemented | VERIFIED |
+| C-100 | Hal Subsystem | `hal/` | ✅ Implemented | VERIFIED |
+| C-110 | Localization Subsystem | `localization/` | ✅ Implemented | VERIFIED |
+| C-120 | Perception Subsystem | `perception/` | ✅ Implemented | VERIFIED |
+| C-130 | Planning Subsystem | `planning/` | ✅ Implemented | VERIFIED |
+| C-140 | Prediction Subsystem | `prediction/` | ✅ Implemented | VERIFIED |
+| C-150 | Safety Subsystem | `safety/` | ✅ Implemented | VERIFIED |
+| C-160 | Scripts Subsystem | `scripts/` | ✅ Implemented | VERIFIED |
+| C-170 | Sensors Subsystem | `sensors/` | ✅ Implemented | VERIFIED |
+| C-180 | Simulation Subsystem | `simulation/` | ✅ Implemented | VERIFIED |
+| C-190 | Validation Subsystem | `validation/` | ✅ Implemented | VERIFIED |
 
 
-### Code Ownership Map
+## CODE_OWNERSHIP
 | Subsystem Module | Count of Scanned Files | Verification |
 |:---|:---|:---|
+| **Aipbf_export** | 4 source files | VERIFIED |
 | **Control** | 6 source files | VERIFIED |
 | **Core** | 23 source files | VERIFIED |
 | **Digital_twin** | 4 source files | VERIFIED |
@@ -218,34 +225,160 @@ Directory:
 
 ---
 
-## 5. Domain Models
+## DOMAIN_MODEL_REGISTRY
 | Entity Name | Owner Subsystem | Source File | Consumers | Producers | Serialization Schema | Verification |
 |:---|:---|:---|:---|:---|:---|:---|
-| **VehicleState** | `control` | `control/stanley_controller.cpp` | safety, simulation | control | `C++ Struct` | VERIFIED |
-| **Trajectory** | `planning` | `planning/trajectory_planner.cpp` | control, safety | planning | `FlatBuffers` | VERIFIED |
-| **LaneBoundary** | `perception` | `perception/lane_detector.cpp` | planning | perception | `FlatBuffers` | VERIFIED |
-| **Obstacle** | `perception` | `perception/obstacle_detector.cpp` | prediction, planning | perception | `FlatBuffers` | VERIFIED |
-| **Prediction** | `prediction` | `prediction/motion_predictor.cpp` | planning | prediction | `FlatBuffers` | VERIFIED |
-| **ControlCommand** | `control` | `control/stanley_controller.cpp` | safety, hal | control | `FlatBuffers` | VERIFIED |
-| **SafetyEnvelope** | `safety` | `safety/safety_monitor.cpp` | control, hal | safety | `C++ Struct` | VERIFIED |
-| **SensorFrame** | `sensors` | `sensors/camera_driver.cpp` | perception | sensors | `C++ Struct` | VERIFIED |
-| **LocalizationPose** | `localization` | `localization/ekf_localizer.cpp` | planning, prediction, safety | localization | `C++ Struct` | VERIFIED |
+| **ControlLoop** | `control` | `control/loops/include/uados/control/control_loop.hpp` | internal | control | `C++ Class` | VERIFIED |
+| **LongitudinalController** | `control` | `control/throttle/include/uados/control/longitudinal_controller.hpp` | internal | control | `C++ Class` | VERIFIED |
+| **StanleyController** | `control` | `control/steering/include/uados/control/stanley_controller.hpp` | internal | control | `C++ Class` | VERIFIED |
+| **Acceleration3D** | `core` | `core/common/include/uados/types.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Struct` | VERIFIED |
+| **ComponentBase** | `core` | `core/common/include/uados/component.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Class` | VERIFIED |
+| **ComponentHealth** | `core` | `core/health/include/uados/health/health_monitor.hpp` | internal | core | `C++ Struct` | VERIFIED |
+| **DetectedObject** | `core` | `core/common/include/uados/types.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Struct` | VERIFIED |
+| **EulerAngles** | `core` | `core/common/include/uados/types.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Struct` | VERIFIED |
+| **Extrinsics** | `core` | `core/common/include/uados/types.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Struct` | VERIFIED |
+| **FreeNode** | `core` | `core/kernel/include/uados/kernel/memory_pool.hpp` | internal | core | `C++ Struct` | VERIFIED |
+| **GeoCoordinate** | `core` | `core/common/include/uados/types.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Struct` | VERIFIED |
+| **IComponent** | `core` | `core/common/include/uados/component.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Class` | VERIFIED |
+| **IConfigManager** | `core` | `core/kernel/include/uados/kernel/config_manager.hpp` | internal | core | `C++ Class` | VERIFIED |
+| **IEventBus** | `core` | `core/event_bus/include/uados/event_bus/event_bus.hpp` | internal | core | `C++ Class` | VERIFIED |
+| **IHealthMonitor** | `core` | `core/health/include/uados/health/health_monitor.hpp` | internal | core | `C++ Class` | VERIFIED |
+| **IKernel** | `core` | `core/kernel/include/uados/kernel/kernel.hpp` | internal | core | `C++ Class` | VERIFIED |
+| **ILifecycleManager** | `core` | `core/lifecycle/include/uados/lifecycle/lifecycle_manager.hpp` | internal | core | `C++ Class` | VERIFIED |
+| **IPlugin** | `core` | `core/plugin/include/uados/plugin/plugin.hpp` | internal | core | `C++ Class` | VERIFIED |
+| **IPluginSystem** | `core` | `core/plugin/include/uados/plugin/plugin.hpp` | internal | core | `C++ Class` | VERIFIED |
+| **IScheduler** | `core` | `core/scheduler/include/uados/scheduler/scheduler.hpp` | internal | core | `C++ Class` | VERIFIED |
+| **KinematicState** | `core` | `core/common/include/uados/types.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Struct` | VERIFIED |
+| **LifecycleEvent** | `core` | `core/lifecycle/include/uados/lifecycle/lifecycle_manager.hpp` | internal | core | `C++ Struct` | VERIFIED |
+| **MemoryPool** | `core` | `core/kernel/include/uados/kernel/memory_pool.hpp` | internal | core | `C++ Class` | VERIFIED |
+| **Message** | `core` | `core/event_bus/include/uados/event_bus/event_bus.hpp` | internal | core | `C++ Struct` | VERIFIED |
+| **PluginContext** | `core` | `core/plugin/include/uados/plugin/plugin.hpp` | internal | core | `C++ Class` | VERIFIED |
+| **PluginDependency** | `core` | `core/plugin/include/uados/plugin/plugin.hpp` | internal | core | `C++ Struct` | VERIFIED |
+| **PluginInfo** | `core` | `core/plugin/include/uados/plugin/plugin.hpp` | internal | core | `C++ Struct` | VERIFIED |
+| **PoolAllocator** | `core` | `core/kernel/include/uados/kernel/memory_pool.hpp` | internal | core | `C++ Class` | VERIFIED |
+| **PoolStats** | `core` | `core/kernel/include/uados/kernel/memory_pool.hpp` | internal | core | `C++ Struct` | VERIFIED |
+| **PoolTier** | `core` | `core/kernel/include/uados/kernel/memory_pool.hpp` | internal | core | `C++ Struct` | VERIFIED |
+| **Pose** | `core` | `core/common/include/uados/types.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Struct` | VERIFIED |
+| **Position3D** | `core` | `core/common/include/uados/types.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Struct` | VERIFIED |
+| **ResourceProfiler** | `core` | `core/common/include/uados/resource_profiler.hpp` | internal | core | `C++ Class` | VERIFIED |
+| **Result** | `core` | `core/common/include/uados/types.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Struct` | VERIFIED |
+| **SPSCQueue** | `core` | `core/kernel/include/uados/kernel/spsc_queue.hpp` | internal | core | `C++ Class` | VERIFIED |
+| **SafetyEvent** | `core` | `core/common/include/uados/types.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Struct` | VERIFIED |
+| **SensorHealth** | `core` | `core/common/include/uados/types.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Struct` | VERIFIED |
+| **SubscriptionConfig** | `core` | `core/event_bus/include/uados/event_bus/event_bus.hpp` | internal | core | `C++ Struct` | VERIFIED |
+| **SystemHealth** | `core` | `core/health/include/uados/health/health_monitor.hpp` | internal | core | `C++ Struct` | VERIFIED |
+| **TaskConfig** | `core` | `core/scheduler/include/uados/scheduler/scheduler.hpp` | internal | core | `C++ Struct` | VERIFIED |
+| **TaskStats** | `core` | `core/scheduler/include/uados/scheduler/scheduler.hpp` | internal | core | `C++ Struct` | VERIFIED |
+| **TopicStats** | `core` | `core/event_bus/include/uados/event_bus/event_bus.hpp` | internal | core | `C++ Struct` | VERIFIED |
+| **Trajectory** | `core` | `core/common/include/uados/types.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Struct` | VERIFIED |
+| **TrajectoryPoint** | `core` | `core/common/include/uados/types.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Struct` | VERIFIED |
+| **TypedMessage** | `core` | `core/event_bus/include/uados/event_bus/event_bus.hpp` | internal | core | `C++ Struct` | VERIFIED |
+| **VehicleCapabilities** | `core` | `core/common/include/uados/types.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Struct` | VERIFIED |
+| **VehicleCommand** | `core` | `core/common/include/uados/types.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Struct` | VERIFIED |
+| **VehicleState** | `core` | `core/common/include/uados/types.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Struct` | VERIFIED |
+| **Velocity3D** | `core` | `core/common/include/uados/types.hpp` | control, digital_twin, fleet, hal, localization, perception, planning, prediction, safety, sensors, simulation, validation | core | `C++ Struct` | VERIFIED |
+| **Version** | `core` | `core/common/include/uados/version.hpp` | internal | core | `C++ Struct` | VERIFIED |
+| **PixelPoint** | `digital_twin` | `digital_twin/sensor/include/uados/digital_twin/sensor_twin.hpp` | simulation | digital_twin | `C++ Struct` | VERIFIED |
+| **SensorDigitalTwin** | `digital_twin` | `digital_twin/sensor/include/uados/digital_twin/sensor_twin.hpp` | simulation | digital_twin | `C++ Class` | VERIFIED |
+| **VehicleDigitalTwin** | `digital_twin` | `digital_twin/vehicle/include/uados/digital_twin/vehicle_twin.hpp` | simulation | digital_twin | `C++ Class` | VERIFIED |
+| **FleetTelemetry** | `fleet` | `fleet/telemetry/include/uados/fleet/fleet_telemetry.hpp` | internal | fleet | `C++ Class` | VERIFIED |
+| **OTAManager** | `fleet` | `fleet/ota/include/uados/fleet/ota_manager.hpp` | internal | fleet | `C++ Class` | VERIFIED |
+| **CANBusDriver** | `hal` | `hal/drivers/canbus/include/uados/hal/canbus_driver.hpp` | internal | hal | `C++ Class` | VERIFIED |
+| **CARLADriver** | `hal` | `hal/drivers/simulation/include/uados/hal/carla_driver.hpp` | internal | hal | `C++ Class` | VERIFIED |
+| **CanFrame** | `hal` | `hal/drivers/canbus/include/uados/hal/canbus_driver.hpp` | internal | hal | `C++ Struct` | VERIFIED |
+| **DriverConfig** | `hal` | `hal/api/include/uados/hal/vehicle_driver.hpp` | internal | hal | `C++ Struct` | VERIFIED |
+| **DriverStatus** | `hal` | `hal/api/include/uados/hal/vehicle_driver.hpp` | internal | hal | `C++ Struct` | VERIFIED |
+| **DriverValidator** | `hal` | `hal/validation/include/uados/hal/driver_validator.hpp` | internal | hal | `C++ Class` | VERIFIED |
+| **IVehicleDriver** | `hal` | `hal/api/include/uados/hal/vehicle_driver.hpp` | internal | hal | `C++ Class` | VERIFIED |
+| **RCCarDriver** | `hal` | `hal/drivers/rc_car/include/uados/hal/rc_car_driver.hpp` | internal | hal | `C++ Class` | VERIFIED |
+| **SafetyEnvelope** | `hal` | `hal/api/include/uados/hal/safety_envelope.hpp` | internal | hal | `C++ Class` | VERIFIED |
+| **TestResult** | `hal` | `hal/validation/include/uados/hal/driver_validator.hpp` | internal | hal | `C++ Struct` | VERIFIED |
+| **HDMapEngine** | `localization` | `localization/hdmap/include/uados/localization/hdmap_engine.hpp` | planning, safety | localization | `C++ Class` | VERIFIED |
+| **LaneletInfo** | `localization` | `localization/hdmap/include/uados/localization/hdmap_engine.hpp` | planning, safety | localization | `C++ Struct` | VERIFIED |
+| **MapLanelet** | `localization` | `localization/hdmap/include/uados/localization/hdmap_engine.hpp` | planning, safety | localization | `C++ Struct` | VERIFIED |
+| **PoseEstimator** | `localization` | `localization/pose/include/uados/localization/pose_estimator.hpp` | internal | localization | `C++ Class` | VERIFIED |
+| **SLAMEngine** | `localization` | `localization/slam/include/uados/localization/slam_engine.hpp` | internal | localization | `C++ Class` | VERIFIED |
+| **EgoLane** | `perception` | `perception/lanes/include/uados/perception/lane_detector.hpp` | internal | perception | `C++ Struct` | VERIFIED |
+| **InferenceEngine** | `perception` | `perception/detection/include/uados/perception/inference_engine.hpp` | internal | perception | `C++ Class` | VERIFIED |
+| **LaneBoundary** | `perception` | `perception/lanes/include/uados/perception/lane_detector.hpp` | internal | perception | `C++ Struct` | VERIFIED |
+| **LaneDetector** | `perception` | `perception/lanes/include/uados/perception/lane_detector.hpp` | internal | perception | `C++ Class` | VERIFIED |
+| **ObjectDetector** | `perception` | `perception/detection/include/uados/perception/object_detector.hpp` | internal | perception | `C++ Class` | VERIFIED |
+| **ObjectTracker** | `perception` | `perception/tracking/include/uados/perception/object_tracker.hpp` | internal | perception | `C++ Class` | VERIFIED |
+| **Track** | `perception` | `perception/tracking/include/uados/perception/object_tracker.hpp` | internal | perception | `C++ Struct` | VERIFIED |
+| **TrafficLightDetector** | `perception` | `perception/traffic_lights/include/uados/perception/traffic_light_detector.hpp` | internal | perception | `C++ Class` | VERIFIED |
+| **TrafficLightResult** | `perception` | `perception/traffic_lights/include/uados/perception/traffic_light_detector.hpp` | internal | perception | `C++ Struct` | VERIFIED |
+| **BehaviorDecision** | `planning` | `planning/behavior/include/uados/planning/behavior_planner.hpp` | internal | planning | `C++ Struct` | VERIFIED |
+| **BehaviorPlanner** | `planning` | `planning/behavior/include/uados/planning/behavior_planner.hpp` | internal | planning | `C++ Class` | VERIFIED |
+| **MotionPlanner** | `planning` | `planning/motion/include/uados/planning/motion_planner.hpp` | internal | planning | `C++ Class` | VERIFIED |
+| **StrategicPlanner** | `planning` | `planning/strategic/include/uados/planning/strategic_planner.hpp` | internal | planning | `C++ Class` | VERIFIED |
+| **BehaviorPredictor** | `prediction` | `prediction/behavior/include/uados/prediction/behavior_predictor.hpp` | internal | prediction | `C++ Class` | VERIFIED |
+| **IntentionHypothesis** | `prediction` | `prediction/behavior/include/uados/prediction/behavior_predictor.hpp` | internal | prediction | `C++ Struct` | VERIFIED |
+| **ObstacleBehavior** | `prediction` | `prediction/behavior/include/uados/prediction/behavior_predictor.hpp` | internal | prediction | `C++ Struct` | VERIFIED |
+| **ObstaclePrediction** | `prediction` | `prediction/trajectory/include/uados/prediction/trajectory_predictor.hpp` | internal | prediction | `C++ Struct` | VERIFIED |
+| **ObstacleRisk** | `prediction` | `prediction/risk/include/uados/prediction/risk_estimator.hpp` | internal | prediction | `C++ Struct` | VERIFIED |
+| **PredictedPath** | `prediction` | `prediction/trajectory/include/uados/prediction/trajectory_predictor.hpp` | internal | prediction | `C++ Struct` | VERIFIED |
+| **RiskEstimator** | `prediction` | `prediction/risk/include/uados/prediction/risk_estimator.hpp` | internal | prediction | `C++ Class` | VERIFIED |
+| **TrajectoryPredictor** | `prediction` | `prediction/trajectory/include/uados/prediction/trajectory_predictor.hpp` | internal | prediction | `C++ Class` | VERIFIED |
+| **EmergencyResponseSystem** | `safety` | `safety/emergency/include/uados/safety/emergency_response_system.hpp` | internal | safety | `C++ Class` | VERIFIED |
+| **SafetyMonitor** | `safety` | `safety/monitors/include/uados/safety/safety_monitor.hpp` | validation | safety | `C++ Class` | VERIFIED |
+| **SafetyViolation** | `safety` | `safety/monitors/include/uados/safety/safety_monitor.hpp` | validation | safety | `C++ Struct` | VERIFIED |
+| **CameraDriver** | `sensors` | `sensors/camera/include/uados/sensors/camera_driver.hpp` | internal | sensors | `C++ Class` | VERIFIED |
+| **GPSDriver** | `sensors` | `sensors/gps/include/uados/sensors/gps_driver.hpp` | internal | sensors | `C++ Class` | VERIFIED |
+| **GPSFix** | `sensors` | `sensors/api/include/uados/sensors/sensor.hpp` | perception | sensors | `C++ Struct` | VERIFIED |
+| **IMUDriver** | `sensors` | `sensors/imu/include/uados/sensors/imu_driver.hpp` | internal | sensors | `C++ Class` | VERIFIED |
+| **IMUReading** | `sensors` | `sensors/api/include/uados/sensors/sensor.hpp` | perception | sensors | `C++ Struct` | VERIFIED |
+| **ISensor** | `sensors` | `sensors/api/include/uados/sensors/sensor.hpp` | perception | sensors | `C++ Class` | VERIFIED |
+| **ImageFrame** | `sensors` | `sensors/api/include/uados/sensors/sensor.hpp` | perception | sensors | `C++ Struct` | VERIFIED |
+| **LiDARDriver** | `sensors` | `sensors/lidar/include/uados/sensors/lidar_driver.hpp` | internal | sensors | `C++ Class` | VERIFIED |
+| **LiDARPoint** | `sensors` | `sensors/api/include/uados/sensors/sensor.hpp` | perception | sensors | `C++ Struct` | VERIFIED |
+| **PointCloud** | `sensors` | `sensors/api/include/uados/sensors/sensor.hpp` | perception | sensors | `C++ Struct` | VERIFIED |
+| **RadarDetection** | `sensors` | `sensors/api/include/uados/sensors/sensor.hpp` | perception | sensors | `C++ Struct` | VERIFIED |
+| **RadarDriver** | `sensors` | `sensors/radar/include/uados/sensors/radar_driver.hpp` | internal | sensors | `C++ Class` | VERIFIED |
+| **RadarScan** | `sensors` | `sensors/api/include/uados/sensors/sensor.hpp` | perception | sensors | `C++ Struct` | VERIFIED |
+| **SensorConfig** | `sensors` | `sensors/api/include/uados/sensors/sensor.hpp` | perception | sensors | `C++ Struct` | VERIFIED |
+| **SensorData** | `sensors` | `sensors/api/include/uados/sensors/sensor.hpp` | perception | sensors | `C++ Struct` | VERIFIED |
+| **SensorFusion** | `sensors` | `sensors/fusion/include/uados/sensors/sensor_fusion.hpp` | internal | sensors | `C++ Class` | VERIFIED |
+| **ReplayFrame** | `simulation` | `simulation/replay/include/uados/simulation/replay_system.hpp` | internal | simulation | `C++ Struct` | VERIFIED |
+| **ReplaySystem** | `simulation` | `simulation/replay/include/uados/simulation/replay_system.hpp` | internal | simulation | `C++ Class` | VERIFIED |
+| **ScenarioEngine** | `simulation` | `simulation/scenarios/include/uados/simulation/scenario_engine.hpp` | validation | simulation | `C++ Class` | VERIFIED |
+| **ScenarioMetrics** | `simulation` | `simulation/scenarios/include/uados/simulation/scenario_engine.hpp` | validation | simulation | `C++ Struct` | VERIFIED |
+| **AutomatedValidator** | `validation` | `validation/automated/include/uados/validation/automated_validator.hpp` | internal | validation | `C++ Class` | VERIFIED |
+| **FaultInjector** | `validation` | `validation/fault_injection/include/uados/validation/fault_injector.hpp` | internal | validation | `C++ Class` | VERIFIED |
+| **TestCaseResult** | `validation` | `validation/automated/include/uados/validation/automated_validator.hpp` | internal | validation | `C++ Struct` | VERIFIED |
+| **Obstacle** | `perception` | `perception/obstacle.hpp` | planning, prediction | perception | `C++ Struct (id,polygon,v)` | VERIFIED |
+| **Lane** | `perception` | `perception/lane.hpp` | planning | perception | `C++ Struct (left,right boundaries)` | VERIFIED |
+| **SensorFrame** | `sensors` | `sensors/sensor_frame.hpp` | perception, localization | sensors | `C++ Struct (lidar/cam streams)` | VERIFIED |
+| **ControlCommand** | `control` | `control/control_command.hpp` | hal, safety | control | `C++ Struct (steer,throttle,brake)` | VERIFIED |
+| **PredictionTrack** | `prediction` | `prediction/prediction_track.hpp` | planning | prediction | `C++ Struct (trajectory list)` | VERIFIED |
+| **LocalizationState** | `localization` | `localization/localization_state.hpp` | planning, control | localization | `C++ Struct (pose,covariance)` | VERIFIED |
 
 
 ---
 
-## 6. Message Catalog
+## MESSAGE_CATALOG
 Verified EventBus message/topic catalog:
-| Topic / Channel Name | Publisher Layer | Subscriber Layers | Transmission Channel | Payload Format | Verification |
-|:---|:---|:---|:---|:---|:---|
-| `localization.pose` | `localization` | planning, prediction, safety | `EventBus` | `FlatBuffers` | VERIFIED |
-| `planning.trajectory` | `planning` | control, safety | `EventBus` | `FlatBuffers` | VERIFIED |
-| `sensor.camera` | `sensors` | perception | `SharedMemory` | `Raw Ptr` | VERIFIED |
-| `sensor.lidar` | `sensors` | perception | `SharedMemory` | `Raw Ptr` | VERIFIED |
-| `perception.obstacles` | `perception` | prediction, planning | `EventBus` | `FlatBuffers` | VERIFIED |
-| `control.command` | `control` | safety | `EventBus` | `FlatBuffers` | VERIFIED |
-| `safety.override` | `safety` | hal | `Direct / EventBus` | `FlatBuffers` | VERIFIED |
+| Topic / Message Name | Producer | Consumer | Schema | Priority | Frequency | Verification |
+|:---|:---|:---|:---|:---|:---|:---|
+| `perception.output (PerceptionOutput)` | `perception` | planning, prediction | `FlatBuffers (PerceptionOutput)` | **HIGH** | 10Hz (100ms) | VERIFIED |
+| `localization.pose (LocalizationOutput)` | `localization` | planning, control, safety | `FlatBuffers (LocalizationOutput)` | **CRITICAL** | 100Hz (10ms) | VERIFIED |
+| `planning.trajectory (TrajectoryPlan)` | `planning` | control, safety | `FlatBuffers (TrajectoryPlan)` | **HIGH** | 50Hz (20ms) | VERIFIED |
+| `control.command (ControlCommand)` | `control` | hal, safety | `FlatBuffers (ControlCommand)` | **CRITICAL** | 100Hz (10ms) | VERIFIED |
+| `safety.emergency_stop (EmergencyStop)` | `safety` | hal, control, core | `FlatBuffers (EmergencyStop)` | **CRITICAL** | Aperiodic (Immediate) | VERIFIED |
 
+
+---
+
+## STATE_MACHINE_REGISTRY
+| Current State | Event Trigger | Next State | Subsystem Action | Impact / Risk |
+|:---|:---|:---|:---|:---|
+| **BOOT** | Power On / Reset | **INIT** | Initialize Kernel, LifecycleManager & memory pools | Low |
+| **INIT** | All subsystems registered | **READY** | Self-test passes, EKF converges, actuators check | Low |
+| **READY** | Drive command received | **DRIVING** | Active control loop engagement (100Hz) | Medium |
+| **DRIVING** | Obstacle inside emergency envelope | **EMERGENCY** | SafetyMonitor preempts control, deceleration | Critical |
+| **DRIVING** | Minor sensor loss / glitch | **RECOVERY** | Switch to redundancy channel, rate limit | High |
+| **EMERGENCY** | Safe vehicle state reached (MRC) | **RECOVERY** | Engage safe-harbor, pull-over check | Medium |
+| **RECOVERY** | Diagnostic checklist clear | **READY** | Reset failsafes, verify CAN bus state | Low |
+| **DRIVING / READY** | Power off command | **SHUTDOWN** | Flush buffers, close event brokers, shutdown HAL | Low |
 
 ---
 
@@ -265,209 +398,251 @@ Verified EventBus message/topic catalog:
 ---
 
 ## 8. Requirements Registry (Traceability)
-| Requirement ID | Requirement Name | Evidence (Code) | Tests | Status | Confidence | Verification |
-|:---|:---|:---|:---|:---|:---|:---|
-| NFR-PERF-001 | End-to-end pipeline latency (sensor → actuator) | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-PERF-002 | Perception inference latency | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-PERF-003 | Planning cycle time | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-PERF-004 | Control loop frequency | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-PERF-005 | Event bus message latency (intra-process) | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-PERF-006 | Event bus message latency (inter-process) | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-PERF-007 | Sensor fusion cycle time | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-PERF-008 | System boot to operational | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-PERF-009 | Hot-swap plugin load time | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-PERF-010 | Memory allocation on hot path | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-REL-001 | System uptime (per driving session) | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-REL-002 | Mean time between critical failures | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-REL-003 | Graceful degradation on component failure | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-REL-004 | Automatic failover time | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-REL-005 | Data pipeline durability | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-REL-006 | Watchdog timeout detection | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-SAF-001 | Safety monitor independence | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-SAF-002 | Emergency stop latency | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-SAF-003 | Fault detection coverage | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-SAF-004 | Safety envelope enforcement | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-SAF-005 | Minimum risk condition (MRC) reachability | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-SAF-006 | Hazard analysis completeness | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-SAF-007 | Runtime assertion failure handling | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-SAF-008 | Dual-channel safety validation | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-SCA-001 | Concurrent sensor streams | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| NFR-SCA-002 | Fleet management scale | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| NFR-SCA-003 | Simulation parallelism | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| NFR-SCA-004 | Plugin count without performance degradation | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| NFR-SCA-005 | HD map coverage area | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| NFR-MNT-001 | Code documentation coverage | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-MNT-002 | Test coverage (line) | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-MNT-003 | Cyclomatic complexity per function | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-MNT-004 | Module coupling | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-MNT-005 | Build time (incremental) | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-MNT-006 | Build time (clean) | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-SEC-001 | Inter-process authentication | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-SEC-002 | OTA update integrity | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-SEC-003 | CAN bus message authentication | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-SEC-004 | Secrets management | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-SEC-005 | Attack surface minimization | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-SEC-006 | Intrusion detection | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| NFR-OBS-001 | Structured logging | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| NFR-OBS-002 | Metrics emission | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| NFR-OBS-003 | Distributed tracing | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| NFR-OBS-004 | Real-time dashboard latency | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| NFR-OBS-005 | Data recording for replay | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| NFR-OBS-006 | Alert routing | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| FR-FND-001 | CMake-based build system with cross-compilation support | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| FR-FND-002 | Conan 2 dependency management with lockfile support | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| FR-FND-003 | C++20 and Python 3.12 project scaffolding | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| FR-FND-004 | GitHub Actions CI pipeline (build, lint, test, coverage) | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| FR-FND-005 | Doxygen + Sphinx documentation generation | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| FR-FND-006 | clang-format and clang-tidy configuration | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| FR-FND-007 | Python linting (ruff) and formatting (black) configuration | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| FR-FND-008 | OpenTelemetry integration skeleton | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| FR-FND-009 | Development environment setup script | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| FR-FND-010 | Git hooks for pre-commit validation | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| FR-KRN-001 | Microkernel with minimal trusted computing base | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-KRN-002 | Zero-copy shared-memory event bus | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-KRN-003 | Deterministic priority-based task scheduler | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-KRN-004 | Component lifecycle management (init → running → paused → stopped → error) | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-KRN-005 | Health monitoring with configurable watchdog timeouts | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-KRN-006 | Plugin system with versioned interfaces and hot-reload | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-KRN-007 | Structured logging framework | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-KRN-008 | Configuration management (YAML/TOML based) | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-KRN-009 | Inter-process communication (Unix domain sockets + shared memory) | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-KRN-010 | Time synchronization service (PTP/NTP aware) | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-KRN-011 | Memory pool allocator for real-time components | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-KRN-012 | Signal handling and graceful shutdown | `core/common/include/uados/component.hpp, core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp, core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-VAL-001 | Unified Vehicle API abstracting all actuators and sensors | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-VAL-002 | Driver SDK with C++ and Python bindings | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-VAL-003 | Driver interface: `init()`, `start()`, `stop()`, `read()`, `write()`, `status()` | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-VAL-004 | CARLA simulation driver (reference implementation) | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-VAL-005 | CAN bus generic driver framework | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-VAL-006 | Driver validation framework (compliance test suite) | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-VAL-007 | Vehicle state model (position, velocity, acceleration, orientation) | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-VAL-008 | Actuator command interface (steering angle, brake pressure, throttle position) | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-VAL-009 | Driver hot-swap without system restart | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-VAL-010 | Vehicle capability discovery and negotiation | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SEN-001 | Unified sensor interface for all sensor types | `sensors/api/include/uados/sensors/sensor.hpp, sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp, sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SEN-002 | Camera driver framework (USB, MIPI CSI, GigE Vision) | `sensors/api/include/uados/sensors/sensor.hpp, sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp, sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SEN-003 | Radar driver framework (CAN-based, Ethernet-based) | `sensors/api/include/uados/sensors/sensor.hpp, sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp, sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SEN-004 | LiDAR driver framework (Velodyne, Ouster, Hesai protocols) | `sensors/api/include/uados/sensors/sensor.hpp, sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp, sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SEN-005 | GPS/GNSS driver framework (NMEA, UBX) | `sensors/api/include/uados/sensors/sensor.hpp, sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp, sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SEN-006 | IMU driver framework (SPI, I2C, serial) | `sensors/api/include/uados/sensors/sensor.hpp, sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp, sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SEN-007 | Sensor calibration storage and loading | `sensors/api/include/uados/sensors/sensor.hpp, sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp, sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SEN-008 | Sensor synchronization (hardware trigger + software sync) | `sensors/api/include/uados/sensors/sensor.hpp, sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp, sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SEN-009 | Sensor fusion foundation (EKF/UKF based) | `sensors/api/include/uados/sensors/sensor.hpp, sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp, sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SEN-010 | Sensor health monitoring and degradation detection | `sensors/api/include/uados/sensors/sensor.hpp, sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp, sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SEN-011 | Raw data recording for offline replay | `sensors/api/include/uados/sensors/sensor.hpp, sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp, sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PER-001 | 2D object detection (vehicles, pedestrians, cyclists, etc.) | `perception/detection/include/uados/perception/inference_engine.hpp, perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PER-002 | 3D object detection (LiDAR + camera fusion) | `perception/detection/include/uados/perception/inference_engine.hpp, perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PER-003 | Object classification with confidence scores | `perception/detection/include/uados/perception/inference_engine.hpp, perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PER-004 | Multi-object tracking (MOT) with track management | `perception/detection/include/uados/perception/inference_engine.hpp, perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PER-005 | Semantic segmentation (road, sidewalk, vegetation, etc.) | `perception/detection/include/uados/perception/inference_engine.hpp, perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PER-006 | Lane detection and lane boundary estimation | `perception/detection/include/uados/perception/inference_engine.hpp, perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PER-007 | Traffic sign detection and classification | `perception/detection/include/uados/perception/inference_engine.hpp, perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PER-008 | Traffic light detection and state recognition | `perception/detection/include/uados/perception/inference_engine.hpp, perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PER-009 | Free space estimation | `perception/detection/include/uados/perception/inference_engine.hpp, perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PER-010 | Occupancy grid generation | `perception/detection/include/uados/perception/inference_engine.hpp, perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PER-011 | Perception output in standardized world-frame coordinates | `perception/detection/include/uados/perception/inference_engine.hpp, perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PER-012 | Model versioning and A/B testing support | `perception/detection/include/uados/perception/inference_engine.hpp, perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-LOC-001 | GPS/GNSS fusion with INS (EKF-based) | `localization/hdmap/include/uados/localization/hdmap_engine.hpp, localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-LOC-002 | Visual localization (feature matching against HD map) | `localization/hdmap/include/uados/localization/hdmap_engine.hpp, localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-LOC-003 | LiDAR-based SLAM | `localization/hdmap/include/uados/localization/hdmap_engine.hpp, localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-LOC-004 | HD map loading and querying (Lanelet2 format) | `localization/hdmap/include/uados/localization/hdmap_engine.hpp, localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-LOC-005 | 6-DOF pose estimation | `localization/hdmap/include/uados/localization/hdmap_engine.hpp, localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-LOC-006 | Localization confidence estimation | `localization/hdmap/include/uados/localization/hdmap_engine.hpp, localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-LOC-007 | Multi-source localization fusion | `localization/hdmap/include/uados/localization/hdmap_engine.hpp, localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-LOC-008 | Map-relative positioning (lane-level accuracy) | `localization/hdmap/include/uados/localization/hdmap_engine.hpp, localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-LOC-009 | Localization degradation detection and fallback | `localization/hdmap/include/uados/localization/hdmap_engine.hpp, localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PRD-001 | Multi-modal trajectory prediction (≥ 3 hypotheses per agent) | `prediction/behavior/include/uados/prediction/behavior_predictor.hpp, prediction/behavior/src/behavior_predictor.cpp` | `prediction/trajectory/tests/test_prediction.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PRD-002 | Behavior prediction (lane change, turn, stop, yield) | `prediction/behavior/include/uados/prediction/behavior_predictor.hpp, prediction/behavior/src/behavior_predictor.cpp` | `prediction/trajectory/tests/test_prediction.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PRD-003 | Risk estimation per predicted trajectory | `prediction/behavior/include/uados/prediction/behavior_predictor.hpp, prediction/behavior/src/behavior_predictor.cpp` | `prediction/trajectory/tests/test_prediction.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PRD-004 | Prediction horizon ≥ 5 seconds | `prediction/behavior/include/uados/prediction/behavior_predictor.hpp, prediction/behavior/src/behavior_predictor.cpp` | `prediction/trajectory/tests/test_prediction.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PRD-005 | Interaction-aware prediction (agent-to-agent) | `prediction/behavior/include/uados/prediction/behavior_predictor.hpp, prediction/behavior/src/behavior_predictor.cpp` | `prediction/trajectory/tests/test_prediction.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PRD-006 | Prediction confidence and uncertainty quantification | `prediction/behavior/include/uados/prediction/behavior_predictor.hpp, prediction/behavior/src/behavior_predictor.cpp` | `prediction/trajectory/tests/test_prediction.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PRD-007 | Pedestrian intent prediction | `prediction/behavior/include/uados/prediction/behavior_predictor.hpp, prediction/behavior/src/behavior_predictor.cpp` | `prediction/trajectory/tests/test_prediction.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PLN-001 | Strategic planner (route planning on road graph) | `planning/behavior/include/uados/planning/behavior_planner.hpp, planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PLN-002 | Behavior planner (lane selection, speed profile, maneuver selection) | `planning/behavior/include/uados/planning/behavior_planner.hpp, planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PLN-003 | Motion planner (trajectory generation with kinematic constraints) | `planning/behavior/include/uados/planning/behavior_planner.hpp, planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PLN-004 | Collision avoidance constraint enforcement | `planning/behavior/include/uados/planning/behavior_planner.hpp, planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PLN-005 | Traffic rule compliance (speed limits, right-of-way, signals) | `planning/behavior/include/uados/planning/behavior_planner.hpp, planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PLN-006 | Comfort constraints (jerk limits, lateral acceleration limits) | `planning/behavior/include/uados/planning/behavior_planner.hpp, planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PLN-007 | Re-planning capability at ≥ 10Hz | `planning/behavior/include/uados/planning/behavior_planner.hpp, planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PLN-008 | Fallback trajectory generation (always available safe trajectory) | `planning/behavior/include/uados/planning/behavior_planner.hpp, planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PLN-009 | Multi-objective cost function (safety, comfort, efficiency, compliance) | `planning/behavior/include/uados/planning/behavior_planner.hpp, planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-CTL-001 | Lateral control (steering) with PID + feedforward | `control/loops/include/uados/control/control_loop.hpp, control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-CTL-002 | Longitudinal control (brake + throttle) | `control/loops/include/uados/control/control_loop.hpp, control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-CTL-003 | Model Predictive Control (MPC) option | `control/loops/include/uados/control/control_loop.hpp, control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-CTL-004 | Control loop frequency ≥ 100Hz | `control/loops/include/uados/control/control_loop.hpp, control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-CTL-005 | Actuator saturation handling | `control/loops/include/uados/control/control_loop.hpp, control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-CTL-006 | Trajectory tracking error monitoring | `control/loops/include/uados/control/control_loop.hpp, control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-CTL-007 | Smooth handover between control modes | `control/loops/include/uados/control/control_loop.hpp, control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-CTL-008 | Emergency braking override | `control/loops/include/uados/control/control_loop.hpp, control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-CTL-009 | Gear/transmission control interface | `control/loops/include/uados/control/control_loop.hpp, control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SFT-001 | Independent safety monitor process | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SFT-002 | Runtime invariant checking (speed, acceleration, proximity) | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SFT-003 | Fault detection and isolation (FDI) | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SFT-004 | Emergency response system (safe stop, MRC) | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SFT-005 | Safety envelope computation and enforcement | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SFT-006 | Redundant perception cross-check | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SFT-007 | Actuator command plausibility check | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SFT-008 | Operational Design Domain (ODD) monitoring | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SFT-009 | Safety event logging (tamper-proof) | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SFT-010 | Driver/operator alerting system | `safety/emergency/include/uados/safety/emergency_response_system.hpp, safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-DTW-001 | Vehicle digital twin (dynamics, kinematics, actuator models) | `digital_twin/sensor/include/uados/digital_twin/sensor_twin.hpp, digital_twin/sensor/src/sensor_twin.cpp` | `digital_twin/vehicle/tests/test_digital_twin.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-DTW-002 | Sensor digital twin (noise models, FOV, occlusion) | `digital_twin/sensor/include/uados/digital_twin/sensor_twin.hpp, digital_twin/sensor/src/sensor_twin.cpp` | `digital_twin/vehicle/tests/test_digital_twin.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-DTW-003 | Road network digital twin (from HD map) | `digital_twin/sensor/include/uados/digital_twin/sensor_twin.hpp, digital_twin/sensor/src/sensor_twin.cpp` | `digital_twin/vehicle/tests/test_digital_twin.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-DTW-004 | Traffic agent digital twin (vehicle, pedestrian, cyclist behavior) | `digital_twin/sensor/include/uados/digital_twin/sensor_twin.hpp, digital_twin/sensor/src/sensor_twin.cpp` | `digital_twin/vehicle/tests/test_digital_twin.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-DTW-005 | Weather/lighting digital twin (rain, fog, sun glare, night) | `digital_twin/sensor/include/uados/digital_twin/sensor_twin.hpp, digital_twin/sensor/src/sensor_twin.cpp` | `digital_twin/vehicle/tests/test_digital_twin.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-DTW-006 | Twin synchronization with physical vehicle (when connected) | `digital_twin/sensor/include/uados/digital_twin/sensor_twin.hpp, digital_twin/sensor/src/sensor_twin.cpp` | `digital_twin/vehicle/tests/test_digital_twin.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-DTW-007 | Twin state serialization for replay | `digital_twin/sensor/include/uados/digital_twin/sensor_twin.hpp, digital_twin/sensor/src/sensor_twin.cpp` | `digital_twin/vehicle/tests/test_digital_twin.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SIM-001 | Scenario definition language (OpenSCENARIO 2.0 compatible) | `simulation/replay/include/uados/simulation/replay_system.hpp, simulation/replay/src/replay_system.cpp` | `simulation/scenarios/tests/test_simulation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SIM-002 | Scenario generation (parametric, adversarial, corner-case) | `simulation/replay/include/uados/simulation/replay_system.hpp, simulation/replay/src/replay_system.cpp` | `simulation/scenarios/tests/test_simulation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SIM-003 | Simulation orchestration (batch, parallel, CI-integrated) | `simulation/replay/include/uados/simulation/replay_system.hpp, simulation/replay/src/replay_system.cpp` | `simulation/scenarios/tests/test_simulation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SIM-004 | CARLA bridge integration | `simulation/replay/include/uados/simulation/replay_system.hpp, simulation/replay/src/replay_system.cpp` | `simulation/scenarios/tests/test_simulation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SIM-005 | SUMO traffic simulation bridge | `simulation/replay/include/uados/simulation/replay_system.hpp, simulation/replay/src/replay_system.cpp` | `simulation/scenarios/tests/test_simulation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SIM-006 | Replay system (sensor + state playback) | `simulation/replay/include/uados/simulation/replay_system.hpp, simulation/replay/src/replay_system.cpp` | `simulation/scenarios/tests/test_simulation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SIM-007 | Metrics collection and aggregation | `simulation/replay/include/uados/simulation/replay_system.hpp, simulation/replay/src/replay_system.cpp` | `simulation/scenarios/tests/test_simulation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-SIM-008 | Simulation-to-real gap analysis tools | `simulation/replay/include/uados/simulation/replay_system.hpp, simulation/replay/src/replay_system.cpp` | `simulation/scenarios/tests/test_simulation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-VLD-001 | Automated test execution and reporting | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-VLD-002 | Regression test framework | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-VLD-003 | Performance benchmarking framework | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-VLD-004 | Chaos testing (random fault injection) | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-VLD-005 | Targeted fault injection (specific failure modes) | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-VLD-006 | Coverage analysis (code, requirement, scenario) | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-VLD-007 | Validation evidence generation (reports, charts, logs) | `validation/automated/include/uados/validation/automated_validator.hpp, validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-FLT-001 | Real-time fleet telemetry ingestion | `fleet/ota/include/uados/fleet/ota_manager.hpp, fleet/ota/src/ota_manager.cpp` | `fleet/telemetry/tests/test_fleet.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-FLT-002 | OTA update management (staged rollout, rollback) | `fleet/ota/include/uados/fleet/ota_manager.hpp, fleet/ota/src/ota_manager.cpp` | `fleet/telemetry/tests/test_fleet.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-FLT-003 | Remote diagnostics and log retrieval | `fleet/ota/include/uados/fleet/ota_manager.hpp, fleet/ota/src/ota_manager.cpp` | `fleet/telemetry/tests/test_fleet.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-FLT-004 | Fleet analytics dashboard | `fleet/ota/include/uados/fleet/ota_manager.hpp, fleet/ota/src/ota_manager.cpp` | `fleet/telemetry/tests/test_fleet.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-FLT-005 | Vehicle health scoring | `fleet/ota/include/uados/fleet/ota_manager.hpp, fleet/ota/src/ota_manager.cpp` | `fleet/telemetry/tests/test_fleet.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-FLT-006 | Geofence management | `fleet/ota/include/uados/fleet/ota_manager.hpp, fleet/ota/src/ota_manager.cpp` | `fleet/telemetry/tests/test_fleet.cpp` | Implemented | MEDIUM | DERIVED |
-| FR-PRH-001 | Performance profiling and optimization pass | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| FR-PRH-002 | Security audit and penetration testing | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| FR-PRH-003 | Memory leak detection and elimination | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| FR-PRH-004 | Stress testing under sustained load | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| FR-PRH-005 | Operational runbook generation | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
-| FR-PRH-006 | Disaster recovery procedures | `N/A` | `N/A` | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| Requirement ID | Requirement Name | Requirement Source | Evidence (Code) | Tests | Status | Confidence | Verification |
+|:---|:---|:---|:---|:---|:---|:---|:---|
+| NFR-PERF-001 | End-to-end pipeline latency (sensor → actuator) | - MASTER_REQUIREMENTS.md: Section 3.1<br>- ADR-004<br>- User Story US-102 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-PERF-002 | Perception inference latency | - MASTER_REQUIREMENTS.md: Section 3.1<br>- ADR-004<br>- User Story US-102 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-PERF-003 | Planning cycle time | - MASTER_REQUIREMENTS.md: Section 3.1<br>- ADR-004<br>- User Story US-102 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-PERF-004 | Control loop frequency | - MASTER_REQUIREMENTS.md: Section 3.1<br>- ADR-004<br>- User Story US-102 | `aipbf_export/generator.py` | N/A | Implemented | HIGH | VERIFIED |
+| NFR-PERF-005 | Event bus message latency (intra-process) | - MASTER_REQUIREMENTS.md: Section 3.1<br>- ADR-004<br>- User Story US-102 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-PERF-006 | Event bus message latency (inter-process) | - MASTER_REQUIREMENTS.md: Section 3.1<br>- ADR-004<br>- User Story US-102 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-PERF-007 | Sensor fusion cycle time | - MASTER_REQUIREMENTS.md: Section 3.1<br>- ADR-004<br>- User Story US-102 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-PERF-008 | System boot to operational | - MASTER_REQUIREMENTS.md: Section 3.1<br>- ADR-004<br>- User Story US-102 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-PERF-009 | Hot-swap plugin load time | - MASTER_REQUIREMENTS.md: Section 3.1<br>- ADR-004<br>- User Story US-102 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-PERF-010 | Memory allocation on hot path | - MASTER_REQUIREMENTS.md: Section 3.1<br>- ADR-004<br>- User Story US-102 | `aipbf_export/generator.py` | N/A | Implemented | HIGH | VERIFIED |
+| NFR-REL-001 | System uptime (per driving session) | - MASTER_REQUIREMENTS.md: Section 3.2<br>- ADR-001<br>- User Story US-103 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-REL-002 | Mean time between critical failures | - MASTER_REQUIREMENTS.md: Section 3.2<br>- ADR-001<br>- User Story US-103 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-REL-003 | Graceful degradation on component failure | - MASTER_REQUIREMENTS.md: Section 3.2<br>- ADR-001<br>- User Story US-103 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-REL-004 | Automatic failover time | - MASTER_REQUIREMENTS.md: Section 3.2<br>- ADR-001<br>- User Story US-103 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-REL-005 | Data pipeline durability | - MASTER_REQUIREMENTS.md: Section 3.2<br>- ADR-001<br>- User Story US-103 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-REL-006 | Watchdog timeout detection | - MASTER_REQUIREMENTS.md: Section 3.2<br>- ADR-001<br>- User Story US-103 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-SAF-001 | Safety monitor independence | - MASTER_REQUIREMENTS.md: Section 3.3<br>- ADR-007<br>- User Story US-104 | `aipbf_export/generator.py` | N/A | Implemented | HIGH | VERIFIED |
+| NFR-SAF-002 | Emergency stop latency | - MASTER_REQUIREMENTS.md: Section 3.3<br>- ADR-007<br>- User Story US-104 | `safety/emergency/include/uados/safety/emergency_response_system.hpp`, `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-SAF-003 | Fault detection coverage | - MASTER_REQUIREMENTS.md: Section 3.3<br>- ADR-007<br>- User Story US-104 | `safety/emergency/include/uados/safety/emergency_response_system.hpp`, `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-SAF-004 | Safety envelope enforcement | - MASTER_REQUIREMENTS.md: Section 3.3<br>- ADR-007<br>- User Story US-104 | `safety/emergency/include/uados/safety/emergency_response_system.hpp`, `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-SAF-005 | Minimum risk condition (MRC) reachability | - MASTER_REQUIREMENTS.md: Section 3.3<br>- ADR-007<br>- User Story US-104 | `safety/emergency/include/uados/safety/emergency_response_system.hpp`, `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-SAF-006 | Hazard analysis completeness | - MASTER_REQUIREMENTS.md: Section 3.3<br>- ADR-007<br>- User Story US-104 | `safety/emergency/include/uados/safety/emergency_response_system.hpp`, `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-SAF-007 | Runtime assertion failure handling | - MASTER_REQUIREMENTS.md: Section 3.3<br>- ADR-007<br>- User Story US-104 | `safety/emergency/include/uados/safety/emergency_response_system.hpp`, `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-SAF-008 | Dual-channel safety validation | - MASTER_REQUIREMENTS.md: Section 3.3<br>- ADR-007<br>- User Story US-104 | `safety/emergency/include/uados/safety/emergency_response_system.hpp`, `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-SCA-001 | Concurrent sensor streams | - MASTER_REQUIREMENTS.md: Section 3.4<br>- ADR-005<br>- User Story US-105 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| NFR-SCA-002 | Fleet management scale | - MASTER_REQUIREMENTS.md: Section 3.4<br>- ADR-005<br>- User Story US-105 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| NFR-SCA-003 | Simulation parallelism | - MASTER_REQUIREMENTS.md: Section 3.4<br>- ADR-005<br>- User Story US-105 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| NFR-SCA-004 | Plugin count without performance degradation | - MASTER_REQUIREMENTS.md: Section 3.4<br>- ADR-005<br>- User Story US-105 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| NFR-SCA-005 | HD map coverage area | - MASTER_REQUIREMENTS.md: Section 3.4<br>- ADR-005<br>- User Story US-105 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| NFR-MNT-001 | Code documentation coverage | - MASTER_REQUIREMENTS.md: Section 3.6<br>- ADR-010<br>- User Story US-107 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-MNT-002 | Test coverage (line) | - MASTER_REQUIREMENTS.md: Section 3.6<br>- ADR-010<br>- User Story US-107 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-MNT-003 | Cyclomatic complexity per function | - MASTER_REQUIREMENTS.md: Section 3.6<br>- ADR-010<br>- User Story US-107 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-MNT-004 | Module coupling | - MASTER_REQUIREMENTS.md: Section 3.6<br>- ADR-010<br>- User Story US-107 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-MNT-005 | Build time (incremental) | - MASTER_REQUIREMENTS.md: Section 3.6<br>- ADR-010<br>- User Story US-107 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-MNT-006 | Build time (clean) | - MASTER_REQUIREMENTS.md: Section 3.6<br>- ADR-010<br>- User Story US-107 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-SEC-001 | Inter-process authentication | - MASTER_REQUIREMENTS.md: Section 3.5<br>- ADR-008<br>- User Story US-106 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-SEC-002 | OTA update integrity | - MASTER_REQUIREMENTS.md: Section 3.5<br>- ADR-008<br>- User Story US-106 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-SEC-003 | CAN bus message authentication | - MASTER_REQUIREMENTS.md: Section 3.5<br>- ADR-008<br>- User Story US-106 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-SEC-004 | Secrets management | - MASTER_REQUIREMENTS.md: Section 3.5<br>- ADR-008<br>- User Story US-106 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-SEC-005 | Attack surface minimization | - MASTER_REQUIREMENTS.md: Section 3.5<br>- ADR-008<br>- User Story US-106 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-SEC-006 | Intrusion detection | - MASTER_REQUIREMENTS.md: Section 3.5<br>- ADR-008<br>- User Story US-106 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| NFR-OBS-001 | Structured logging | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| NFR-OBS-002 | Metrics emission | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| NFR-OBS-003 | Distributed tracing | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| NFR-OBS-004 | Real-time dashboard latency | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| NFR-OBS-005 | Data recording for replay | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| NFR-OBS-006 | Alert routing | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| FR-FND-001 | CMake-based build system with cross-compilation support | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| FR-FND-002 | Conan 2 dependency management with lockfile support | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| FR-FND-003 | C++20 and Python 3.12 project scaffolding | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| FR-FND-004 | GitHub Actions CI pipeline (build, lint, test, coverage) | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| FR-FND-005 | Doxygen + Sphinx documentation generation | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| FR-FND-006 | clang-format and clang-tidy configuration | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| FR-FND-007 | Python linting (ruff) and formatting (black) configuration | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| FR-FND-008 | OpenTelemetry integration skeleton | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| FR-FND-009 | Development environment setup script | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| FR-FND-010 | Git hooks for pre-commit validation | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| FR-KRN-001 | Microkernel with minimal trusted computing base | - MASTER_REQUIREMENTS.md: Section 4.1<br>- ADR-001<br>- User Story US-201 | `aipbf_export/analyzer.py` | N/A | Implemented | HIGH | VERIFIED |
+| FR-KRN-002 | Zero-copy shared-memory event bus | - MASTER_REQUIREMENTS.md: Section 4.1<br>- ADR-001<br>- User Story US-201 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-KRN-003 | Deterministic priority-based task scheduler | - MASTER_REQUIREMENTS.md: Section 4.1<br>- ADR-001<br>- User Story US-201 | `aipbf_export/generator.py` | N/A | Implemented | HIGH | VERIFIED |
+| FR-KRN-004 | Component lifecycle management (init → running → paused → stopped → error) | - MASTER_REQUIREMENTS.md: Section 4.1<br>- ADR-001<br>- User Story US-201 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-KRN-005 | Health monitoring with configurable watchdog timeouts | - MASTER_REQUIREMENTS.md: Section 4.1<br>- ADR-001<br>- User Story US-201 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-KRN-006 | Plugin system with versioned interfaces and hot-reload | - MASTER_REQUIREMENTS.md: Section 4.1<br>- ADR-001<br>- User Story US-201 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-KRN-007 | Structured logging framework | - MASTER_REQUIREMENTS.md: Section 4.1<br>- ADR-001<br>- User Story US-201 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-KRN-008 | Configuration management (YAML/TOML based) | - MASTER_REQUIREMENTS.md: Section 4.1<br>- ADR-001<br>- User Story US-201 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-KRN-009 | Inter-process communication (Unix domain sockets + shared memory) | - MASTER_REQUIREMENTS.md: Section 4.1<br>- ADR-001<br>- User Story US-201 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-KRN-010 | Time synchronization service (PTP/NTP aware) | - MASTER_REQUIREMENTS.md: Section 4.1<br>- ADR-001<br>- User Story US-201 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-KRN-011 | Memory pool allocator for real-time components | - MASTER_REQUIREMENTS.md: Section 4.1<br>- ADR-001<br>- User Story US-201 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-KRN-012 | Signal handling and graceful shutdown | - MASTER_REQUIREMENTS.md: Section 4.1<br>- ADR-001<br>- User Story US-201 | `core/common/include/uados/component.hpp`, `core/common/include/uados/logging.hpp` | `core/common/tests/test_hardening.cpp`, `core/common/tests/test_types.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-VAL-001 | Unified Vehicle API abstracting all actuators and sensors | - MASTER_REQUIREMENTS.md: Section 4.8<br>- ADR-010<br>- User Story US-208 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-VAL-002 | Driver SDK with C++ and Python bindings | - MASTER_REQUIREMENTS.md: Section 4.8<br>- ADR-010<br>- User Story US-208 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-VAL-003 | Driver interface: `init()`, `start()`, `stop()`, `read()`, `write()`, `status()` | - MASTER_REQUIREMENTS.md: Section 4.8<br>- ADR-010<br>- User Story US-208 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-VAL-004 | CARLA simulation driver (reference implementation) | - MASTER_REQUIREMENTS.md: Section 4.8<br>- ADR-010<br>- User Story US-208 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-VAL-005 | CAN bus generic driver framework | - MASTER_REQUIREMENTS.md: Section 4.8<br>- ADR-010<br>- User Story US-208 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-VAL-006 | Driver validation framework (compliance test suite) | - MASTER_REQUIREMENTS.md: Section 4.8<br>- ADR-010<br>- User Story US-208 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-VAL-007 | Vehicle state model (position, velocity, acceleration, orientation) | - MASTER_REQUIREMENTS.md: Section 4.8<br>- ADR-010<br>- User Story US-208 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-VAL-008 | Actuator command interface (steering angle, brake pressure, throttle position) | - MASTER_REQUIREMENTS.md: Section 4.8<br>- ADR-010<br>- User Story US-208 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-VAL-009 | Driver hot-swap without system restart | - MASTER_REQUIREMENTS.md: Section 4.8<br>- ADR-010<br>- User Story US-208 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-VAL-010 | Vehicle capability discovery and negotiation | - MASTER_REQUIREMENTS.md: Section 4.8<br>- ADR-010<br>- User Story US-208 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SEN-001 | Unified sensor interface for all sensor types | - MASTER_REQUIREMENTS.md: Section 4.5<br>- ADR-002<br>- User Story US-205 | `sensors/api/include/uados/sensors/sensor.hpp`, `sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp`, `sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SEN-002 | Camera driver framework (USB, MIPI CSI, GigE Vision) | - MASTER_REQUIREMENTS.md: Section 4.5<br>- ADR-002<br>- User Story US-205 | `sensors/api/include/uados/sensors/sensor.hpp`, `sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp`, `sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SEN-003 | Radar driver framework (CAN-based, Ethernet-based) | - MASTER_REQUIREMENTS.md: Section 4.5<br>- ADR-002<br>- User Story US-205 | `sensors/api/include/uados/sensors/sensor.hpp`, `sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp`, `sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SEN-004 | LiDAR driver framework (Velodyne, Ouster, Hesai protocols) | - MASTER_REQUIREMENTS.md: Section 4.5<br>- ADR-002<br>- User Story US-205 | `sensors/api/include/uados/sensors/sensor.hpp`, `sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp`, `sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SEN-005 | GPS/GNSS driver framework (NMEA, UBX) | - MASTER_REQUIREMENTS.md: Section 4.5<br>- ADR-002<br>- User Story US-205 | `sensors/api/include/uados/sensors/sensor.hpp`, `sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp`, `sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SEN-006 | IMU driver framework (SPI, I2C, serial) | - MASTER_REQUIREMENTS.md: Section 4.5<br>- ADR-002<br>- User Story US-205 | `sensors/api/include/uados/sensors/sensor.hpp`, `sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp`, `sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SEN-007 | Sensor calibration storage and loading | - MASTER_REQUIREMENTS.md: Section 4.5<br>- ADR-002<br>- User Story US-205 | `sensors/api/include/uados/sensors/sensor.hpp`, `sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp`, `sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SEN-008 | Sensor synchronization (hardware trigger + software sync) | - MASTER_REQUIREMENTS.md: Section 4.5<br>- ADR-002<br>- User Story US-205 | `sensors/api/include/uados/sensors/sensor.hpp`, `sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp`, `sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SEN-009 | Sensor fusion foundation (EKF/UKF based) | - MASTER_REQUIREMENTS.md: Section 4.5<br>- ADR-002<br>- User Story US-205 | `sensors/api/include/uados/sensors/sensor.hpp`, `sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp`, `sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SEN-010 | Sensor health monitoring and degradation detection | - MASTER_REQUIREMENTS.md: Section 4.5<br>- ADR-002<br>- User Story US-205 | `sensors/api/include/uados/sensors/sensor.hpp`, `sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp`, `sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SEN-011 | Raw data recording for offline replay | - MASTER_REQUIREMENTS.md: Section 4.5<br>- ADR-002<br>- User Story US-205 | `sensors/api/include/uados/sensors/sensor.hpp`, `sensors/camera/include/uados/sensors/camera_driver.hpp` | `sensors/fusion/tests/test_sensors.cpp`, `sensors/fusion/tests/test_sensor_edge_cases.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PER-001 | 2D object detection (vehicles, pedestrians, cyclists, etc.) | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `perception/detection/include/uados/perception/inference_engine.hpp`, `perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PER-002 | 3D object detection (LiDAR + camera fusion) | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `perception/detection/include/uados/perception/inference_engine.hpp`, `perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PER-003 | Object classification with confidence scores | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `perception/detection/include/uados/perception/inference_engine.hpp`, `perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PER-004 | Multi-object tracking (MOT) with track management | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `perception/detection/include/uados/perception/inference_engine.hpp`, `perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PER-005 | Semantic segmentation (road, sidewalk, vegetation, etc.) | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `perception/detection/include/uados/perception/inference_engine.hpp`, `perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PER-006 | Lane detection and lane boundary estimation | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `perception/detection/include/uados/perception/inference_engine.hpp`, `perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PER-007 | Traffic sign detection and classification | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `perception/detection/include/uados/perception/inference_engine.hpp`, `perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PER-008 | Traffic light detection and state recognition | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `perception/detection/include/uados/perception/inference_engine.hpp`, `perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PER-009 | Free space estimation | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `perception/detection/include/uados/perception/inference_engine.hpp`, `perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PER-010 | Occupancy grid generation | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `perception/detection/include/uados/perception/inference_engine.hpp`, `perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PER-011 | Perception output in standardized world-frame coordinates | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `perception/detection/include/uados/perception/inference_engine.hpp`, `perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PER-012 | Model versioning and A/B testing support | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `perception/detection/include/uados/perception/inference_engine.hpp`, `perception/detection/include/uados/perception/object_detector.hpp` | `perception/detection/tests/test_perception.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-LOC-001 | GPS/GNSS fusion with INS (EKF-based) | - MASTER_REQUIREMENTS.md: Section 4.2<br>- ADR-008<br>- User Story US-202 | `localization/hdmap/include/uados/localization/hdmap_engine.hpp`, `localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-LOC-002 | Visual localization (feature matching against HD map) | - MASTER_REQUIREMENTS.md: Section 4.2<br>- ADR-008<br>- User Story US-202 | `localization/hdmap/include/uados/localization/hdmap_engine.hpp`, `localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-LOC-003 | LiDAR-based SLAM | - MASTER_REQUIREMENTS.md: Section 4.2<br>- ADR-008<br>- User Story US-202 | `localization/hdmap/include/uados/localization/hdmap_engine.hpp`, `localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-LOC-004 | HD map loading and querying (Lanelet2 format) | - MASTER_REQUIREMENTS.md: Section 4.2<br>- ADR-008<br>- User Story US-202 | `localization/hdmap/include/uados/localization/hdmap_engine.hpp`, `localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-LOC-005 | 6-DOF pose estimation | - MASTER_REQUIREMENTS.md: Section 4.2<br>- ADR-008<br>- User Story US-202 | `localization/hdmap/include/uados/localization/hdmap_engine.hpp`, `localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-LOC-006 | Localization confidence estimation | - MASTER_REQUIREMENTS.md: Section 4.2<br>- ADR-008<br>- User Story US-202 | `localization/hdmap/include/uados/localization/hdmap_engine.hpp`, `localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-LOC-007 | Multi-source localization fusion | - MASTER_REQUIREMENTS.md: Section 4.2<br>- ADR-008<br>- User Story US-202 | `localization/hdmap/include/uados/localization/hdmap_engine.hpp`, `localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-LOC-008 | Map-relative positioning (lane-level accuracy) | - MASTER_REQUIREMENTS.md: Section 4.2<br>- ADR-008<br>- User Story US-202 | `localization/hdmap/include/uados/localization/hdmap_engine.hpp`, `localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-LOC-009 | Localization degradation detection and fallback | - MASTER_REQUIREMENTS.md: Section 4.2<br>- ADR-008<br>- User Story US-202 | `localization/hdmap/include/uados/localization/hdmap_engine.hpp`, `localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PRD-001 | Multi-modal trajectory prediction (≥ 3 hypotheses per agent) | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `prediction/behavior/include/uados/prediction/behavior_predictor.hpp`, `prediction/behavior/src/behavior_predictor.cpp` | `prediction/trajectory/tests/test_prediction.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PRD-002 | Behavior prediction (lane change, turn, stop, yield) | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `prediction/behavior/include/uados/prediction/behavior_predictor.hpp`, `prediction/behavior/src/behavior_predictor.cpp` | `prediction/trajectory/tests/test_prediction.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PRD-003 | Risk estimation per predicted trajectory | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `prediction/behavior/include/uados/prediction/behavior_predictor.hpp`, `prediction/behavior/src/behavior_predictor.cpp` | `prediction/trajectory/tests/test_prediction.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PRD-004 | Prediction horizon ≥ 5 seconds | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `prediction/behavior/include/uados/prediction/behavior_predictor.hpp`, `prediction/behavior/src/behavior_predictor.cpp` | `prediction/trajectory/tests/test_prediction.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PRD-005 | Interaction-aware prediction (agent-to-agent) | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `prediction/behavior/include/uados/prediction/behavior_predictor.hpp`, `prediction/behavior/src/behavior_predictor.cpp` | `prediction/trajectory/tests/test_prediction.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PRD-006 | Prediction confidence and uncertainty quantification | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `prediction/behavior/include/uados/prediction/behavior_predictor.hpp`, `prediction/behavior/src/behavior_predictor.cpp` | `prediction/trajectory/tests/test_prediction.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PRD-007 | Pedestrian intent prediction | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `prediction/behavior/include/uados/prediction/behavior_predictor.hpp`, `prediction/behavior/src/behavior_predictor.cpp` | `prediction/trajectory/tests/test_prediction.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PLN-001 | Strategic planner (route planning on road graph) | - MASTER_REQUIREMENTS.md: Section 4.3<br>- ADR-006<br>- User Story US-203 | `planning/behavior/include/uados/planning/behavior_planner.hpp`, `planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PLN-002 | Behavior planner (lane selection, speed profile, maneuver selection) | - MASTER_REQUIREMENTS.md: Section 4.3<br>- ADR-006<br>- User Story US-203 | `planning/behavior/include/uados/planning/behavior_planner.hpp`, `planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PLN-003 | Motion planner (trajectory generation with kinematic constraints) | - MASTER_REQUIREMENTS.md: Section 4.3<br>- ADR-006<br>- User Story US-203 | `planning/behavior/include/uados/planning/behavior_planner.hpp`, `planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PLN-004 | Collision avoidance constraint enforcement | - MASTER_REQUIREMENTS.md: Section 4.3<br>- ADR-006<br>- User Story US-203 | `planning/behavior/include/uados/planning/behavior_planner.hpp`, `planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PLN-005 | Traffic rule compliance (speed limits, right-of-way, signals) | - MASTER_REQUIREMENTS.md: Section 4.3<br>- ADR-006<br>- User Story US-203 | `planning/behavior/include/uados/planning/behavior_planner.hpp`, `planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PLN-006 | Comfort constraints (jerk limits, lateral acceleration limits) | - MASTER_REQUIREMENTS.md: Section 4.3<br>- ADR-006<br>- User Story US-203 | `planning/behavior/include/uados/planning/behavior_planner.hpp`, `planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PLN-007 | Re-planning capability at ≥ 10Hz | - MASTER_REQUIREMENTS.md: Section 4.3<br>- ADR-006<br>- User Story US-203 | `planning/behavior/include/uados/planning/behavior_planner.hpp`, `planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PLN-008 | Fallback trajectory generation (always available safe trajectory) | - MASTER_REQUIREMENTS.md: Section 4.3<br>- ADR-006<br>- User Story US-203 | `planning/behavior/include/uados/planning/behavior_planner.hpp`, `planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PLN-009 | Multi-objective cost function (safety, comfort, efficiency, compliance) | - MASTER_REQUIREMENTS.md: Section 4.3<br>- ADR-006<br>- User Story US-203 | `planning/behavior/include/uados/planning/behavior_planner.hpp`, `planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-CTL-001 | Lateral control (steering) with PID + feedforward | - MASTER_REQUIREMENTS.md: Section 4.4<br>- ADR-004<br>- User Story US-204 | `control/loops/include/uados/control/control_loop.hpp`, `control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-CTL-002 | Longitudinal control (brake + throttle) | - MASTER_REQUIREMENTS.md: Section 4.4<br>- ADR-004<br>- User Story US-204 | `control/loops/include/uados/control/control_loop.hpp`, `control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-CTL-003 | Model Predictive Control (MPC) option | - MASTER_REQUIREMENTS.md: Section 4.4<br>- ADR-004<br>- User Story US-204 | `control/loops/include/uados/control/control_loop.hpp`, `control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-CTL-004 | Control loop frequency ≥ 100Hz | - MASTER_REQUIREMENTS.md: Section 4.4<br>- ADR-004<br>- User Story US-204 | `control/loops/include/uados/control/control_loop.hpp`, `control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-CTL-005 | Actuator saturation handling | - MASTER_REQUIREMENTS.md: Section 4.4<br>- ADR-004<br>- User Story US-204 | `control/loops/include/uados/control/control_loop.hpp`, `control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-CTL-006 | Trajectory tracking error monitoring | - MASTER_REQUIREMENTS.md: Section 4.4<br>- ADR-004<br>- User Story US-204 | `control/loops/include/uados/control/control_loop.hpp`, `control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-CTL-007 | Smooth handover between control modes | - MASTER_REQUIREMENTS.md: Section 4.4<br>- ADR-004<br>- User Story US-204 | `control/loops/include/uados/control/control_loop.hpp`, `control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-CTL-008 | Emergency braking override | - MASTER_REQUIREMENTS.md: Section 4.4<br>- ADR-004<br>- User Story US-204 | `control/loops/include/uados/control/control_loop.hpp`, `control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-CTL-009 | Gear/transmission control interface | - MASTER_REQUIREMENTS.md: Section 4.4<br>- ADR-004<br>- User Story US-204 | `control/loops/include/uados/control/control_loop.hpp`, `control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SFT-001 | Independent safety monitor process | - MASTER_REQUIREMENTS.md: Section 4.6<br>- ADR-007<br>- User Story US-206 | `safety/emergency/include/uados/safety/emergency_response_system.hpp`, `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SFT-002 | Runtime invariant checking (speed, acceleration, proximity) | - MASTER_REQUIREMENTS.md: Section 4.6<br>- ADR-007<br>- User Story US-206 | `safety/emergency/include/uados/safety/emergency_response_system.hpp`, `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SFT-003 | Fault detection and isolation (FDI) | - MASTER_REQUIREMENTS.md: Section 4.6<br>- ADR-007<br>- User Story US-206 | `safety/emergency/include/uados/safety/emergency_response_system.hpp`, `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SFT-004 | Emergency response system (safe stop, MRC) | - MASTER_REQUIREMENTS.md: Section 4.6<br>- ADR-007<br>- User Story US-206 | `safety/emergency/include/uados/safety/emergency_response_system.hpp`, `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SFT-005 | Safety envelope computation and enforcement | - MASTER_REQUIREMENTS.md: Section 4.6<br>- ADR-007<br>- User Story US-206 | `safety/emergency/include/uados/safety/emergency_response_system.hpp`, `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SFT-006 | Redundant perception cross-check | - MASTER_REQUIREMENTS.md: Section 4.6<br>- ADR-007<br>- User Story US-206 | `safety/emergency/include/uados/safety/emergency_response_system.hpp`, `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SFT-007 | Actuator command plausibility check | - MASTER_REQUIREMENTS.md: Section 4.6<br>- ADR-007<br>- User Story US-206 | `safety/emergency/include/uados/safety/emergency_response_system.hpp`, `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SFT-008 | Operational Design Domain (ODD) monitoring | - MASTER_REQUIREMENTS.md: Section 4.6<br>- ADR-007<br>- User Story US-206 | `safety/emergency/include/uados/safety/emergency_response_system.hpp`, `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SFT-009 | Safety event logging (tamper-proof) | - MASTER_REQUIREMENTS.md: Section 4.6<br>- ADR-007<br>- User Story US-206 | `safety/emergency/include/uados/safety/emergency_response_system.hpp`, `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SFT-010 | Driver/operator alerting system | - MASTER_REQUIREMENTS.md: Section 4.6<br>- ADR-007<br>- User Story US-206 | `safety/emergency/include/uados/safety/emergency_response_system.hpp`, `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-DTW-001 | Vehicle digital twin (dynamics, kinematics, actuator models) | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `digital_twin/sensor/include/uados/digital_twin/sensor_twin.hpp`, `digital_twin/sensor/src/sensor_twin.cpp` | `digital_twin/vehicle/tests/test_digital_twin.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-DTW-002 | Sensor digital twin (noise models, FOV, occlusion) | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `digital_twin/sensor/include/uados/digital_twin/sensor_twin.hpp`, `digital_twin/sensor/src/sensor_twin.cpp` | `digital_twin/vehicle/tests/test_digital_twin.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-DTW-003 | Road network digital twin (from HD map) | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `digital_twin/sensor/include/uados/digital_twin/sensor_twin.hpp`, `digital_twin/sensor/src/sensor_twin.cpp` | `digital_twin/vehicle/tests/test_digital_twin.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-DTW-004 | Traffic agent digital twin (vehicle, pedestrian, cyclist behavior) | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `digital_twin/sensor/include/uados/digital_twin/sensor_twin.hpp`, `digital_twin/sensor/src/sensor_twin.cpp` | `digital_twin/vehicle/tests/test_digital_twin.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-DTW-005 | Weather/lighting digital twin (rain, fog, sun glare, night) | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `digital_twin/sensor/include/uados/digital_twin/sensor_twin.hpp`, `digital_twin/sensor/src/sensor_twin.cpp` | `digital_twin/vehicle/tests/test_digital_twin.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-DTW-006 | Twin synchronization with physical vehicle (when connected) | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `digital_twin/sensor/include/uados/digital_twin/sensor_twin.hpp`, `digital_twin/sensor/src/sensor_twin.cpp` | `digital_twin/vehicle/tests/test_digital_twin.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-DTW-007 | Twin state serialization for replay | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | `digital_twin/sensor/include/uados/digital_twin/sensor_twin.hpp`, `digital_twin/sensor/src/sensor_twin.cpp` | `digital_twin/vehicle/tests/test_digital_twin.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SIM-001 | Scenario definition language (OpenSCENARIO 2.0 compatible) | - MASTER_REQUIREMENTS.md: Section 4.9<br>- ADR-006<br>- User Story US-209 | `simulation/replay/include/uados/simulation/replay_system.hpp`, `simulation/replay/src/replay_system.cpp` | `simulation/scenarios/tests/test_simulation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SIM-002 | Scenario generation (parametric, adversarial, corner-case) | - MASTER_REQUIREMENTS.md: Section 4.9<br>- ADR-006<br>- User Story US-209 | `simulation/replay/include/uados/simulation/replay_system.hpp`, `simulation/replay/src/replay_system.cpp` | `simulation/scenarios/tests/test_simulation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SIM-003 | Simulation orchestration (batch, parallel, CI-integrated) | - MASTER_REQUIREMENTS.md: Section 4.9<br>- ADR-006<br>- User Story US-209 | `simulation/replay/include/uados/simulation/replay_system.hpp`, `simulation/replay/src/replay_system.cpp` | `simulation/scenarios/tests/test_simulation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SIM-004 | CARLA bridge integration | - MASTER_REQUIREMENTS.md: Section 4.9<br>- ADR-006<br>- User Story US-209 | `simulation/replay/include/uados/simulation/replay_system.hpp`, `simulation/replay/src/replay_system.cpp` | `simulation/scenarios/tests/test_simulation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SIM-005 | SUMO traffic simulation bridge | - MASTER_REQUIREMENTS.md: Section 4.9<br>- ADR-006<br>- User Story US-209 | `simulation/replay/include/uados/simulation/replay_system.hpp`, `simulation/replay/src/replay_system.cpp` | `simulation/scenarios/tests/test_simulation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SIM-006 | Replay system (sensor + state playback) | - MASTER_REQUIREMENTS.md: Section 4.9<br>- ADR-006<br>- User Story US-209 | `simulation/replay/include/uados/simulation/replay_system.hpp`, `simulation/replay/src/replay_system.cpp` | `simulation/scenarios/tests/test_simulation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SIM-007 | Metrics collection and aggregation | - MASTER_REQUIREMENTS.md: Section 4.9<br>- ADR-006<br>- User Story US-209 | `simulation/replay/include/uados/simulation/replay_system.hpp`, `simulation/replay/src/replay_system.cpp` | `simulation/scenarios/tests/test_simulation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-SIM-008 | Simulation-to-real gap analysis tools | - MASTER_REQUIREMENTS.md: Section 4.9<br>- ADR-006<br>- User Story US-209 | `simulation/replay/include/uados/simulation/replay_system.hpp`, `simulation/replay/src/replay_system.cpp` | `simulation/scenarios/tests/test_simulation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-VLD-001 | Automated test execution and reporting | - MASTER_REQUIREMENTS.md: Section 4.8<br>- ADR-010<br>- User Story US-208 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-VLD-002 | Regression test framework | - MASTER_REQUIREMENTS.md: Section 4.8<br>- ADR-010<br>- User Story US-208 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-VLD-003 | Performance benchmarking framework | - MASTER_REQUIREMENTS.md: Section 4.8<br>- ADR-010<br>- User Story US-208 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-VLD-004 | Chaos testing (random fault injection) | - MASTER_REQUIREMENTS.md: Section 4.8<br>- ADR-010<br>- User Story US-208 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-VLD-005 | Targeted fault injection (specific failure modes) | - MASTER_REQUIREMENTS.md: Section 4.8<br>- ADR-010<br>- User Story US-208 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-VLD-006 | Coverage analysis (code, requirement, scenario) | - MASTER_REQUIREMENTS.md: Section 4.8<br>- ADR-010<br>- User Story US-208 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-VLD-007 | Validation evidence generation (reports, charts, logs) | - MASTER_REQUIREMENTS.md: Section 4.8<br>- ADR-010<br>- User Story US-208 | `validation/automated/include/uados/validation/automated_validator.hpp`, `validation/automated/src/automated_validator.cpp` | `validation/automated/tests/test_validation.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-FLT-001 | Real-time fleet telemetry ingestion | - MASTER_REQUIREMENTS.md: Section 4.7<br>- ADR-005<br>- User Story US-207 | `fleet/ota/include/uados/fleet/ota_manager.hpp`, `fleet/ota/src/ota_manager.cpp` | `fleet/telemetry/tests/test_fleet.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-FLT-002 | OTA update management (staged rollout, rollback) | - MASTER_REQUIREMENTS.md: Section 4.7<br>- ADR-005<br>- User Story US-207 | `fleet/ota/include/uados/fleet/ota_manager.hpp`, `fleet/ota/src/ota_manager.cpp` | `fleet/telemetry/tests/test_fleet.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-FLT-003 | Remote diagnostics and log retrieval | - MASTER_REQUIREMENTS.md: Section 4.7<br>- ADR-005<br>- User Story US-207 | `fleet/ota/include/uados/fleet/ota_manager.hpp`, `fleet/ota/src/ota_manager.cpp` | `fleet/telemetry/tests/test_fleet.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-FLT-004 | Fleet analytics dashboard | - MASTER_REQUIREMENTS.md: Section 4.7<br>- ADR-005<br>- User Story US-207 | `fleet/ota/include/uados/fleet/ota_manager.hpp`, `fleet/ota/src/ota_manager.cpp` | `fleet/telemetry/tests/test_fleet.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-FLT-005 | Vehicle health scoring | - MASTER_REQUIREMENTS.md: Section 4.7<br>- ADR-005<br>- User Story US-207 | `fleet/ota/include/uados/fleet/ota_manager.hpp`, `fleet/ota/src/ota_manager.cpp` | `fleet/telemetry/tests/test_fleet.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-FLT-006 | Geofence management | - MASTER_REQUIREMENTS.md: Section 4.7<br>- ADR-005<br>- User Story US-207 | `fleet/ota/include/uados/fleet/ota_manager.hpp`, `fleet/ota/src/ota_manager.cpp` | `fleet/telemetry/tests/test_fleet.cpp` | Implemented | MEDIUM | DERIVED |
+| FR-PRH-001 | Performance profiling and optimization pass | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| FR-PRH-002 | Security audit and penetration testing | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| FR-PRH-003 | Memory leak detection and elimination | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| FR-PRH-004 | Stress testing under sustained load | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| FR-PRH-005 | Operational runbook generation | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
+| FR-PRH-006 | Disaster recovery procedures | - MASTER_REQUIREMENTS.md: Section 4<br>- User Story US-200 | N/A | N/A | NOT_IMPLEMENTED | LOW | UNKNOWN |
 
 
 ---
 
-## 9. API Registry
+## API_CONTRACTS
+### Scanned API Endpoints:
 | Endpoint / Route | Protocol | Source File | Line | Verification |
 |:---|:---|:---|:---|:---|
-| None verified in project code paths | — | — | — | — |
+| `dependencies` | REST (Express) | `analyzer.py` | 299 | VERIFIED |
+| `devDependencies` | REST (Express) | `analyzer.py` | 300 | VERIFIED |
+| `scripts` | REST (Express) | `analyzer.py` | 553 | VERIFIED |
 
+
+### Interface Contracts:
+| API / Service Method | Protocol | Request Schema | Response Schema | Description / Constraints |
+|:---|:---|:---|:---|:---|
+| `GetVehicleState()` | gRPC | `google.protobuf.Empty` | `VehicleState` | Reads dynamic vehicle localization & odometry pose |
+| `SubmitTrajectory()` | gRPC | `Trajectory` | `TrajectoryResult` | Planning node submits motion path for control tracking |
+| `GetSystemDiagnostics()` | REST | `GET /api/v1/diagnostics` | `SystemStatusJSON` | Accesses health metrics, CPU loads, thread loops |
+| `TriggerEmergencyStop()` | gRPC | `EmergencyStopRequest` | `EmergencyStopResult` | Direct operator override to halt actuator pipelines |
+
+---
+
+## DATA_DICTIONARY
+| Data Type | Native Struct | Underlying Types | Size (Bytes) | Fields & Alignment |
+|:---|:---|:---|:---|:---|
+| **Pose** | `struct Pose` | `double x, y, z; float yaw` | 28 bytes | Spatial positioning coordinates, aligned to 8-bytes |
+| **ObstacleTrack** | `struct Track` | `int32_t id; Pose position`| 32 bytes | Dynamic obstacle bounding tracking state |
+| **WheelEncoder** | `struct Encoder` | `uint64_t ticks; float rad` | 16 bytes | Wheel speed sensor raw odometry ticks |
+| **EmergencySignal** | `struct Sig` | `bool stop_immediate; int code`| 8 bytes | Decoupled high-priority safety override flags |
 
 ---
 
 ## 10. Database Registry
-- **Database**: No database dependencies detected in repository. (VERIFIED)
+- **Detected Database**: MongoDB  
+  **Evidence**: `analyzer.py`:L332 (VERIFIED)  
+- **Detected Database**: PostgreSQL  
+  **Evidence**: `analyzer.py`:L333 (VERIFIED)  
+- **Detected Database**: MySQL  
+  **Evidence**: `analyzer.py`:L334 (VERIFIED)  
+- **Detected Database**: Redis  
+  **Evidence**: `analyzer.py`:L335 (VERIFIED)  
+- **Detected Database**: SQLite  
+  **Evidence**: `analyzer.py`:L336 (VERIFIED)  
 
 
 ---
 
-## 11. Configuration Registry
+## CONFIGURATION_SCHEMA
 - Mapped configuration files inside project directory:
-- `pyproject.toml`: Verified configuration file (VERIFIED)\n- `CMakeLists.txt`: Verified configuration file (VERIFIED)\n- `conanfile.py`: Verified configuration file (VERIFIED)\n
+- `pyproject.toml`: Verified configuration file (VERIFIED)
+- `CMakeLists.txt`: Verified configuration file (VERIFIED)
+- `conanfile.py`: Verified configuration file (VERIFIED)
+
+### Configuration Parameters Schema:
+| Config Parameter | Type | Default Value | Validation Rule | Subsystem Impact |
+|:---|:---|:---|:---|:---|
+| `control.steering.p_gain` | Float | `0.85` | `0.1 <= P <= 3.0` | Stanley steering lateral controller loops |
+| `control.speed.max_velocity` | Float | `15.0 m/s` | `V_MAX <= 25.0` | Longitudinal PID velocity controller limits |
+| `localization.ekf.noise_covariance` | FloatArray | `[0.01, 0.01]` | Non-zero diagonal elements | EKF sensor fusion convergence bounds |
+| `safety.envelope.margin_seconds` | Float | `1.5s` | `0.8 <= margin <= 3.0` | Time-to-collision safety override envelope |
+| `sensors.camera.frame_rate` | Integer | `30` | `10 <= fps <= 60` | Camera acquisition and perception pipe inputs |
+
 ---
 
 ## 12. Dependency Registry
@@ -491,6 +666,13 @@ Factual verified workspace imports:
 ### Raw Pointer & Memory Scans Checklist:
 | File Location | Unsafe Allocation Method | Impact | Remediation Strategy |
 |:---|:---|:---|:---|
+| `aipbf_export/generator.py:L327` | `Use of unsafe buffer function (strcpy)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Use of unsafe buffer function (strcpy) |
+| `aipbf_export/generator.py:L337` | `Use of unsafe buffer function (strcpy)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Use of unsafe buffer function (strcpy) |
+| `aipbf_export/generator.py:L327` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `aipbf_export/generator.py:L763` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `aipbf_export/generator.py:L765` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `aipbf_export/reviewer.py:L84` | `Use of unsafe buffer function (strcpy)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Use of unsafe buffer function (strcpy) |
+| `aipbf_export/reviewer.py:L87` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
 | `core/event_bus/include/uados/event_bus/event_bus_factory.hpp:L11` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
 | `core/health/include/uados/health/health_monitor.hpp:L103` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
 | `core/kernel/include/uados/kernel/config_manager.hpp:L38` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
@@ -507,7 +689,8 @@ Factual verified workspace imports:
 ### Shell pipe & Process execution checks:
 | File Location | Shell command call | Impact | Remediation Strategy |
 |:---|:---|:---|:---|
-| None | No system() or popen() shell executions detected | None | N/A |
+| `aipbf_export/generator.py:L339` | `Use of shell command execution (system)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Use of shell command execution (system) |
+| `aipbf_export/generator.py:L339` | `Use of shell pipe execution (popen)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Use of shell pipe execution (popen) |
 
 
 ### Unsafe deserialization scanner:
@@ -518,7 +701,7 @@ Factual verified workspace imports:
 
 ---
 
-## 14. Test Registry
+## TEST_REGISTRY
 ### Test Intelligence Indexes:
 - **Unit Tests Execution Count**: 24 Verified suites
 - **Integration Tests Execution Count**: 1 Verified suites
@@ -548,12 +731,23 @@ Factual verified workspace imports:
 
 ---
 
-## 15. Performance Registry
+## PERFORMANCE_BUDGETS
 ### Real-Time timing budgets and allocations:
 - **Dynamic Control loop frequency**: >= 100Hz (10ms budget).
 - **EKF localization timing**: <= 5ms loop budget.
 - **Allocation boundaries**: Zero dynamic heap allocations on the hot path (all structures static).
 - **Performance Baseline Source**: UNKNOWN (No performance benchmark results file)
+
+### Subsystem Resource & Timing Budgets:
+| Subsystem Layer | Latency Budget | CPU Core Limit | Memory Pool Allocation | ASIL Target |
+|:---|:---|:---|:---|:---|
+| **Core Kernel / EventBus** | ≤ 1ms | Core 0 (Dedicated) | 16 MB (Static lockless) | ASIL-D |
+| **Sensors & Driver HAL** | ≤ 5ms | Core 1 | 32 MB (Static ring buffer)| ASIL-B |
+| **Localization (EKF)** | ≤ 10ms | Core 2 | 64 MB | ASIL-B |
+| **Perception (LiDAR/Cam)**| ≤ 50ms | Core 3 (GPU bound) | 256 MB (TensorRT) | ASIL-B |
+| **Planning & Behaviors** | ≤ 20ms | Core 4 | 128 MB | ASIL-B |
+| **Control Loop (Stanley)** | ≤ 5ms | Core 5 | 8 MB | ASIL-C |
+| **Safety Envelope Monitor**| ≤ 2ms | Core 0 (Dedicated) | 4 MB (Isolated memory) | ASIL-D |
 
 ---
 
@@ -581,12 +775,14 @@ Factual verified workspace imports:
 ### Code Quality & Technical Debt Registries:
 | Debt Descriptor | Impact | Priority | Recommended Remediation | Verification |
 |:---|:---|:---|:---|:---|
-| None | No large files or quality debt verified | Low | — | VERIFIED |
+| Large Source File Complexity | Increased dynamic cognitive load and difficult refactoring | Medium | Deconstruct file analyzer.py into smaller cohesive functional classes. | VERIFIED |
+| Large Source File Complexity | Increased dynamic cognitive load and difficult refactoring | Medium | Deconstruct file generator.py into smaller cohesive functional classes. | VERIFIED |
 
 
 ---
 
-## 18. Risks
+## FAILURE_MODES
+### Project Domain Risks:
 | Risk Descriptor | Likelihood | Impact | Mitigation Strategy | Owner |
 |:---|:---|:---|:---|:---|
 | Sensor calibration drift | Low | High | Automated EKF covariance checks & bounds | Fusion |
@@ -595,6 +791,15 @@ Factual verified workspace imports:
 | Model inference latency spikes | Low | High | TensorRT pre-allocations & deadline watchdogs | Perception |
 | Preemptive watchdog starvation | Low | Critical | Scheduler deadline partitions & high thread priorities | SRE |
 | Failsafe OTA rollback failure | Low | Critical | Independent bootloader partition switch | DevOps |
+
+### Failure Modes & Effects Analysis (FMEA):
+| Failure Mode | Detected By | Root Cause | System Effect | Failsafe Action / Mitigation |
+|:---|:---|:---|:---|:---|
+| **Sensor Drift (IMU/GPS)** | EKF Covariance boundary check | Hardware thermal drift | Inaccurate vehicle localization | Degrade to odometry only, decelerate |
+| **Control Loop Lag (100Hz)**| Lifecycle Watchdog timer | Thread scheduling deadlock | Steer/velocity command loss | Trigger emergency hardware brake stop |
+| **CAN Bus Dropped Frame** | Driver Timeout checking | Bus load congestion | Actuator feedback lost | Preempt with safety monitor, hold state |
+| **LiDAR Obstacle Miss** | Perception Kalman validation | Extreme rainfall / occlusion | Late obstacle path planning | Engage conservative velocity limits |
+| **Power Supply Voltage Drop**| HAL ADC voltage monitor | Actuator load spike | Incomplete steer engagement | Engage hardware battery redundancy channel |
 
 ---
 
@@ -701,9 +906,9 @@ Factual verified workspace imports:
   - Deployment: Operational presets.
   - Coverage: UNKNOWN
 - **What Works (Implemented)**:
-  - Verified active directories: `/core`, `/hal`, `/sensors`, `/control`, `/safety`, `/fleet`, `/docs`, `/scripts`, `/prediction`, `/perception`, `/localization`, `/simulation`, `/validation`, `/.github`, `/AI_BRAIN`, `/configs`, `/digital_twin`, `/planning`.
+  - Verified active directories: `/core`, `/hal`, `/sensors`, `/control`, `/safety`, `/fleet`, `/docs`, `/scripts`, `/prediction`, `/perception`, `/localization`, `/simulation`, `/validation`, `/.github`, `/aipbf_export`, `/AI_BRAIN`, `/configs`, `/digital_twin`, `/planning`.
 - **What Doesn't Work (Known Issues)**:
-  - Found 0 security vulnerabilities and 11 unsafe findings.
+  - Found 0 security vulnerabilities and 21 unsafe findings.
 - **Missing Work (Pending)**:
   - Integrate JUnit XML export to verify testing pass rates.
 - **Highest Priority (Next Steps)**:
@@ -717,14 +922,19 @@ Factual verified workspace imports:
 
 ## 21. Enhancement Opportunities
 Detailed actionable opportunities to improve codebase structure and resolve static security issues:
+- Deconstruct file analyzer.py into smaller cohesive functional classes.
+- Deconstruct file generator.py into smaller cohesive functional classes.
+- Refactor module to remove unsafe API calls. Raw console printf instead of thread-safe logger
 - Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared)
+- Refactor module to remove unsafe API calls. Use of shell command execution (system)
+- Refactor module to remove unsafe API calls. Use of shell pipe execution (popen)
+- Refactor module to remove unsafe API calls. Use of unsafe buffer function (strcpy)
 
 
 ---
 
 ## 22. Missing Features (Gap Analysis)
 ### Scanned Subsystems Gaps Analysis:
-- **Missing Entry Point**: No standard main initialization target found.  
 - **Missing Test Evidence**: No JUnit XML test logs verified on disk.  
 - **Missing Coverage Evidence**: No Cobertura/coverage XML reports verified on disk.  
 
@@ -749,11 +959,20 @@ Detailed actionable opportunities to improve codebase structure and resolve stat
 
 ## 25. Repository Metrics
 ### Codebase Statistics:
-- **Primary Languages**: C++, Markdown, YAML, Python
+- **Primary Languages**: C++, Markdown, Python, YAML
 - **Build / Packaging Tooling**: Conan, CMake
-- **Total Lines of Code (LOC)**: `20820` lines of code (LOC).
+- **Total Lines of Code (LOC)**: `24246` lines of code (LOC).
 - **Subsystem Walkthrough Entry Points**:
-- **System Initiator**: UNKNOWN (No standard main entry file detected)
+- **Target Executable**: `analyzer`  
+  **Entry Source File**: `aipbf_export/analyzer.py` (VERIFIED)
+- **Target Executable**: `analyzer`  
+  **Entry Source File**: `aipbf_export/analyzer.py` (VERIFIED)
+- **Target Executable**: `analyzer`  
+  **Entry Source File**: `aipbf_export/analyzer.py` (VERIFIED)
+- **Target Executable**: `analyzer`  
+  **Entry Source File**: `aipbf_export/analyzer.py` (VERIFIED)
+- **Target Executable**: `analyzer`  
+  **Entry Source File**: `aipbf_export/analyzer.py` (VERIFIED)
 
 
 ### Knowledge Confidence Matrix:

@@ -982,7 +982,7 @@ Detailed actionable opportunities to improve codebase structure and resolve stat
 ### Codebase Statistics:
 - **Primary Languages**: C++, Markdown, Python, YAML
 - **Build / Packaging Tooling**: Conan, CMake
-- **Total Lines of Code (LOC)**: `24079` lines of code (LOC).
+- **Total Lines of Code (LOC)**: `24246` lines of code (LOC).
 - **Subsystem Walkthrough Entry Points**:
 - **Target Executable**: `analyzer`  
   **Entry Source File**: `aipbf_export/analyzer.py` (VERIFIED)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-UADOS — Universal AI Project Brain Framework (AIPBF) v3.1
+UADOS — Universal AI Project Brain Framework (AIPBF) v3.3
 Factual Single-File Master Project Brain Generator
 """
 
@@ -129,18 +129,25 @@ class DocumentationGenerator:
         if not entry_output:
             entry_output = "| None detected | No executable main entry points identified | — | LOW | UNKNOWN |\n"
 
-        # Startup flow diagram
-        startup_flow_mermaid = ""
-        if any(ep["name"] == "kernel" for ep in self.analysis["entry_points"]):
-            startup_flow_mermaid = """```mermaid
-graph TD
-    A[main.cpp Entry] -->|Boot kernel| B[Kernel::start]
-    B -->|Initialize core| C[EventBus::init]
-    C -->|Load modules| D[LifecycleManager::initialize]
-    D -->|Start scheduling| E[Scheduler::start]
-```"""
+        # Dynamic Startup flow from boot_flow scanner
+        boot_flow_data = self.analysis.get("boot_flow", [])
+        if boot_flow_data:
+            startup_flow_mermaid = "```mermaid\ngraph TD\n"
+            for i, step in enumerate(boot_flow_data):
+                node_id = chr(65 + i)  # A, B, C, ...
+                node_label = step['step'].replace('(', ' ').replace(')', ' ').strip()
+                startup_flow_mermaid += f"    {node_id}[{node_label}]\n"
+                if i > 0:
+                    prev_id = chr(65 + i - 1)
+                    startup_flow_mermaid += f"    {prev_id} --> {node_id}\n"
+            startup_flow_mermaid += "```\n\n"
+            startup_flow_mermaid += "### Boot Sequence Evidence\n"
+            startup_flow_mermaid += "| Order | Step | Source File | Line | Verification |\n"
+            startup_flow_mermaid += "|:---|:---|:---|:---|:---|\n"
+            for step in boot_flow_data:
+                startup_flow_mermaid += f"| {step['order']} | `{step['step']}` | `{step['file']}` | L{step['line']} | {step['verification']} |\n"
         else:
-            startup_flow_mermaid = "No standard application boot sequence derived from entries.\n"
+            startup_flow_mermaid = "Boot Flow: UNKNOWN (No boot initialization patterns discovered in source files)\n"
 
         # Dynamic Build Targets & Target Dependencies (Fix 5)
         build_targets_output = ""
@@ -592,49 +599,24 @@ graph LR
 |:---|:---|:---|:---|:---|:---|
 {capability_rows}"""
 
-        # === 4. Decision Registry ===
+        # === 4. Decision Registry (fix: parse tradeoffs properly) ===
         decision_registry = ""
         dec_list = self.analysis.get("decisions", [])
         if dec_list:
             for dec in dec_list:
+                # Extract tradeoffs dynamically if available, otherwise derive from alternatives
+                tradeoffs = dec.get('tradeoffs', '')
+                if not tradeoffs or tradeoffs == 'See MASTER_DECISIONS.md':
+                    tradeoffs = f"See {dec['id']} analysis in MASTER_DECISIONS.md for full tradeoff discussion."
                 decision_registry += f"""#### {dec['id']}: {dec['title']}
 - **Decision**: {dec['decision']}
 - **Reason**: {dec['reason']}
 - **Alternatives Considered**: {dec['alternatives']}
-- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+- **Tradeoffs**: {tradeoffs}
 
 """
         else:
-            if ident["type"] in ["Autonomous Driving Operating System", "Robotics / Autonomous Systems Platform"]:
-                decision_registry = """#### ADR-001: Use Stanley Controller
-- **Decision**: Select Stanley lateral controller as primary controller for trajectory tracking.
-- **Reason**: Highly stable lateral tracking with straightforward parametric tuning.
-- **Alternatives Considered**: Pure Pursuit, Model Predictive Control (MPC).
-- **Tradeoffs**: Lower compute cost than MPC, but less optimal at high speeds where slip angles become significant.
-
-#### ADR-002: Real-time Microkernel Architecture
-- **Decision**: Structure the system around an event-driven C++ microkernel with strict real-time priority queues.
-- **Reason**: Ensures safety and timing isolation between perception modules and control actuators.
-- **Alternatives Considered**: Monolithic process framework.
-- **Tradeoffs**: Requires rigorous pre-allocated memory boundaries but prevents cascading priority starvation."""
-            elif ident["type"] == "Autonomous Trading Platform":
-                decision_registry = """#### ADR-001: Async Backtesting Solver
-- **Decision**: Implement the backtesting simulation solver using multi-threaded asynchronous event loops.
-- **Reason**: Enables massive parallel scenario sweeps over historical tick datasets.
-- **Alternatives Considered**: Single-threaded synchronous sweeps.
-- **Tradeoffs**: Highly parallelized but requires strict read-only lock bounds on shared assets.
-
-#### ADR-002: Single-ledger Broker Transaction Model
-- **Decision**: Route all trades through a single-ledger transactional broker gateway.
-- **Reason**: Eliminates race conditions in asset balances and provides a strict audit trail.
-- **Alternatives Considered**: Dynamic distributed micro-ledgers.
-- **Tradeoffs**: Extremely safe and simple to audit, but creates a single network bottleneck at peak trade rates."""
-            else:
-                decision_registry = """#### ADR-001: Modular Subsystem Design
-- **Decision**: Segregate workspace layout into discrete, decoupled layers with strict interface boundaries.
-- **Reason**: Enhances code maintainability and prevents architectural contamination.
-- **Alternatives Considered**: Monolithic package setup.
-- **Tradeoffs**: Clear boundaries but adds initial IPC and setup boilerplate."""
+            decision_registry = "No architectural decision records discovered. Create `AI_BRAIN/MASTER_DECISIONS.md` to document ADRs."
 
         # === 5. Feature Inventory ===
         feature_inventory_md = ""
@@ -938,26 +920,58 @@ Before marking complete:
         else:
             message_catalog_rows = "| None | No publish/subscribe patterns discovered in source code | — | — | — | — | UNKNOWN |"
 
-        # Production Readiness Dashboard
+        # Production Readiness Dashboard (evidence-based)
+        ci_exists = (self.repo_path / ".github" / "workflows").exists()
+        ci_status = "✅ YES | CI workflow files verified in `.github/workflows/`" if ci_exists else "❌ NO | No CI workflow files found in `.github/workflows/`"
+        
+        tests_exist = bool(self.analysis.get("test_map", {}))
+        tests_status = f"✅ YES | {test_reg['pass_rate']}" if test_reg['pass_rate'] != 'UNKNOWN' else ("🟡 PARTIAL | Test files exist but no execution results verified on disk" if tests_exist else "❌ NO | No test files found")
+        
+        coverage_status = f"✅ YES | {test_reg['coverage']}" if test_reg['coverage'] != 'UNKNOWN' else "❌ NO | UNKNOWN (No coverage reports found on disk)"
+        mutation_status = f"✅ YES | {test_reg['mutation']}" if test_reg['mutation'] != 'UNKNOWN' else "❌ NO | UNKNOWN (Mutation testing not configured)"
+        
+        sast_clean = len(self.review["vulnerabilities"]) == 0
+        sast_status = "✅ YES | No security vulnerabilities found in static scan" if sast_clean else f"❌ NO | {len(self.review['vulnerabilities'])} vulnerabilities detected"
+
+        secrets_clean = not any("Secret" in v["title"] for v in self.review["vulnerabilities"])
+        secrets_status = "✅ YES | No hardcoded secrets detected" if secrets_clean else "❌ NO | Hardcoded secrets/credentials detected"
+
+        perf_status = f"✅ YES | {test_reg['performance']}" if 'VERIFIED' in str(test_reg.get('performance', '')) else "❌ NO | UNKNOWN (No performance benchmarks found)"
+
+        sim_exists = self.analysis["directories"].get("simulation", False)
+        sim_status = "✅ YES | Simulation subsystem verified on disk" if sim_exists else "❌ NO | No simulation directory found"
+
+        dt_exists = self.analysis["directories"].get("digital_twin", False)
+        dt_status = "✅ YES | Digital twin subsystem verified on disk" if dt_exists else "❌ NO | No digital_twin directory found"
+
+        safety_exists = self.analysis["directories"].get("safety", False)
+        safety_dir_status = "✅ YES | Safety subsystem verified on disk" if safety_exists else "❌ NO | No safety directory found"
+
+        val_exists = self.analysis["directories"].get("validation", False)
+        val_status = "✅ YES | Validation subsystem verified on disk" if val_exists else "❌ NO | No validation directory found"
+
+        config_secrets = any(c.get("has_secrets", False) for c in self.analysis.get("config_files", []))
+        config_sec_status = "⚠️ WARNING | Config files with secret-like keys detected" if config_secrets else "✅ YES | No secrets found in configuration files"
+
         prod_readiness_checklist = f"""| Production Requirement | Checked Status | Factual Evidence / Logs Reference |
 |:---|:---|:---|
-| **Build Passing** | ✅ YES | Verified CMake/NPM compilation presets operational |
-| **Tests Passing** | ✅ YES | {test_reg['pass_rate'] if test_reg['pass_rate'] != 'UNKNOWN' else 'UNKNOWN (GTest results not verified on disk)'} |
-| **Coverage > 90%** | 🟡 PARTIAL | {test_reg['coverage'] if test_reg['coverage'] != 'UNKNOWN' else 'UNKNOWN (Cobertura coverage reports absent)'} |
-| **Mutation > 80%** | 🟡 PARTIAL | {test_reg['mutation'] if test_reg['mutation'] != 'UNKNOWN' else 'UNKNOWN (Mutation testing not scanned)'} |
-| **SAST Clean** | ✅ YES | Scanned via custom C++ and Script review filters (VERIFIED) |
-| **DAST Clean** | ❌ N/A | Dynamic security testing not configured in this repository |
-| **Secrets Scan** | ✅ YES | Secrets and plaintext credentials audit cleanly validated |
-| **Performance Baseline** | 🟡 PARTIAL | {test_reg['performance'] if test_reg['performance'] != 'UNKNOWN' else 'UNKNOWN (No performance benchmarks verified)'} |
-| **Memory Baseline** | ✅ YES | Pre-allocated static buffers constraint defined on hot paths |
-| **Chaos Testing** | ✅ YES | Fault-injection and state-machine tests verified in `/tests` |
-| **HIL Testing** | 🟡 PARTIAL | Hardware-in-the-loop validation planned for physical platforms |
-| **SIL Testing** | ✅ YES | Simulation-first CARLA replay scenarios verified in `/simulation` |
-| **Digital Twin Testing** | ✅ YES | Replay playback validator verified in `/digital_twin` |"""
+| **CI/CD Pipeline** | {ci_status} |
+| **Tests Passing** | {tests_status} |
+| **Coverage > 90%** | {coverage_status} |
+| **Mutation > 80%** | {mutation_status} |
+| **SAST Clean** | {sast_status} |
+| **DAST Clean** | ❌ NO | Dynamic security testing not configured in this repository |
+| **Secrets Scan** | {secrets_status} |
+| **Config Secrets Scan** | {config_sec_status} |
+| **Performance Baseline** | {perf_status} |
+| **Safety Subsystem** | {safety_dir_status} |
+| **SIL Testing** | {sim_status} |
+| **Digital Twin Testing** | {dt_status} |
+| **Validation Framework** | {val_status} |"""
 
-        content = f"""# Universal AI Project Brain (AIPBF) v3.2 — AI Operating Manual
+        content = f"""# Universal AI Project Brain (AIPBF) v3.3 — AI Operating Manual
 
-> **Framework Version**: v3.2 (AI Operating Manual)  
+> **Framework Version**: v3.3 (AI Operating Manual)  
 > **Last Synchronized**: {self.now_str}  
 > **Verification Gate**: 100% Strict Evidence-Based  
 
@@ -1071,14 +1085,18 @@ Verified EventBus message/topic catalog:
 ---
 
 ## CONFIGURATION_SCHEMA
-- Mapped configuration files inside project directory:
 """
-        config_files = [".env", ".env.example", "pyproject.toml", "CMakeLists.txt", "conanfile.py", "package.json"]
-        for conf in config_files:
-            p = self.repo_path / conf
-            if p.exists():
-                content += f"- `{conf}`: Verified configuration file (VERIFIED)\n"
-                
+        # Dynamic configuration registry from scanner
+        scanned_configs = self.analysis.get("config_files", [])
+        if scanned_configs:
+            content += "| Configuration File | Type | Secrets Detected | Verification |\n"
+            content += "|:---|:---|:---|:---|\n"
+            for cfg in scanned_configs:
+                secrets_str = "⚠️ YES" if cfg.get("has_secrets", False) else "✅ No"
+                content += f"| `{cfg['path']}` | {cfg['type']} | {secrets_str} | {cfg['verification']} |\n"
+        else:
+            content += "- No configuration files discovered in repository.\n"
+            
         content += "\n### Configuration Parameters Schema:\n" + config_schema_md + "\n"
 
         content += f"""
@@ -1140,8 +1158,21 @@ Factual verified workspace imports:
 
 ### Subsystem Resource & Timing Budgets:
 {perf_budgets_md}
+"""
 
----
+        # AI/ML Model Registry subsection
+        ai_models = self.analysis.get("ai_models", [])
+        if ai_models:
+            content += "\n### AI/ML Model Registry\n"
+            content += "| Model Name | Framework | Model File | Location | Source File | Verification |\n"
+            content += "|:---|:---|:---|:---|:---|:---|\n"
+            for model in ai_models:
+                content += f"| **{model['name']}** | `{model['framework']}` | `{model['model_file']}` | `{model['location']}` | `{model['source_file']}` | {model['verification']} |\n"
+        else:
+            content += "\n### AI/ML Model Registry\n"
+            content += "No AI/ML model loading patterns discovered in source code.\n"
+
+        content += f"""
 
 ## 16. Production Readiness
 ### Dynamic Production Checklist & Dashboard:
@@ -1216,10 +1247,12 @@ Detailed actionable opportunities to improve codebase structure and resolve stat
 ---
 
 ## 24. Release Notes
-### AIPBF v3.2 Release Notes:
-- **Unified AI Operating Manual Architecture**: Upgraded template structure from standard facts index to 25-section professional AI operating manual.
-- **Dynamic Registries Expansion**: Integrated Domain Model registries, Message catalogs, Production Readiness dashboards, and AI Development guides.
-- **Zero-Fabrication & Evidence-Based**: Maintained strict evidence traceability matching codebase disk structures.
+### AIPBF v3.3 Release Notes:
+- **Dynamic Evidence Scanners**: Boot flow, domain model, message catalog, AI model, and configuration scanners replace hardcoded templates.
+- **Evidence-Based Production Readiness**: All checklist items now verified against actual file existence on disk.
+- **ADR Tradeoffs Fix**: Each ADR now displays its own tradeoff analysis instead of a copy-pasted template.
+- **Build Intelligence**: CMake targets, build order, and build/test commands rendered in metrics section.
+- **AI/ML Model Registry**: Automatic detection of ONNX, TensorRT, and other ML framework usage patterns.
 
 ---
 
@@ -1230,7 +1263,34 @@ Detailed actionable opportunities to improve codebase structure and resolve stat
 - **Total Lines of Code (LOC)**: `{self.analysis['loc']}` lines of code (LOC).
 - **Subsystem Walkthrough Entry Points**:
 {walkthrough_entries}
+"""
 
+        # Build Intelligence subsection
+        if self.analysis.get("build_targets"):
+            content += "\n### Build Intelligence\n"
+            content += "| Target Name | Type | Source CMakeLists | Dependencies | Verification |\n"
+            content += "|:---|:---|:---|:---|:---|\n"
+            for bt in self.analysis["build_targets"]:
+                deps = self.analysis["target_dependencies"].get(bt["name"], [])
+                deps_str = ", ".join([f"`{d}`" for d in deps]) if deps else "None"
+                content += f"| `{bt['name']}` | {bt['type']} | `{bt['source']}` | {deps_str} | VERIFIED |\n"
+            
+            if self.analysis.get("build_order"):
+                build_order_display = " → ".join([f"`{o}`" for o in self.analysis["build_order"][:12]])
+                if len(self.analysis["build_order"]) > 12:
+                    build_order_display += f" → (+{len(self.analysis['build_order']) - 12} more)"
+                content += f"\n**Topological Build Order**: {build_order_display}\n"
+
+        # Build/Run/Test commands
+        content += "\n### Build & Run Commands\n"
+        content += f"| Action | Command |\n"
+        content += f"|:---|:---|\n"
+        content += f"| **Setup** | {setup_cmd} |\n"
+        content += f"| **Compile** | {compile_cmd} |\n"
+        content += f"| **Test** | {test_cmd} |\n"
+        content += f"| **Run** | {run_cmd} |\n"
+
+        content += f"""
 ### Knowledge Confidence Matrix:
 | Section / Module | Confidence Rating | Verification Method |
 |:---|:---|:---|
@@ -1239,6 +1299,10 @@ Detailed actionable opportunities to improve codebase structure and resolve stat
 | Testing Registry | {conf_test} | GTEST VERIFIED |
 | Security Intelligence | {conf_sec} | HEURISTIC SCANNED |
 | Performance Metrics | {conf_perf} | Not Scanned |
+| Domain Models | {'HIGH (VERIFIED)' if self.analysis.get('domain_models') else 'LOW (No struct/class definitions found)'} | STRUCT SCAN |
+| Message Catalog | {'HIGH (VERIFIED)' if self.analysis.get('message_catalog') else 'LOW (No pub/sub patterns found)'} | PATTERN SCAN |
+| Boot Flow | {'HIGH (VERIFIED)' if self.analysis.get('boot_flow') else 'LOW (No boot patterns found)'} | ENTRY SCAN |
+| AI/ML Models | {'HIGH (VERIFIED)' if self.analysis.get('ai_models') else 'LOW (No ML patterns found)'} | FRAMEWORK SCAN |
 """
         (self.brain_dir / "PROJECT_BRAIN.md").write_text(content, encoding="utf-8")
         print("[AIPBF] Generated AI_BRAIN/PROJECT_BRAIN.md successfully.")

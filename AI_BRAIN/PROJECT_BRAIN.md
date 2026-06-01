@@ -1,6 +1,6 @@
-# Universal AI Project Brain (AIPBF) v3.2 — AI Operating Manual
+# Universal AI Project Brain (AIPBF) v3.3 — AI Operating Manual
 
-> **Framework Version**: v3.2 (AI Operating Manual)  
+> **Framework Version**: v3.3 (AI Operating Manual)  
 > **Last Synchronized**: 2026-06-01  
 > **Verification Gate**: 100% Strict Evidence-Based  
 
@@ -56,7 +56,15 @@ graph TD
 ## 3. Runtime Boot Flow
 The boot initialization sequence proceeds from the main execution trigger to event bus startup and hardware orchestration:
 
-No standard application boot sequence derived from entries.
+```mermaid
+graph TD
+    A[SafetyMonitor::start]
+```
+
+### Boot Sequence Evidence
+| Order | Step | Source File | Line | Verification |
+|:---|:---|:---|:---|:---|
+| 100 | `SafetyMonitor::start()` | `safety/monitors/src/safety_monitor.cpp` | L11 | VERIFIED |
 
 
 ### Critical Execution Pathways:
@@ -629,10 +637,13 @@ Verified EventBus message/topic catalog:
 ---
 
 ## CONFIGURATION_SCHEMA
-- Mapped configuration files inside project directory:
-- `pyproject.toml`: Verified configuration file (VERIFIED)
-- `CMakeLists.txt`: Verified configuration file (VERIFIED)
-- `conanfile.py`: Verified configuration file (VERIFIED)
+| Configuration File | Type | Secrets Detected | Verification |
+|:---|:---|:---|:---|
+| `.github/workflows/ci.yml` | YAML | ✅ No | VERIFIED |
+| `.github/workflows/docs-sync.yml` | YAML | ✅ No | VERIFIED |
+| `configs/vehicle/carla_simulation.yaml` | YAML | ✅ No | VERIFIED |
+| `configs/vehicle/rc_car.yaml` | YAML | ✅ No | VERIFIED |
+| `pyproject.toml` | TOML | ✅ No | VERIFIED |
 
 ### Configuration Parameters Schema:
 | Config Parameter | Type | Default Value | Validation Rule | Subsystem Impact |
@@ -749,25 +760,33 @@ Factual verified workspace imports:
 | **Control Loop (Stanley)** | ≤ 5ms | Core 5 | 8 MB | ASIL-C |
 | **Safety Envelope Monitor**| ≤ 2ms | Core 0 (Dedicated) | 4 MB (Isolated memory) | ASIL-D |
 
----
+### AI/ML Model Registry
+| Model Name | Framework | Model File | Location | Source File | Verification |
+|:---|:---|:---|:---|:---|:---|
+| **Aipbf_export Model** | `ONNX Runtime` | `UNKNOWN` | `aipbf_export/` | `aipbf_export/analyzer.py` | VERIFIED |
+| **Aipbf_export Model** | `TensorRT` | `UNKNOWN` | `aipbf_export/` | `aipbf_export/analyzer.py` | VERIFIED |
+| **Aipbf_export Model** | `PyTorch/TorchScript` | `UNKNOWN` | `aipbf_export/` | `aipbf_export/analyzer.py` | VERIFIED |
+| **Aipbf_export Model** | `TensorFlow` | `UNKNOWN` | `aipbf_export/` | `aipbf_export/analyzer.py` | VERIFIED |
+| **Aipbf_export Model** | `OpenCV DNN` | `UNKNOWN` | `aipbf_export/` | `aipbf_export/analyzer.py` | VERIFIED |
+
 
 ## 16. Production Readiness
 ### Dynamic Production Checklist & Dashboard:
 | Production Requirement | Checked Status | Factual Evidence / Logs Reference |
 |:---|:---|:---|
-| **Build Passing** | ✅ YES | Verified CMake/NPM compilation presets operational |
-| **Tests Passing** | ✅ YES | UNKNOWN (GTest results not verified on disk) |
-| **Coverage > 90%** | 🟡 PARTIAL | UNKNOWN (Cobertura coverage reports absent) |
-| **Mutation > 80%** | 🟡 PARTIAL | UNKNOWN (Mutation testing not scanned) |
-| **SAST Clean** | ✅ YES | Scanned via custom C++ and Script review filters (VERIFIED) |
-| **DAST Clean** | ❌ N/A | Dynamic security testing not configured in this repository |
-| **Secrets Scan** | ✅ YES | Secrets and plaintext credentials audit cleanly validated |
-| **Performance Baseline** | 🟡 PARTIAL | UNKNOWN (No performance benchmarks verified) |
-| **Memory Baseline** | ✅ YES | Pre-allocated static buffers constraint defined on hot paths |
-| **Chaos Testing** | ✅ YES | Fault-injection and state-machine tests verified in `/tests` |
-| **HIL Testing** | 🟡 PARTIAL | Hardware-in-the-loop validation planned for physical platforms |
-| **SIL Testing** | ✅ YES | Simulation-first CARLA replay scenarios verified in `/simulation` |
-| **Digital Twin Testing** | ✅ YES | Replay playback validator verified in `/digital_twin` |
+| **CI/CD Pipeline** | ✅ YES | CI workflow files verified in `.github/workflows/` |
+| **Tests Passing** | 🟡 PARTIAL | Test files exist but no execution results verified on disk |
+| **Coverage > 90%** | ❌ NO | UNKNOWN (No coverage reports found on disk) |
+| **Mutation > 80%** | ❌ NO | UNKNOWN (Mutation testing not configured) |
+| **SAST Clean** | ✅ YES | No security vulnerabilities found in static scan |
+| **DAST Clean** | ❌ NO | Dynamic security testing not configured in this repository |
+| **Secrets Scan** | ✅ YES | No hardcoded secrets detected |
+| **Config Secrets Scan** | ✅ YES | No secrets found in configuration files |
+| **Performance Baseline** | ❌ NO | UNKNOWN (No performance benchmarks found) |
+| **Safety Subsystem** | ✅ YES | Safety subsystem verified on disk |
+| **SIL Testing** | ✅ YES | Simulation subsystem verified on disk |
+| **Digital Twin Testing** | ✅ YES | Digital twin subsystem verified on disk |
+| **Validation Framework** | ✅ YES | Validation subsystem verified on disk |
 
 ---
 
@@ -808,91 +827,91 @@ Factual verified workspace imports:
 - **Decision**: Adopt a microkernel architecture where the kernel provides only: lifecycle management, event bus, scheduling, health monitoring, and plugin loading. All domain logic (perception, planning, control) runs as plugins.
 - **Reason**: UADOS needs an architecture that supports multiple vehicle platforms, allows independent subsystem development, and can evolve over multiple years without major rewrites.
 - **Alternatives Considered**: 1. **Monolithic kernel** — Simpler initially but becomes unmaintainable; tight coupling makes testing and replacement difficult.
-- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+- **Tradeoffs**: - (+) Strong isolation between subsystems
 
 #### ADR-002: C++20 as Primary Runtime Language
 - **Decision**: Use C++20 for all runtime components. Use Python 3.12 for tooling, ML training, simulation scripting, and test automation.
 - **Reason**: The runtime system requires deterministic performance, zero-overhead abstractions, and control over memory allocation patterns.
 - **Alternatives Considered**: 1. **Rust** — Superior memory safety but smaller automotive ecosystem; harder to find automotive Rust engineers; FFI overhead with ML libraries.
-- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+- **Tradeoffs**: - (+) Industry-standard for automotive software
 
 #### ADR-003: Zero-Copy Shared Memory Event Bus
 - **Decision**: Implement a custom zero-copy event bus using POSIX shared memory. Messages are written once into a shared memory pool and consumers receive pointers. Reference counting manages lifetime.
 - **Reason**: The autonomy pipeline processes high-bandwidth sensor data (cameras: ~180 MB/s, LiDAR: ~36 MB/s). Copying this data between components is prohibitive.
 - **Alternatives Considered**: 1. **DDS (eProsima Fast DDS)** — Industry standard for ROS 2 but adds latency (~10-50μs), memory copies, and significant code bloat. Retained as optional bridge for fleet communication.
-- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+- **Tradeoffs**: - (+) Sub-microsecond message delivery
 
 #### ADR-004: FlatBuffers for Hot Path Serialization
 - **Decision**: Use FlatBuffers for all hot-path messages (sensor data, perception output, control commands). Use Protocol Buffers for cold-path communication (configuration, fleet API, diagnostics).
 - **Reason**: Messages on the event bus need a schema-defined format for type safety and versioning, but deserialization overhead is unacceptable on the hot path.
 - **Alternatives Considered**: 1. **Protocol Buffers** — Good schema support but requires deserialization (copies). Used for cold path.
-- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+- **Tradeoffs**: - (+) Zero-copy access to serialized data
 
 #### ADR-005: Plugin-Based Extension Model
 - **Decision**: All major subsystems are implemented as dynamically-loaded plugins with versioned C++ interfaces. Plugins are loaded via `dlopen`, instantiated via factory functions, and managed by the Plugin System.
 - **Reason**: UADOS must support multiple vehicle platforms, sensor configurations, and perception algorithms without modifying core code.
 - **Alternatives Considered**: 1. **Static linking** — Simpler but no hot-swap; requires full rebuild for any change.
-- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+- **Tradeoffs**: - (+) Hot-swap without restart
 
 #### ADR-006: Simulation-First Development
 - **Decision**: All components must be fully testable in simulation. CARLA is the primary simulation platform. Physical vehicle testing is a validation step, not a development step.
 - **Reason**: Physical vehicle testing is expensive, slow, and dangerous for early development. Every component must be validated before deployment.
 - **Alternatives Considered**: See MASTER_DECISIONS.md
-- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+- **Tradeoffs**: - (+) Faster development iteration
 
 #### ADR-007: Independent Safety Monitor
 - **Decision**: The Safety Monitor runs in a separate OS process, on a separate CPU core (when possible), with its own event bus connection. It has authority to override all actuator commands and trigger emergency responses.
 - **Reason**: Safety monitoring must be independent of the systems it monitors. A bug in perception or planning must not compromise safety.
 - **Alternatives Considered**: See MASTER_DECISIONS.md
-- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+- **Tradeoffs**: - (+) Fault isolation from monitored systems
 
 #### ADR-008: Lanelet2 for HD Maps
 - **Decision**: Use Lanelet2 as the primary HD map format. Build a map abstraction layer to support future format additions.
 - **Reason**: HD maps are essential for localization, planning, and regulatory compliance. Need an open, well-defined map format.
 - **Alternatives Considered**: 1. **OpenDRIVE** — Good road geometry but weaker semantic representation.
-- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+- **Tradeoffs**: - (+) Open-source, actively maintained
 
 #### ADR-009: ONNX Runtime for ML Inference
 - **Decision**: Use ONNX Runtime as the inference engine. All models are trained in PyTorch and exported to ONNX format.
 - **Reason**: Perception models (detection, segmentation, lane detection) need efficient inference on various hardware (CPU, GPU, NPU).
 - **Alternatives Considered**: 1. **TensorRT** — Fastest on NVIDIA but vendor-locked.
-- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+- **Tradeoffs**: - (+) Hardware-agnostic (CPU, CUDA, TensorRT, OpenVINO backends)
 
 #### ADR-010: CMake + Conan 2 Build System
 - **Decision**: Use CMake 3.28+ as the build system with Conan 2 for C++ dependency management. Use pyproject.toml for Python packages.
 - **Reason**: The project needs a build system that supports cross-compilation, multiple compilers, and reproducible builds.
 - **Alternatives Considered**: 1. **Bazel** — Superior caching and hermeticity but steeper learning curve; less automotive adoption.
-- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+- **Tradeoffs**: - (+) Widest ecosystem support
 
 #### ADR-011: Pre-Production Safety Grade (ASIL-B)
 - **Decision**: Design with ASIL-B patterns (documented hazard analysis, safety monitor, fault detection) but do not pursue formal certification in initial phases. Architecture supports upgrade to ASIL-D.
 - **Reason**: Full ASIL-D compliance requires 5-10x more engineering effort including formal methods, certified toolchains, and third-party audits. The initial system is a research/development platform.
 - **Alternatives Considered**: See MASTER_DECISIONS.md
-- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+- **Tradeoffs**: - (+) Practical safety without certification overhead
 
 #### ADR-012: OpenTelemetry for Observability
 - **Decision**: Use OpenTelemetry SDK for instrumentation. Export to Prometheus (metrics) and Grafana (dashboards). Structured logging via spdlog.
 - **Reason**: Need vendor-neutral observability covering metrics, traces, and logs.
 - **Alternatives Considered**: See MASTER_DECISIONS.md
-- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+- **Tradeoffs**: - (+) Vendor-neutral, open standard
 
 #### ADR-013: Rate-Monotonic Scheduling
 - **Decision**: Use Rate-Monotonic Scheduling (RMS) where priority is inversely proportional to period. Deadline monitoring reports violations to Health Monitor.
 - **Reason**: The autonomy pipeline has strict timing requirements. Components must execute at predictable rates.
 - **Alternatives Considered**: 1. **Earliest Deadline First (EDF)** — Optimal utilization but harder to analyze; priority inversion more complex.
-- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+- **Tradeoffs**: - (+) Well-understood schedulability analysis
 
 #### ADR-014: Apache 2.0 License
 - **Decision**: Apache License 2.0 for all UADOS source code.
 - **Reason**: Need a permissive license that allows commercial use while providing patent protection.
 - **Alternatives Considered**: See MASTER_DECISIONS.md
-- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+- **Tradeoffs**: - (+) Permissive, allows commercial use
 
 #### ADR-015: CARLA as Primary Simulation Platform
 - **Decision**: Use CARLA as the primary simulation platform. Build a bridge to abstract CARLA specifics behind our sensor/driver interfaces.
 - **Reason**: Need a realistic simulation environment for developing and testing the full autonomy stack.
 - **Alternatives Considered**: 1. **LGSVL** — Discontinued.
-- **Tradeoffs**: Stable lateral tracking, lower compute cost than MPC.
+- **Tradeoffs**: - (+) Open-source, active community
 
 
 
@@ -950,10 +969,12 @@ Detailed actionable opportunities to improve codebase structure and resolve stat
 ---
 
 ## 24. Release Notes
-### AIPBF v3.2 Release Notes:
-- **Unified AI Operating Manual Architecture**: Upgraded template structure from standard facts index to 25-section professional AI operating manual.
-- **Dynamic Registries Expansion**: Integrated Domain Model registries, Message catalogs, Production Readiness dashboards, and AI Development guides.
-- **Zero-Fabrication & Evidence-Based**: Maintained strict evidence traceability matching codebase disk structures.
+### AIPBF v3.3 Release Notes:
+- **Dynamic Evidence Scanners**: Boot flow, domain model, message catalog, AI model, and configuration scanners replace hardcoded templates.
+- **Evidence-Based Production Readiness**: All checklist items now verified against actual file existence on disk.
+- **ADR Tradeoffs Fix**: Each ADR now displays its own tradeoff analysis instead of a copy-pasted template.
+- **Build Intelligence**: CMake targets, build order, and build/test commands rendered in metrics section.
+- **AI/ML Model Registry**: Automatic detection of ONNX, TensorRT, and other ML framework usage patterns.
 
 ---
 
@@ -961,7 +982,7 @@ Detailed actionable opportunities to improve codebase structure and resolve stat
 ### Codebase Statistics:
 - **Primary Languages**: C++, Markdown, Python, YAML
 - **Build / Packaging Tooling**: Conan, CMake
-- **Total Lines of Code (LOC)**: `24246` lines of code (LOC).
+- **Total Lines of Code (LOC)**: `24079` lines of code (LOC).
 - **Subsystem Walkthrough Entry Points**:
 - **Target Executable**: `analyzer`  
   **Entry Source File**: `aipbf_export/analyzer.py` (VERIFIED)
@@ -975,6 +996,148 @@ Detailed actionable opportunities to improve codebase structure and resolve stat
   **Entry Source File**: `aipbf_export/analyzer.py` (VERIFIED)
 
 
+### Build Intelligence
+| Target Name | Type | Source CMakeLists | Dependencies | Verification |
+|:---|:---|:---|:---|:---|
+| `uados_warnings` | LIBRARY | `CMakeLists.txt` | None | VERIFIED |
+| `uados_sanitizers` | LIBRARY | `CMakeLists.txt` | None | VERIFIED |
+| `uados_coverage` | LIBRARY | `CMakeLists.txt` | None | VERIFIED |
+| `uados_options` | LIBRARY | `CMakeLists.txt` | `uados_warnings`, `uados_sanitizers`, `uados_coverage` | VERIFIED |
+| `uados_ctrl_brake` | LIBRARY | `control/brake/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `control/brake/CMakeLists.txt` | None | VERIFIED |
+| `uados_ctrl_loops` | LIBRARY | `control/loops/CMakeLists.txt` | `uados::common`, `uados_options`, `uados::ctrl_steering`, `uados::ctrl_throttle` | VERIFIED |
+| `uados` | LIBRARY | `control/loops/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_control` | EXECUTABLE | `control/loops/tests/CMakeLists.txt` | `uados::ctrl_loops`, `uados::ctrl_steering`, `uados::ctrl_throttle`, `GTest::gtest_main` | VERIFIED |
+| `uados_ctrl_steering` | LIBRARY | `control/steering/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `control/steering/CMakeLists.txt` | None | VERIFIED |
+| `uados_ctrl_throttle` | LIBRARY | `control/throttle/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `control/throttle/CMakeLists.txt` | None | VERIFIED |
+| `uados_ctrl_trans` | LIBRARY | `control/transmission/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `control/transmission/CMakeLists.txt` | None | VERIFIED |
+| `uados_common` | LIBRARY | `core/common/CMakeLists.txt` | `fmt::fmt`, `spdlog::spdlog`, `Eigen3::Eigen`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `core/common/CMakeLists.txt` | None | VERIFIED |
+| `uados_common_tests` | EXECUTABLE | `core/common/tests/CMakeLists.txt` | `uados::common`, `GTest::gtest_main` | VERIFIED |
+| `uados_event_bus` | LIBRARY | `core/event_bus/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `core/event_bus/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_event_bus` | EXECUTABLE | `core/event_bus/tests/CMakeLists.txt` | `uados::event_bus`, `GTest::gtest_main` | VERIFIED |
+| `uados_health` | LIBRARY | `core/health/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `core/health/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_health` | EXECUTABLE | `core/health/tests/CMakeLists.txt` | `uados::health`, `GTest::gtest_main` | VERIFIED |
+| `uados_kernel` | LIBRARY | `core/kernel/CMakeLists.txt` | `uados::common`, `uados::event_bus`, `uados::scheduler`, `uados::health`, `uados::lifecycle`, `uados::plugin`, `uados_options`, `yaml-cpp` | VERIFIED |
+| `uados` | LIBRARY | `core/kernel/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_kernel` | EXECUTABLE | `core/kernel/tests/CMakeLists.txt` | `uados::kernel`, `GTest::gtest_main` | VERIFIED |
+| `uados_lifecycle` | LIBRARY | `core/lifecycle/CMakeLists.txt` | `uados::common`, `uados::health`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `core/lifecycle/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_lifecycle` | EXECUTABLE | `core/lifecycle/tests/CMakeLists.txt` | `uados::lifecycle`, `GTest::gtest_main` | VERIFIED |
+| `uados_messaging` | LIBRARY | `core/messaging/CMakeLists.txt` | `uados::common;uados_event_bus`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `core/messaging/CMakeLists.txt` | None | VERIFIED |
+| `uados_plugin` | LIBRARY | `core/plugin/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `core/plugin/CMakeLists.txt` | None | VERIFIED |
+| `uados_scheduler` | LIBRARY | `core/scheduler/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `core/scheduler/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_scheduler` | EXECUTABLE | `core/scheduler/tests/CMakeLists.txt` | `uados::scheduler`, `GTest::gtest_main` | VERIFIED |
+| `uados_dtw_sensor` | LIBRARY | `digital_twin/sensor/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `digital_twin/sensor/CMakeLists.txt` | None | VERIFIED |
+| `uados_dtw_vehicle` | LIBRARY | `digital_twin/vehicle/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `digital_twin/vehicle/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_digital_twin` | EXECUTABLE | `digital_twin/vehicle/tests/CMakeLists.txt` | `uados::dtw_vehicle`, `uados::dtw_sensor`, `GTest::gtest_main` | VERIFIED |
+| `uados_fleet_ota` | LIBRARY | `fleet/ota/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `fleet/ota/CMakeLists.txt` | None | VERIFIED |
+| `uados_fleet_telemetry` | LIBRARY | `fleet/telemetry/CMakeLists.txt` | `uados::common`, `uados_options`, `nlohmann_json::nlohmann_json` | VERIFIED |
+| `uados` | LIBRARY | `fleet/telemetry/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_fleet` | EXECUTABLE | `fleet/telemetry/tests/CMakeLists.txt` | `uados::fleet_telemetry`, `uados::fleet_ota`, `GTest::gtest_main` | VERIFIED |
+| `uados_hal_api` | LIBRARY | `hal/api/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `hal/api/CMakeLists.txt` | None | VERIFIED |
+| `uados_driver_can` | LIBRARY | `hal/drivers/canbus/CMakeLists.txt` | `uados::hal_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `hal/drivers/canbus/CMakeLists.txt` | None | VERIFIED |
+| `uados_driver_rc_car` | LIBRARY | `hal/drivers/rc_car/CMakeLists.txt` | `uados::hal_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `hal/drivers/rc_car/CMakeLists.txt` | None | VERIFIED |
+| `uados_driver_sim` | LIBRARY | `hal/drivers/simulation/CMakeLists.txt` | `uados::hal_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `hal/drivers/simulation/CMakeLists.txt` | None | VERIFIED |
+| `uados_hal_sdk` | LIBRARY | `hal/sdk/CMakeLists.txt` | `uados_hal_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `hal/sdk/CMakeLists.txt` | None | VERIFIED |
+| `uados_hal_validation` | LIBRARY | `hal/validation/CMakeLists.txt` | `uados::hal_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `hal/validation/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_hal` | EXECUTABLE | `hal/validation/tests/CMakeLists.txt` | `uados::hal_validation`, `uados::driver_sim`, `uados::driver_rc_car`, `uados::driver_can`, `uados::hal_api`, `GTest::gtest_main` | VERIFIED |
+| `uados_loc_gps` | LIBRARY | `localization/gps_fusion/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `localization/gps_fusion/CMakeLists.txt` | None | VERIFIED |
+| `uados_localization_hdmap` | LIBRARY | `localization/hdmap/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `localization/hdmap/CMakeLists.txt` | None | VERIFIED |
+| `uados_localization_pose` | LIBRARY | `localization/pose/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `localization/pose/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_localization` | EXECUTABLE | `localization/pose/tests/CMakeLists.txt` | `uados::localization_pose`, `uados::localization_hdmap`, `uados::localization_slam`, `GTest::gtest_main` | VERIFIED |
+| `uados_localization_slam` | LIBRARY | `localization/slam/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `localization/slam/CMakeLists.txt` | None | VERIFIED |
+| `uados_loc_visual` | LIBRARY | `localization/visual/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `localization/visual/CMakeLists.txt` | None | VERIFIED |
+| `uados_perception_detection` | LIBRARY | `perception/detection/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `perception/detection/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_perception` | EXECUTABLE | `perception/detection/tests/CMakeLists.txt` | `uados::perception_detection`, `uados::perception_tracking`, `uados::perception_lanes`, `uados::perception_traffic_lights`, `uados::sensor_api`, `GTest::gtest_main` | VERIFIED |
+| `uados_perception_lanes` | LIBRARY | `perception/lanes/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `perception/lanes/CMakeLists.txt` | None | VERIFIED |
+| `uados_perception_tracking` | LIBRARY | `perception/tracking/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `perception/tracking/CMakeLists.txt` | None | VERIFIED |
+| `uados_perception_traffic_lights` | LIBRARY | `perception/traffic_lights/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `perception/traffic_lights/CMakeLists.txt` | None | VERIFIED |
+| `uados_plan_behavior` | LIBRARY | `planning/behavior/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `planning/behavior/CMakeLists.txt` | None | VERIFIED |
+| `uados_plan_motion` | LIBRARY | `planning/motion/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `planning/motion/CMakeLists.txt` | None | VERIFIED |
+| `uados_plan_strategic` | LIBRARY | `planning/strategic/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `planning/strategic/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_planning` | EXECUTABLE | `planning/strategic/tests/CMakeLists.txt` | `uados::plan_strategic`, `uados::plan_behavior`, `uados::plan_motion`, `uados::localization_hdmap`, `GTest::gtest_main` | VERIFIED |
+| `uados_prediction_behavior` | LIBRARY | `prediction/behavior/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `prediction/behavior/CMakeLists.txt` | None | VERIFIED |
+| `uados_prediction_risk` | LIBRARY | `prediction/risk/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `prediction/risk/CMakeLists.txt` | None | VERIFIED |
+| `uados_prediction_trajectory` | LIBRARY | `prediction/trajectory/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `prediction/trajectory/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_prediction` | EXECUTABLE | `prediction/trajectory/tests/CMakeLists.txt` | `uados::prediction_trajectory`, `uados::prediction_behavior`, `uados::prediction_risk`, `GTest::gtest_main` | VERIFIED |
+| `uados_safety_emergency` | LIBRARY | `safety/emergency/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `safety/emergency/CMakeLists.txt` | None | VERIFIED |
+| `uados_safety_fdi` | LIBRARY | `safety/fault_detection/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `safety/fault_detection/CMakeLists.txt` | None | VERIFIED |
+| `uados_safety_monitors` | LIBRARY | `safety/monitors/CMakeLists.txt` | `uados::common`, `uados_options`, `uados::localization_hdmap` | VERIFIED |
+| `uados` | LIBRARY | `safety/monitors/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_safety` | EXECUTABLE | `safety/monitors/tests/CMakeLists.txt` | `uados::safety_monitors`, `uados::safety_emergency`, `uados::localization_hdmap`, `GTest::gtest_main` | VERIFIED |
+| `uados_safety_rv` | LIBRARY | `safety/runtime_validation/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `safety/runtime_validation/CMakeLists.txt` | None | VERIFIED |
+| `uados_sensor_api` | LIBRARY | `sensors/api/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `sensors/api/CMakeLists.txt` | None | VERIFIED |
+| `uados_sensor_camera` | LIBRARY | `sensors/camera/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `sensors/camera/CMakeLists.txt` | None | VERIFIED |
+| `uados_sensor_fusion` | LIBRARY | `sensors/fusion/CMakeLists.txt` | `uados::sensor_api`, `uados_options`, `Eigen3::Eigen` | VERIFIED |
+| `uados` | LIBRARY | `sensors/fusion/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_sensors` | EXECUTABLE | `sensors/fusion/tests/CMakeLists.txt` | `uados::sensor_fusion`, `uados::sensor_camera`, `uados::sensor_lidar`, `uados::sensor_radar`, `uados::sensor_gps`, `uados::sensor_imu`, `uados::sensor_api`, `GTest::gtest_main`, `Eigen3::Eigen` | VERIFIED |
+| `uados_sensor_gps` | LIBRARY | `sensors/gps/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `sensors/gps/CMakeLists.txt` | None | VERIFIED |
+| `uados_sensor_imu` | LIBRARY | `sensors/imu/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `sensors/imu/CMakeLists.txt` | None | VERIFIED |
+| `uados_sensor_lidar` | LIBRARY | `sensors/lidar/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `sensors/lidar/CMakeLists.txt` | None | VERIFIED |
+| `uados_sensor_radar` | LIBRARY | `sensors/radar/CMakeLists.txt` | `uados::sensor_api`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `sensors/radar/CMakeLists.txt` | None | VERIFIED |
+| `uados_sim_replay` | LIBRARY | `simulation/replay/CMakeLists.txt` | `uados::common`, `uados_options`, `nlohmann_json::nlohmann_json` | VERIFIED |
+| `uados` | LIBRARY | `simulation/replay/CMakeLists.txt` | None | VERIFIED |
+| `uados_sim_scenarios` | LIBRARY | `simulation/scenarios/CMakeLists.txt` | `uados::common`, `uados_options`, `uados::dtw_vehicle`, `uados::dtw_sensor` | VERIFIED |
+| `uados` | LIBRARY | `simulation/scenarios/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_simulation` | EXECUTABLE | `simulation/scenarios/tests/CMakeLists.txt` | `uados::sim_scenarios`, `uados::sim_replay`, `GTest::gtest_main` | VERIFIED |
+| `uados_val_automated` | LIBRARY | `validation/automated/CMakeLists.txt` | `uados::common`, `uados_options`, `uados::sim_scenarios` | VERIFIED |
+| `uados` | LIBRARY | `validation/automated/CMakeLists.txt` | None | VERIFIED |
+| `test_uados_validation` | EXECUTABLE | `validation/automated/tests/CMakeLists.txt` | `uados::val_automated`, `uados::val_fault_injection`, `uados::safety_monitors`, `GTest::gtest_main` | VERIFIED |
+| `uados_val_fault_injection` | LIBRARY | `validation/fault_injection/CMakeLists.txt` | `uados::common`, `uados_options` | VERIFIED |
+| `uados` | LIBRARY | `validation/fault_injection/CMakeLists.txt` | None | VERIFIED |
+
+**Topological Build Order**: `uados_warnings` → `uados_sanitizers` → `uados_coverage` → `uados_options` → `uados_ctrl_brake` → `uados` → `uados_ctrl_loops` → `test_uados_control` → `uados_ctrl_steering` → `uados_ctrl_throttle` → `uados_ctrl_trans` → `uados_common` → (+64 more)
+
+### Build & Run Commands
+| Action | Command |
+|:---|:---|
+| **Setup** | `conan install . --build=missing` |
+| **Compile** | `cmake --preset release` & `cmake --build --preset release` |
+| **Test** | `ctest --output-on-failure` |
+| **Run** | `./build/release/bin/test_uados_kernel` |
+
 ### Knowledge Confidence Matrix:
 | Section / Module | Confidence Rating | Verification Method |
 |:---|:---|:---|
@@ -983,3 +1146,7 @@ Detailed actionable opportunities to improve codebase structure and resolve stat
 | Testing Registry | LOW (UNKNOWN - No XML/JSON test logs verified on disk) | GTEST VERIFIED |
 | Security Intelligence | LOW (HEURISTIC) | HEURISTIC SCANNED |
 | Performance Metrics | LOW (UNKNOWN - No benchmark results file verified on disk) | Not Scanned |
+| Domain Models | HIGH (VERIFIED) | STRUCT SCAN |
+| Message Catalog | LOW (No pub/sub patterns found) | PATTERN SCAN |
+| Boot Flow | HIGH (VERIFIED) | ENTRY SCAN |
+| AI/ML Models | HIGH (VERIFIED) | FRAMEWORK SCAN |

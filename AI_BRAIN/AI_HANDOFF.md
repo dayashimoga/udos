@@ -1,6 +1,6 @@
 # AI Handoff Document (AIPBF v4.0)
 
-> **Generated**: 2026-06-01
+> **Generated**: 2026-06-02
 > **Purpose**: Enable any AI model to restore full project context after context loss, model switching, or conversation reset.
 
 ---

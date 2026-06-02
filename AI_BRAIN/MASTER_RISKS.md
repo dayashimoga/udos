@@ -1,6 +1,6 @@
 # Master Risks Document (AIPBF v4.0)
 
-> **Generated**: 2026-06-01
+> **Generated**: 2026-06-02
 > **Risk Categories**: Domain Risks, Failure Modes, State Machine Transitions
 
 ---

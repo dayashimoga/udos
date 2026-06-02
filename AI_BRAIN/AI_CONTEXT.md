@@ -1,6 +1,6 @@
 # AI Context Document (AIPBF v4.0)
 
-> **Generated**: 2026-06-01
+> **Generated**: 2026-06-02
 > **Purpose**: LLM-optimized project understanding. A completely different AI model should be able to read ONLY this file and understand the project well enough to continue development accurately.
 
 ---
@@ -13,7 +13,7 @@
 - **Confidence**: HIGH
 - **Primary Languages**: C++, Markdown, Python, YAML
 - **Build Tooling**: Conan, CMake
-- **Total LOC**: 24661
+- **Total LOC**: 25235
 
 ---
 
@@ -74,7 +74,7 @@ graph LR
 
 ### VERIFIED_FACTS (100% Proven on Disk)
 - **Directory Layout**: Subsystem folders verified on disk.
-- **Source Files**: 430 source files, 25 test files present.
+- **Source Files**: 429 source files, 25 test files present.
 - **Build Configurations**: Conan, CMake active and verified.
 - **Static Security**: Static analyzer results completed.
 

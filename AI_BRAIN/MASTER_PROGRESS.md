@@ -1,6 +1,6 @@
 # Master Progress & Feature Registry (AIPBF v4.0)
 
-> **Generated**: 2026-06-02
+> **Generated**: 2026-06-03
 > **Features Tracked**: 10
 
 ---
@@ -11,16 +11,16 @@ Lifecycle states: `PLANNED` -> `DEVELOPING` -> `TESTING` -> `PRODUCTION` -> `DEP
 
 | Feature ID | Feature Name | Lifecycle | Owner Layer | Entry Point File | Verification Tests | Last Changed | Provenance |
 |:---|:---|:---|:---|:---|:---|:---|:---|
-| F-001 | **Lane Detection** | PRODUCTION | `perception` | `perception/lane_detector.cpp` | `test_perception.cpp` | 2026-06-02 | VERIFIED |
-| F-002 | **Obstacle Detection** | PRODUCTION | `perception` | `perception/obstacle_detector.cpp` | `test_perception.cpp` | 2026-06-02 | VERIFIED |
-| F-003 | **EKF Pose Localization** | PRODUCTION | `localization` | `localization/ekf_localizer.cpp` | `test_localization.cpp` | 2026-06-02 | VERIFIED |
-| F-004 | **Stanley Steering Control** | PRODUCTION | `control` | `control/stanley_controller.cpp` | `test_control.cpp` | 2026-06-02 | VERIFIED |
-| F-005 | **Real-time EventBus** | PRODUCTION | `core` | `core/event_bus.cpp` | `test_event_bus.cpp` | 2026-06-02 | VERIFIED |
-| F-006 | **Safety Envelope Watchdog** | PRODUCTION | `safety` | `safety/safety_monitor.cpp` | `test_safety.cpp` | 2026-06-02 | VERIFIED |
-| F-007 | **OTA Rollback Client** | PRODUCTION | `fleet` | `fleet/ota_client.cpp` | `test_fleet.cpp` | 2026-06-02 | VERIFIED |
-| F-008 | **Digital Twin Simulator Bridge** | TESTING | `digital_twin` | `digital_twin/simulation_bridge.cpp` | `test_simulation.cpp` | 2026-06-02 | VERIFIED |
-| F-009 | **Prediction Trajectory Engine** | PRODUCTION | `prediction` | `prediction/trajectory_predictor.cpp` | `test_prediction.cpp` | 2026-06-02 | VERIFIED |
-| F-010 | **Sensor Fusion Pipeline** | PRODUCTION | `sensors` | `sensors/sensor_fusion.cpp` | `test_sensors.cpp` | 2026-06-02 | VERIFIED |
+| F-001 | **Lane Detection** | PRODUCTION | `perception` | `perception/lane_detector.cpp` | `test_perception.cpp` | 2026-06-03 | VERIFIED |
+| F-002 | **Obstacle Detection** | PRODUCTION | `perception` | `perception/obstacle_detector.cpp` | `test_perception.cpp` | 2026-06-03 | VERIFIED |
+| F-003 | **EKF Pose Localization** | PRODUCTION | `localization` | `localization/ekf_localizer.cpp` | `test_localization.cpp` | 2026-06-03 | VERIFIED |
+| F-004 | **Stanley Steering Control** | PRODUCTION | `control` | `control/stanley_controller.cpp` | `test_control.cpp` | 2026-06-03 | VERIFIED |
+| F-005 | **Real-time EventBus** | PRODUCTION | `core` | `core/event_bus.cpp` | `test_event_bus.cpp` | 2026-06-03 | VERIFIED |
+| F-006 | **Safety Envelope Watchdog** | PRODUCTION | `safety` | `safety/safety_monitor.cpp` | `test_safety.cpp` | 2026-06-03 | VERIFIED |
+| F-007 | **OTA Rollback Client** | PRODUCTION | `fleet` | `fleet/ota_client.cpp` | `test_fleet.cpp` | 2026-06-03 | VERIFIED |
+| F-008 | **Digital Twin Simulator Bridge** | TESTING | `digital_twin` | `digital_twin/simulation_bridge.cpp` | `test_simulation.cpp` | 2026-06-03 | VERIFIED |
+| F-009 | **Prediction Trajectory Engine** | PRODUCTION | `prediction` | `prediction/trajectory_predictor.cpp` | `test_prediction.cpp` | 2026-06-03 | VERIFIED |
+| F-010 | **Sensor Fusion Pipeline** | PRODUCTION | `sensors` | `sensors/sensor_fusion.cpp` | `test_sensors.cpp` | 2026-06-03 | VERIFIED |
 
 
 ---

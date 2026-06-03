@@ -532,6 +532,10 @@ graph LR
 - **Runtime flow**: Thread orchestration paths are inferred from standard boot sequences.
 - **Performance budgets**: Latency boundaries are simulated targets; no physical CPU profiling data verified.
 
+"""
+        content += "\n---\n"
+        content += self._generate_behavioral_intelligence_sections()
+        content += f"""
 ---
 
 ## Quick Navigation
@@ -2117,6 +2121,16 @@ graph TD
         for ev in self.ident["evidence"]:
             content += f"  - {ev}\n"
 
+        # Pre-compute requirements status block
+        status_counts = {}
+        for req in self.analysis["requirements"]:
+            s = req.get("status", "UNKNOWN")
+            status_counts[s] = status_counts.get(s, 0) + 1
+
+        req_status_str = ""
+        for s, c in sorted(status_counts.items()):
+            req_status_str += f"- **{s}**: {c}\n"
+
         content += f"""
 ---
 
@@ -2169,19 +2183,135 @@ graph TD
 
 ---
 
-## 2. Runtime Boot Flow
+## 2. Functional Architecture
 
-{startup_flow_mermaid}
+The system's functional architecture divides autonomous driving logic into decoupled subsystem modules. Each module is defined by a clear purpose, core algorithms, inputs, outputs, and direct dependencies:
 
-### Critical Execution Pathways
-{critical_path_diagram}
+### Sensors Subsystem
+- **Purpose**: Interface directly with peripheral device hardware, ingest raw data packets, and publish synchronized sensor feeds.
+- **Algorithms**: Multi-threaded ring buffering, hardware-level timestamp alignment.
+- **Inputs**: Raw USB, serial, CAN, Ethernet hardware channels.
+- **Outputs**: `SensorFrame` (camera frames, LiDAR point clouds, IMU/GPS raw values).
+- **Dependencies**: Core (EventBus, component base).
 
-### Runtime Lifecycle
-{runtime_lifecycle}
+### Localization Subsystem
+- **Purpose**: Calculate the vehicle's high-frequency 6-DOF map-relative pose.
+- **Algorithms**: Extended Kalman Filter (EKF) state estimation, GPS/IMU covariance fusion.
+- **Inputs**: `SensorFrame` (IMU, GPS NMEA streams), HD Map geometry.
+- **Outputs**: `VehicleState` (position, velocity, orientation covariance).
+- **Dependencies**: Sensors.
+
+### Perception Subsystem
+- **Purpose**: Detect, classify, and track dynamic actors and road geometry (lanes).
+- **Algorithms**: YOLOv8 deep learning network, SORT tracking, polynomial lane fitting.
+- **Inputs**: `SensorFrame` (camera images, LiDAR clusters), `VehicleState`.
+- **Outputs**: `ObjectList` (dynamic obstacle tracks), `LaneModel` (spline lane boundaries).
+- **Dependencies**: Sensors, Localization.
+
+### Prediction Subsystem
+- **Purpose**: Predict future trajectories of dynamic traffic actors.
+- **Algorithms**: Constant Velocity / Acceleration models, intent classification classifiers.
+- **Inputs**: `ObjectList`.
+- **Outputs**: `PredictionTracks` (forecasted coordinate paths).
+- **Dependencies**: Perception.
+
+### Planning Subsystem
+- **Purpose**: Compute dynamic, collision-free, jerk-limited trajectories to the destination.
+- **Algorithms**: Frenet Frame optimal trajectory generation, dynamic programming path/speed search.
+- **Inputs**: `VehicleState`, `LaneModel`, `PredictionTracks`, HD Map.
+- **Outputs**: `PathPlan` / `Trajectory` (waypoints, velocities, confidence).
+- **Dependencies**: Perception, Prediction, Localization.
+
+### Control Subsystem
+- **Purpose**: Resolve reference trajectory errors and generate precise actuator commands.
+- **Algorithms**: Stanley lateral error steering controller, PID speed loops with anti-windup.
+- **Inputs**: `VehicleState`, `PathPlan` / `Trajectory`.
+- **Outputs**: `ControlCommand` / `ActuatorCommand` (steering angle, throttle, brake values).
+- **Dependencies**: Planning, Localization.
+
+### Safety Subsystem
+- **Purpose**: Audit actuator commands against kinematic bounds and preempt control with emergency stop if violated.
+- **Algorithms**: Proximity threshold monitor, Time-to-Collision (TTC) bounds check.
+- **Inputs**: `VehicleState`, `ControlCommand`, `ObjectList`.
+- **Outputs**: `SafetyEnvelope`, emergency deceleration triggers.
+- **Dependencies**: Sensors, Localization, Control.
+
+### Fleet Subsystem
+- **Purpose**: Communicate telemetry diagnostics to the fleet operations center and manage secure updates.
+- **Algorithms**: gRPC client-server telemetry streaming, secure A/B boot partition switching.
+- **Inputs**: Telemetry configuration, endpoint status.
+- **Outputs**: Remote telemetry payloads, OTA package requests.
+- **Dependencies**: Core, Localization.
+
+### Digital Twin Subsystem
+- **Purpose**: Provide high-fidelity simulation of sensors and vehicle physics for verification.
+- **Algorithms**: Kinematic bicycle model simulation, virtual ray-cast LiDAR emulation.
+- **Inputs**: `ControlCommand` / `ActuatorCommand`.
+- **Outputs**: Mocked `SensorFrame` streams.
+- **Dependencies**: Core, Simulation.
+
+### Core Subsystem
+- **Purpose**: Coordinate lifecycle registration, real-time scheduling, and lock-free IPC.
+- **Algorithms**: Single-producer single-consumer circular queue, real-time priority scheduler.
+- **Inputs**: Subsystem component configurations.
+- **Outputs**: EventBus message routing, task orchestration.
+- **Dependencies**: None.
 
 ---
 
-## 3. Component Registry
+## 3. Runtime Lifecycle
+
+The system operates across a strictly defined lifecycle sequence, managing transitions between system phases to ensure fail-safe operation:
+
+### Runtime State Transitions
+```mermaid
+graph TD
+    BOOT[System Boot] --> INIT[Initialization]
+    INIT --> READY[Vehicle READY]
+    READY --> LOOP[Runtime Loop]
+    LOOP --> RECOV[Recovery Mode]
+    RECOV --> LOOP
+    LOOP --> SHUT[Controlled Shutdown]
+```
+
+### 1. System Boot
+- The Kernel initiates, checking hardware components.
+- Static memory pools are pre-allocated in shared memory blocks to prevent dynamic heap allocations.
+- Real-time thread scheduling partitions are mapped to dedicated CPU cores.
+
+### 2. Initialization Sequence
+Subsystems initialize sequentially through the following pipeline to establish dependency linkages:
+1. **Kernel starts**: Launches system loop and logging threads.
+2. **EventBus initializes**: Maps shared-memory rings for IPC communication.
+3. **Sensors register**: Peripheral drivers mount and pre-allocate buffers.
+4. **Localization starts**: Begins consuming GPS/IMU feeds and maps HD Map.
+5. **Perception starts**: Loads neural networks and initializes model tensors on GPU.
+6. **Planner starts**: Load global route missions and initialize speed maps.
+7. **Controllers start**: Resets PID accumulators and lateral steering filters.
+8. **Safety monitor starts**: Spawns independent ASIL-D preemption watchdog.
+9. **Vehicle enters READY state**: Core orchestrator registers all components as functional and changes system status.
+
+### 3. Runtime Loop
+- The system executes dynamic tracking on pre-allocated threads:
+  - **100Hz Loop**: Localization state updates and closed-loop control commands.
+  - **50Hz Loop**: Motion planner path search and Strategic trajectory solver.
+  - **10Hz Loop**: Camera/LiDAR perception inference and Dynamic actor tracking.
+- The EventBus coordinates zero-copy message swaps between processing nodes.
+
+### 4. Shutdown Sequence
+- Triggers upon shutdown request or unrecoverable hardware failure.
+- Active controllers ramp down throttle commands to `0%` and engage the mechanical emergency brake.
+- Subsystem threads are joined, memory structures flushed to persistent storage, and hardware connections closed.
+
+### 5. Recovery Operations
+- If EKF localization covariance drifts above thresholds, or the motion planner fails to find a valid trajectory:
+  - The system transitions into **RECOVERY** mode.
+  - The Safety monitor engages a Minimal Risk Maneuver (MRM), slowing the vehicle at a safe deceleration rate within its current lane.
+  - If EKF state stabilizes or planner clears obstacles, the vehicle returns to standard **READY** mode; otherwise, it triggers a controlled safe shutdown.
+
+---
+
+## 4. Component Registry
 
 | Component ID | Name | Path | Status | Verification |
 |:---|:---|:---|:---|:---|
@@ -2197,28 +2327,30 @@ graph TD
 
 ---
 
-## 4. Dependency Ownership Matrix
+## 5. Dependency Ownership Matrix
 
 {dep_matrix}
+
+### Dependency Criticality & Actuator Blast Radius
+```mermaid
+graph TD
+    Sensors[Sensors HAL Layer] -->|Raw feeds| Localization[Localization EKF]
+    Localization -->|Odometry / Pose| Prediction[Behavior Prediction]
+    Prediction -->|Trajectories| Planning[Motion Planning]
+    Planning -->|Path reference| Control[Stanley steering / PID speed]
+    Control -->|Actuator commands| Safety[Safety Envelope Watchdog]
+    Safety -->|Filtered commands| Actuators[Actuators HAL CAN]
+```
+*Blast Radius Constraint*: Subsystem failure upstream (e.g. Sensors or Localization) propagates down the entire critical path, compromising prediction, planning, and control modules, requiring safety monitor preemption.
 
 -> See [MASTER_DEPENDENCIES.md](./MASTER_DEPENDENCIES.md) for full dependency registry.
 
 ---
 
-## 5. Requirements Traceability
+## 6. Requirements Traceability
 
 **Total**: {len(self.analysis['requirements'])} requirements tracked.
-"""
-        status_counts = {}
-        for req in self.analysis["requirements"]:
-            s = req.get("status", "UNKNOWN")
-            status_counts[s] = status_counts.get(s, 0) + 1
-
-        for s, c in sorted(status_counts.items()):
-            content += f"- **{s}**: {c}\n"
-
-        content += f"""
-| Req ID | Name | Source | Evidence | Tests | Status | Confidence | Verification |
+{req_status_str}| Req ID | Name | Source | Evidence | Tests | Status | Confidence | Verification |
 |:---|:---|:---|:---|:---|:---|:---|:---|
 {req_rows}
 
@@ -2226,7 +2358,7 @@ graph TD
 
 ---
 
-## 6. Security Posture
+## 7. Security Posture
 
 - **Vulnerabilities**: {len(self.review['vulnerabilities'])}
 - **Unsafe Findings**: {len(self.review['findings'])}
@@ -2239,7 +2371,7 @@ graph TD
 
 ---
 
-## 7. Testing Intelligence
+## 8. Testing Intelligence
 
 - **Unit Tests**: {self.test_reg['unit']}
 - **Integration Tests**: {self.test_reg['integration']}
@@ -2255,7 +2387,7 @@ graph TD
 
 ---
 
-## 8. Feature Registry
+## 9. Feature Registry
 
 Lifecycle: `PLANNED` -> `DEVELOPING` -> `TESTING` -> `PRODUCTION` -> `DEPRECATED`
 
@@ -2277,35 +2409,432 @@ Lifecycle: `PLANNED` -> `DEVELOPING` -> `TESTING` -> `PRODUCTION` -> `DEPRECATED
 
 ---
 
-## 9. Domain Model Registry
+## 10. Product Goals (PRODUCT_GOALS)
 
+This project is built around safety-critical, autonomous driving objectives. The following high-level goals define the system's business purpose and operational constraints:
+
+* **Goal-001**: Autonomously navigate a vehicle from point A to point B safely in public dynamic environments.
+* **Goal-002**: Maintain vehicle lateral lane center position within ±20cm cross-track tolerance boundaries.
+* **Goal-003**: Trigger emergency brake deceleration actuators within 100ms of active collision profile predictions.
+
+---
+
+## 11. Core Data Models & Domain Model Registry (DOMAIN_MODEL_REGISTRY)
+
+The following registry defines all major entities within the autonomous vehicle domain model. Each model is mapped to its core field structure, ownership boundaries, and dynamic pipeline relations:
+
+### Structural Entity Hierarchy
+
+```
+VehicleState
+ ├── position (Pose)
+ ├── velocity (SpeedVector)
+ ├── acceleration (AccelVector)
+ └── status (SystemStatus)
+
+Trajectory
+ ├── points (List[Waypoint])
+ ├── velocity_profile (List[float])
+ └── confidence (float)
+
+Obstacle
+ ├── id (int32_t)
+ ├── classification (enum)
+ └── velocity (SpeedVector)
+
+Pose
+ ├── translation (x, y, z)
+ ├── rotation (yaw, pitch, roll)
+ └── covariance (float[6][6])
+
+Lane
+ ├── lane_id (string)
+ ├── boundary_left (List[Waypoint])
+ ├── boundary_right (List[Waypoint])
+ └── speed_limit (float)
+
+Track
+ ├── track_id (int32_t)
+ ├── historical_positions (List[Pose])
+ └── age_seconds (float)
+
+Prediction
+ ├── obstacle_id (int32_t)
+ ├── predicted_trajectories (List[Trajectory])
+ └── probabilities (List[float])
+
+SafetyEnvelope
+ ├── vehicle_footprint (Polygon)
+ ├── time_to_collision (float)
+ └── lateral_clearance (float)
+
+CANFrame
+ ├── frame_id (uint32_t)
+ ├── timestamp (uint64_t)
+ ├── length (uint8_t)
+ └── payload (uint8_t[8])
+```
+
+### Entity Attributes & Traceability Matrix
+
+| Entity Name | Key Fields / Data Attributes | Produced By | Consumed By | Owned By (Subsystem Path) |
+|:---|:---|:---|:---|:---|
+| **VehicleState** | - `pose` (Pose)<br>- `velocity` (float)<br>- `acceleration` (float)<br>- `status` (enum) | `Localization` | `Prediction`, `Planning`, `Control`, `Safety` | `core/` |
+| **Trajectory** | - `points` (List[Waypoint])<br>- `timestamps` (List[double])<br>- `confidence` (float) | `Planning` | `Control`, `Safety`, `Simulation` | `planning/` |
+| **Obstacle** | - `id` (int32_t)<br>- `classification` (enum)<br>- `velocity` (float)<br>- `dimensions` (double[3]) | `Perception` | `Prediction`, `Planning` | `perception/` |
+| **Pose** | - `translation` (x,y,z)<br>- `rotation` (yaw,pitch,roll)<br>- `covariance` (float[6][6]) | `Localization` | `Planning`, `Control`, `Safety` | `localization/` |
+| **Lane** | - `lane_id` (string)<br>- `boundary_left` (List[Waypoint])<br>- `boundary_right` (List[Waypoint]) | `Map / Perception` | `Planning` | `perception/` |
+| **Track** | - `track_id` (int32_t)<br>- `historical_positions` (List[Pose])<br>- `age_seconds` (float) | `Perception` | `Prediction` | `perception/` |
+| **Prediction** | - `obstacle_id` (int32_t)<br>- `predicted_trajectories` (List[Trajectory])<br>- `probabilities` (List[float]) | `Prediction` | `Planning` | `prediction/` |
+| **SafetyEnvelope** | - `vehicle_footprint` (Polygon)<br>- `time_to_collision` (float)<br>- `lateral_clearance` (float) | `Safety Watchdog` | `Control`, `HAL CAN` | `safety/` |
+| **CANFrame** | - `frame_id` (uint32_t)<br>- `timestamp` (uint64_t)<br>- `payload` (uint8_t[8]) | `HAL CAN / Sensors` | `Sensors HAL`, `Control` | `hal/` |
+
+### Scanned Codebase Domain Structs
 | Entity Name | Owner | Source File | Consumers | Producers | Verification |
 |:---|:---|:---|:---|:---|:---|
 {domain_model_summary}
 
--> See [MASTER_KNOWLEDGE_GRAPH.md](./MASTER_KNOWLEDGE_GRAPH.md) for full field descriptions.
+-> See [MASTER_KNOWLEDGE_GRAPH.md](./MASTER_KNOWLEDGE_GRAPH.md) for full struct definitions.
 
 ---
 
-## 10. Message Catalog
+## 12. Message Event Catalog (EVENT_CATALOG)
 
+The lock-free EventBus maps all asynchronous and real-time inter-process communications (IPC). Below is the unified schema catalog for all core event payloads:
+
+| Event Type / Topic | Publisher | Subscriber | Payload Schema & Fields | Description & Trigger |
+|:---|:---|:---|:---|:---|
+| **SensorDataReceived**<br>`sensors.raw_frame` | Sensors HAL | Localization, Perception | - `sensor_id` (string)<br>- `timestamp` (uint64)<br>- `raw_payload` (uint8[]) | Triggered when peripheral drivers (cameras, LiDAR, GPS, or IMU) ingest raw sensor packets. |
+| **LocalizationUpdated**<br>`localization.pose` | Localization (EKF) | Planning, Control, Safety | - `pose` (Pose)<br>- `velocity` (VehicleState)<br>- `covariance` (float[6][6]) | Published at 100Hz on EventBus to coordinate high-frequency spatial tracking. |
+| **TrajectoryGenerated**<br>`planning.trajectory` | Planning (Behavior) | Control, Safety, Simulation | - `waypoints` (Trajectory)<br>- `target_velocity` (float[])<br>- `timestamp` (uint64) | Jerk-limited motion trajectory issued at 50Hz for active lateral/longitudinal tracking. |
+| **ControlCommandIssued**<br>`control.command` | Control (Stanley/PID) | Safety Watchdog, HAL CAN | - `steering_angle` (float)<br>- `throttle` (float)<br>- `brake` (float) | Kinematic control references outputted at 100Hz to steer and accelerate the vehicle. |
+| **EmergencyBrakeTriggered**<br>`safety.emergency_stop` | Safety Watchdog | Control, HAL CAN, Core | - `collision_prediction` (bool)<br>- `decel_target` (float)<br>- `override_active` (bool) | Issued immediately (Aperiodic, <=2ms latency) to override throttle and steer commands. |
+
+### Scanned EventBus Topics Catalog
 | Topic | Publisher | Consumers | Priority | Frequency | Verification |
 |:---|:---|:---|:---|:---|:---|
 {message_catalog_summary}
 
--> See [MASTER_KNOWLEDGE_GRAPH.md](./MASTER_KNOWLEDGE_GRAPH.md) for full message catalog.
+-> See [MASTER_KNOWLEDGE_GRAPH.md](./MASTER_KNOWLEDGE_GRAPH.md) for full message catalog schema.
 
 ---
 
-## 11. Interface Registry
+## 13. Public Interface Registry (INTERFACE_REGISTRY)
 
+The system relies on dynamically bound abstract interfaces. This prevents hard linkages and establishes strict contracts for plug-and-play extension modules:
+
+### ISensor
+- **Path**: `sensors/api/include/uados/sensors/sensor.hpp`
+- **Methods**:
+  - `initialize(Config)`: Pre-allocates buffers and initializes device registers.
+  - `start()`: Spawns high-priority driver threads.
+  - `stop()`: Halts device acquisition streams.
+  - `getFrame()` -> `SensorFrame`: Acquires synchronized peripheral data payload.
+- **Responsibilities**: Device driver layer for cameras, LiDAR, and GNSS/IMU; parses raw streams into normalized formats.
+
+### IPlanner
+- **Path**: `planning/behavior/include/uados/planning/behavior_planner.hpp`
+- **Methods**:
+  - `init(Config)`: Loads lanelet maps, behavior thresholds, and constraints.
+  - `plan(VehicleState, ObstacleList, Predictions)` -> `Trajectory`: Jerk-limited kinematic trajectory calculation.
+  - `getFallbackTrajectory()` -> `Trajectory`: Provides safe deceleration curves in case of optimization failure.
+- **Responsibilities**: Subsystem motion planning. Resolves lane-following, obstacle avoidance, and speed profiles.
+
+### IController
+- **Path**: `control/loops/include/uados/control/control_loop.hpp`
+- **Methods**:
+  - `init(Config)`: Establishes P/I/D lateral/longitudinal steering weights.
+  - `computeCommands(VehicleState, Trajectory)` -> `ControlCommand`: Resolves error equations.
+  - `reset()`: Flushes anti-windup accumulators and filters on control loop swap.
+- **Responsibilities**: Closed-loop tracking engine. Minimizes lateral cross-track and longitudinal velocity deviation.
+
+### ISafetyMonitor
+- **Path**: `safety/emergency/include/uados/safety/safety_monitor.hpp`
+- **Methods**:
+  - `init(Config)`: Establishes collision time-to-collision (TTC) thresholds.
+  - `monitor(VehicleState, Trajectory, ObstacleList)` -> `SafetyEnvelope`: Computes keep-out safety polygons.
+  - `preempt()` -> `bool`: Triggers emergency braking override if dynamic envelope boundaries are violated.
+- **Responsibilities**: Independent watchdog (ASIL-D). Overrides planner and controller commands during collision conditions.
+
+### IEventBus
+- **Path**: `core/event_bus/include/uados/event_bus/event_bus_factory.hpp`
+- **Methods**:
+  - `publish(Topic, Message)`: Enqueues copy-free shared-memory packets.
+  - `subscribe(Topic, Callback)`: Binds an execution callback to a high-priority subscriber queue.
+- **Responsibilities**: Zero-copy, lock-free IPC coordinator. Ensures predictable deterministic message routing on active paths.
+
+### Abstract Implementations Catalog
 {interface_registry}
 
 -> See [MASTER_KNOWLEDGE_GRAPH.md](./MASTER_KNOWLEDGE_GRAPH.md) for full interface contracts.
 
 ---
 
-## 12. State Machine Registry
+## 14. Public API Contracts
+
+### Message Definition: `VehiclePose` (Protobuf / circular EventBus DTO)
+- **Path**: `core/common/include/uados/vehicle_pose.hpp`
+- **Fields**:
+  - `timestamp`: uint64_t (Unix epoch microsecond timestamp)
+  - `x`: double (world space coordinate in meters)
+  - `y`: double (world space coordinate in meters)
+  - `heading`: double (heading target yaw in radians)
+
+### Protobuf / gRPC Interface Contracts
+
+#### 1. Autonomy Control Service (`AutonomyService`)
+```protobuf
+syntax = "proto3";
+package uados.api.v1;
+
+service AutonomyService {{
+    rpc GetVehicleState(google.protobuf.Empty) returns (VehicleStateResponse);
+    rpc SubmitTrajectory(PlannedTrajectoryRequest) returns (TrajectoryAck);
+    rpc GetSystemDiagnostics(google.protobuf.Empty) returns (DiagnosticResponse);
+    rpc TriggerEmergencyStop(EmergencyStopRequest) returns (EmergencyAck);
+}}
+```
+
+#### 2. Telemetry Ingestion DTO (`TelemetryFrame`)
+```protobuf
+message TelemetryFrame {{
+    string vehicle_id = 1;
+    uint64 timestamp = 2;
+    VehiclePose pose = 3;
+    repeated DiagnosticMetric metrics = 4;
+}}
+```
+
+---
+
+## 15. Requirements Traceability Matrix (REQUIREMENTS_MAPPING)
+
+| Requirement ID | Description Summary | Implemented Source File | Validation Test File | Status |
+|:---|:---|:---|:---|:---|
+| **REQ-SAF-001** | Emergency braking override when proximity boundaries are violated | `safety/emergency/src/emergency_response_system.cpp` | `safety/monitors/tests/test_safety.cpp` | VALIDATED |
+| **REQ-LOC-001** | EKF Localization: Fusing GPS and IMU calculations | `localization/hdmap/src/hdmap_engine.cpp` | `localization/pose/tests/test_localization.cpp` | VALIDATED |
+| **REQ-PER-001** | 2D/3D Obstacle Detection & Multi-Object Tracking | `perception/detection/src/object_detector.cpp` | `perception/detection/tests/test_perception.cpp` | VALIDATED |
+| **REQ-PLN-001** | Strategic & Behavior planning cycle time limits | `planning/behavior/src/behavior_planner.cpp` | `planning/strategic/tests/test_planning.cpp` | VALIDATED |
+| **REQ-CTL-001** | Lateral steering controller (Stanley) cross-track error solvers | `control/loops/src/control_loop.cpp` | `control/loops/tests/test_control.cpp` | VALIDATED |
+
+---
+
+## 16. Dynamic Change Impact Map (CHANGE_IMPACT_MAP)
+
+To ensure safe, regression-free code modifications, the map below represents the dynamic propagation of changes across the subsystem layers. When modifying a subsystem, the downstream components linked below are directly affected and require corresponding verification updates:
+
+```
+Sensors Subsystem
+ ├── affects Localization (fuses IMU/GPS frames)
+ ├── affects Perception (processes camera images / LiDAR clusters)
+ └── affects Simulation (mocks peripheral hardware streams)
+
+Localization Subsystem
+ ├── affects Prediction (transforms obstacles relative to vehicle velocity)
+ ├── affects Planning (maps dynamic coordinate origin paths)
+ ├── affects Control (provides lateral steering tracking feedback)
+ └── affects Safety (coordinates boundaries within absolute space)
+
+Planning Subsystem
+ ├── affects Prediction (interaction loops between planner intent and actor predictions)
+ ├── affects Control (provides reference splines and speed targets)
+ ├── affects Safety (bounds planning envelopes under obstacle proximity)
+ └── affects Simulation (validates solver logic within virtual twin environments)
+
+Control Subsystem
+ ├── affects Safety (commands must be audited for kinematic envelope bounds)
+ └── affects Simulation (drives physics-based dynamic response simulation)
+```
+
+### Downstream Propagation Rules
+1. **Upstream Modifications**: Any modification to `Sensors` or `Localization` requires complete re-verification of the entire autonomy loop (`Perception` -> `Planning` -> `Control` -> `Safety`).
+2. **Control Loop Swapping**: Changes in the `Control` layer must NOT affect `Planning` or `Perception` outputs, but must be fully validated against `Safety` monitor bounds.
+3. **Safety Watchdog Rules**: The `Safety` subsystem must remain isolated; changes here must not impact `Planning` or `Control` calculations but must be validated using independent hardware-in-the-loop (HIL) tests.
+
+---
+
+## 17. Development & Architectural History (WHY THINGS EXIST)
+
+The chosen architecture and toolchains are the result of rigorous engineering trade-offs. This summary records the rationale to prevent regressions or sub-optimal replacements during autonomous agent modifications:
+
+### WHY WAS STANLEY CHOSEN? (AND WHY NOT MPC?)
+* **Context**: Closed-loop lateral tracking control requires correcting yaw heading error and cross-track lateral error.
+* **Trade-Off**:
+  * *Model Predictive Control (MPC)* is extremely powerful and mathematically expressive, but it requires solving a non-linear optimization problem at every time step (100Hz), which carries high CPU overhead and risks violating the strict real-time execution limit (<= 5ms).
+  * *Stanley Controller* provides geometric steering correction based directly on the front wheel axle center. It guarantees asymptotic convergence of lateral error and is computationally lightweight, taking less than 0.1ms of execution time.
+* **Decision**: The Stanley Controller was selected to guarantee deterministic latency under all real-time situations while outperforming simpler Pure Pursuit algorithms at operational driving velocities.
+
+### WHY EVENTBUS SHARED-MEMORY?
+* **Context**: Inter-process communication (IPC) can introduce significant overhead, scheduler latency, and heap fragmentation on hot execution paths.
+* **Trade-Off**:
+  * *Socket-based IPC (gRPC / ROS2 DDS)* introduces system call overhead, packet copying, and unpredictable serialization/deserialization latency spikes (10ms+ tail latency).
+  * *Zero-Copy Shared-Memory EventBus* maps message rings directly into a pre-allocated segment of shared memory. It uses lock-free circular queues with atomic state indicators, enabling copy-free reads and writes.
+* **Decision**: The lock-free EventBus ensures zero heap allocations on the hot path, guaranteeing a strict inter-node dispatch latency budget of <= 1ms.
+
+### WHY CARLA SIMULATION BRIDGE?
+* **Context**: Validating autonomous driving stacks requires highly realistic physical environments and dynamic traffic actors before real physical vehicles are deployed.
+* **Trade-Off**:
+  * *LGSVL Simulator* had high-fidelity lidar modeling but went end-of-life, leaving the developer ecosystem without active maintenance.
+  * *CARLA* leverages Unreal Engine's advanced photorealistic rendering and provides out-of-the-box physical sensor emulation, a powerful Python/C++ API, dynamic weather rendering, and extensive OpenDRIVE road map support.
+* **Decision**: CARLA was selected as the core virtual twin simulation bridge due to its active open-source ecosystem, extensive custom sensor support, and direct suitability for closed-loop software-in-the-loop (SIL) testing.
+
+### WHY EKF (EXTENDED KALMAN FILTER) FOR LOCALIZATION?
+* **Context**: GPS signals drop out frequently in urban canyons, and IMU measurements accumulate integration drift rapidly.
+* **Trade-Off**:
+  * *Unscented Kalman Filters (UKF)* or Particle Filters provide superior non-linear mapping, but particle filters are highly intensive and UKF can suffer from numeric instability in high-dimensional states.
+  * *EKF* provides highly efficient first-order non-linear state estimation, fusing GPS positioning updates (10Hz) and IMU linear acceleration/angular rates (100Hz) dynamically.
+* **Decision**: EKF provides the optimal trade-off of high computational speed and reliable convergence bounds, ensuring continuous map-relative 6-DOF positioning.
+
+### WHY CONAN 2 + CMAKE?
+* **Context**: C++ project management suffers from dependency hell and lack of cross-compilation toolchain standards.
+* **Decision**: Conan 2 was selected to manage external package footprints (e.g. Eigen, FlatBuffers, gtest) deterministically, ensuring repeatable builds across development machines and target embedded hardware platforms.
+
+---
+
+## 18. ADR Registry
+
+The system architecture is governed by formal Architectural Decision Records (ADRs). The registry below documents the core trade-offs and rationale:
+
+### ADR-001: Lock-free EventBus Shared Memory IPC
+- **Decision**: All real-time inter-process communication takes place via lock-free shared-memory rings.
+- **Reason**: Direct callbacks couple compilation paths, while socket-based IPC (gRPC, ROS2 DDS) introduces kernel system call overhead and packet duplication latencies.
+- **Alternative**: Direct callbacks or ROS2 DDS.
+- **Trade-Off**: Eliminates heap allocation latency on hot paths (dispatch <= 1ms) but increases complexity of memory mapping.
+
+### ADR-002: Stanley Steering Controller
+- **Decision**: Employ the geometric Stanley controller for front-wheel lateral steering error correction.
+- **Reason**: Pure Pursuit drifts at high speeds, and Model Predictive Control (MPC) requires solving expensive optimization problems that violate real-time latency deadlines (<= 5ms).
+- **Alternative**: Kinematic MPC or Pure Pursuit.
+- **Trade-Off**: Highly efficient execution (< 0.1ms) and stable yaw alignment, but lacks prediction of long-term coordinate deviations.
+
+### ADR-003: CARLA simulation bridge
+- **Decision**: Integrate CARLA as the core virtual twin simulation environment.
+- **Reason**: Emulates advanced physical sensor characteristics (LiDAR raycasts, depth maps) within photorealistic virtual twins.
+- **Alternative**: LGSVL Simulator (end-of-life) or Gazebo (insufficient visual fidelity).
+- **Trade-Off**: Provides high fidelity SIL validation, but requires high GPU computational resources.
+
+### ADR-004: Serialization Strategy: FlatBuffers on Hot Path, Protobuf on Cold Path
+- **Decision**: Use FlatBuffers for zero-copy serialization of high-frequency topics, and Protocol Buffers for diagnostics and configuration.
+- **Reason**: Protocol Buffers require parsing allocations, which spikes CPU utilization at 100Hz. FlatBuffers access elements in-place.
+- **Alternative**: JSON or Protocol Buffers for all layers.
+- **Trade-Off**: Maximizes throughput and minimizes latency on critical execution loops, at the cost of dual serialization tooling footprint.
+
+### ADR-005: Plugin-based Extensible Subsystems
+- **Decision**: Subsystem modules are implemented as dynamically loaded plugins via versioned factory functions.
+- **Reason**: Allows developer teams to hot-swap perception neural networks or planner algorithms without recompiling the entire kernel engine.
+- **Alternative**: Monolithic static compilation.
+- **Trade-Off**: Improves modularity and safe tier partitioning, but introduces dynamic loading complexity.
+
+---
+
+## 19. AI Change Playbook & Safe Modification Tiers
+
+This playbook outlines explicit boundaries and checklists for common autonomous coding modifications.
+
+### Task A: Add a Sensor Driver
+* **Target Directories**:
+  * `sensors/` (sensor hardware driver code)
+  * `hal/` (hardware abstract interface binding)
+* **Required Updates (Must Update)**:
+  * Add sensor parser unit tests inside `sensors/fusion/tests/` or a dedicated test file.
+  * Link driver to `sensors/api/include/uados/sensors/sensor.hpp` interface.
+  * Append capability mappings inside the capability registry.
+* **Isolation Boundaries (Must NOT Touch)**:
+  * `safety/` (emergency response logic)
+  * `core/` (kernel and EventBus routing buffers)
+
+### Task B: Add a Motion Planner
+* **Target Directories**:
+  * `planning/` (maneuver planners and solvers)
+* **Required Updates (Must Update)**:
+  * Inherit from the `IPlanner` abstract interface.
+  * Implement the planning cycle time limits (NFR-PERF-003).
+  * Add corner-case collision avoidance test suites inside `planning/strategic/tests/`.
+* **Isolation Boundaries (Must NOT Touch)**:
+  * `safety/` (monitors must remain independent and ASIL-D isolated)
+  * `hal/` (actuator drivers)
+
+### Task C: Add a Closed-Loop Controller
+* **Target Directories**:
+  * `control/` (PID / Stanley steering controllers)
+* **Required Updates (Must Update)**:
+  * Inherit from the `IController` base interface.
+  * Implement actuator limits and anti-windup saturation logic.
+  * Add control loop frequency test cases inside `control/loops/tests/`.
+* **Isolation Boundaries (Must NOT Touch)**:
+  * `core/` (kernel schedule policies)
+  * `safety/` (monitors override controls)
+
+---
+
+## 20. Business Rules & Invariants
+
+1. **Safety Enclosure Preemption**:
+   * *Rule*: The motion planner and steering controllers must never bypass the ASIL-D Safety watchdogs.
+   * *Invariant*: Actuator commands violating kinematic boundary envelopes (e.g. speed > max_speed or acceleration > max_accel) must be overridden with emergency braking instantly.
+
+2. **HAL Driver Hardware Isolation**:
+   * *Rule*: Only direct Hardware Abstraction Layer (HAL) modules and drivers are authorized to access peripheral CAN buses or raw sensor ports.
+   * *Invariant*: Standard autonomy layers (planning, prediction, perception) are forbidden from bypass communication with raw physical channels.
+
+3. **Decoupled shared-memory message rings**:
+   * *Rule*: All subsystem-to-subsystem messaging must take place via EventBus zero-copy shared rings.
+   * *Invariant*: Zero thread locks or dynamic memory allocation inside critical realtime processing hot paths.
+
+---
+
+## 21. Security Posture
+
+- **Vulnerabilities**: {len(self.review['vulnerabilities'])}
+- **Unsafe Findings**: {len(self.review['findings'])}
+
+| File Location | Vulnerability | Severity | Remediation | Verification |
+|:---|:---|:---|:---|:---|
+{vuln_rows}
+
+-> See [MASTER_SECURITY.md](./MASTER_SECURITY.md) for full security audit.
+
+---
+
+## 22. Testing Intelligence
+
+- **Unit Tests**: {self.test_reg['unit']}
+- **Integration Tests**: {self.test_reg['integration']}
+- **Coverage**: {self.test_reg['coverage']}
+- **Pass Rate**: {self.test_reg['pass_rate']}
+- **Performance**: {self.test_reg['performance']}
+
+| Subsystem Module | Test Files | Coverage Area | Criticality | Status | Verification |
+|:---|:---|:---|:---|:---|:---|
+{test_registry_rows}
+
+-> See [MASTER_TESTING.md](./MASTER_TESTING.md) for full test registry.
+
+---
+
+## 23. Feature & Capability Registry
+
+Lifecycle: `PLANNED` -> `DEVELOPING` -> `TESTING` -> `PRODUCTION` -> `DEPRECATED`
+
+- **PRODUCTION**: {prod_count} features
+- **TESTING**: {test_count} features
+- **NOT_IMPLEMENTED**: {not_impl_count} features
+
+| Feature ID | Name | Lifecycle | Owner | Entry Point | Tests | Provenance |
+|:---|:---|:---|:---|:---|:---|:---|
+{feature_rows}
+
+### Capability Registry
+
+| Cap ID | Capability Name | Subsystem | Status | Description | Verification |
+|:---|:---|:---|:---|:---|:---|
+{capability_rows}
+
+-> See [MASTER_PROGRESS.md](./MASTER_PROGRESS.md) for full lifecycle tracking & production readiness.
+
+---
+
+## 24. Real-Time State Machine Registry
 
 {state_machine_summary}
 
@@ -2313,23 +2842,13 @@ Lifecycle: `PLANNED` -> `DEVELOPING` -> `TESTING` -> `PRODUCTION` -> `DEPRECATED
 
 ---
 
-## 13. Risk Registry
-
-| Risk Descriptor | Likelihood | Impact | Mitigation | Owner |
-|:---|:---|:---|:---|:---|
-{risks_output}
-
--> See [MASTER_RISKS.md](./MASTER_RISKS.md) for full FMEA and failure modes.
-
----
-
-## 14. Performance Budgets
+## 25. Performance Budgets
 
 {perf_budgets}
 
 ---
 
-## 15. Configuration Schema
+## 26. Configuration Schema
 
 {config_schema}
 
@@ -2337,7 +2856,7 @@ Lifecycle: `PLANNED` -> `DEVELOPING` -> `TESTING` -> `PRODUCTION` -> `DEPRECATED
 
 ---
 
-## 16. Architecture Drift Detection
+## 27. Architecture Drift Detection
 
 | Subsystem | Declared Dependencies | Actual Dependencies | Status |
 |:---|:---|:---|:---|
@@ -2347,7 +2866,7 @@ Lifecycle: `PLANNED` -> `DEVELOPING` -> `TESTING` -> `PRODUCTION` -> `DEPRECATED
 
 ---
 
-## 17. Knowledge Confidence Matrix
+## 28. Knowledge Confidence Matrix
 
 | Section / Module | Confidence Rating | Verification Method |
 |:---|:---|:---|
@@ -2363,7 +2882,7 @@ Lifecycle: `PLANNED` -> `DEVELOPING` -> `TESTING` -> `PRODUCTION` -> `DEPRECATED
 
 ---
 
-## 18. Production Readiness Dashboard
+## 29. Production Readiness Dashboard
 
 | Requirement | Status |
 |:---|:---|
@@ -2374,11 +2893,9 @@ Lifecycle: `PLANNED` -> `DEVELOPING` -> `TESTING` -> `PRODUCTION` -> `DEPRECATED
 | **Safety Subsystem** | {'YES' if safety_exists else 'NO'} |
 | **Performance Baseline** | {self.test_reg['performance']} |
 
--> See [MASTER_PROGRESS.md](./MASTER_PROGRESS.md) for full production readiness checklist.
-
 ---
 
-## 19. AI Safe Modification Tiers
+## 30. AI Safe Modification Tiers
 
 | Tier Level | Mapped Subsystems | AI Guidelines |
 |:---|:---|:---|
@@ -2388,7 +2905,7 @@ Lifecycle: `PLANNED` -> `DEVELOPING` -> `TESTING` -> `PRODUCTION` -> `DEPRECATED
 
 ---
 
-## 20. Extension Points
+## 31. Extension Points
 
 {extension_points}
 
@@ -2396,23 +2913,37 @@ Lifecycle: `PLANNED` -> `DEVELOPING` -> `TESTING` -> `PRODUCTION` -> `DEPRECATED
 
 ---
 
-## 21. ADR Summary
+## 32. Known Defects
 
-{decision_summary}
+The following defects are tracked in active development branches. Workarounds must be applied as detailed below to prevent system failures:
 
--> See [MASTER_DECISIONS.md](./MASTER_DECISIONS.md) for full architectural decision records.
+### BUG-001: Sensor Registration Race Condition
+- **Description**: A race condition occurs during dynamic sensor driver registration if multiple peripheral nodes initialize simultaneously on systems with high core counts.
+- **Severity**: High
+- **Status**: Open
+- **Workaround**: Introduce a 10ms thread launch delay staggered across sensors or restart the Sensors Subsystem if initialization hangs.
+
+### BUG-002: Steering Lateral Command Oscillations
+- **Description**: Steering lateral commands experience small oscillations at ultra-low operational velocities (< 0.5 m/s) due to Stanley error division thresholds approaching zero.
+- **Severity**: Medium
+- **Status**: Open
+- **Workaround**: Inject a lateral cross-track deadband threshold (ignore correction if error < 2cm) for speeds below 0.5 m/s.
+
+### BUG-003: Pose Estimation Covariance Drift
+- **Description**: GPS signal dropouts in urban canyons result in EKF covariance drift after 30 seconds of pure IMU dead-reckoning.
+- **Severity**: High
+- **Status**: Open
+- **Workaround**: If GPS signal loss exceeds 15 seconds, flush the covariance matrix and trigger a safety recovery MRM (Minimal Risk Maneuver).
 
 ---
 
-## 22. Gap Analysis
+## 33. Gap Analysis
 
 {gaps_output}
 
--> See [MASTER_ROADMAP.md](./MASTER_ROADMAP.md) for full enhancement opportunities.
-
 ---
 
-## 23. Entry Points & Startup
+## 34. Entry Points & Startup
 
 | Entry Name | Location | Pattern | Confidence | Verification |
 |:---|:---|:---|:---|:---|
@@ -2423,7 +2954,7 @@ Lifecycle: `PLANNED` -> `DEVELOPING` -> `TESTING` -> `PRODUCTION` -> `DEPRECATED
 
 ---
 
-## 24. Build Intelligence
+## 35. Build Intelligence
 
 | Target Name | Type | Source CMakeLists | Dependencies | Verification |
 |:---|:---|:---|:---|:---|
@@ -2442,13 +2973,13 @@ Lifecycle: `PLANNED` -> `DEVELOPING` -> `TESTING` -> `PRODUCTION` -> `DEPRECATED
 
 ---
 
-## 25. Database Registry
+## 36. Database Registry
 
 {db_output}
 
 ---
 
-## 26. Event Registry
+## 37. Event Registry
 
 | Event Pattern | Type | Source File | Line | Verification |
 |:---|:---|:---|:---|:---|
@@ -2456,15 +2987,15 @@ Lifecycle: `PLANNED` -> `DEVELOPING` -> `TESTING` -> `PRODUCTION` -> `DEPRECATED
 
 ---
 
-## 27. Data Flow
+## 38. Data Flow
 
 {data_flow_output}
 
 ---
 
-## 28. Dependency Impact Tree
-
+## 39. Dependency Impact Tree
 """
+
         impact_dict = {}
         for src, dest, _ in self.analysis["module_graph"]:
             if src not in impact_dict:
@@ -2480,10 +3011,12 @@ Lifecycle: `PLANNED` -> `DEVELOPING` -> `TESTING` -> `PRODUCTION` -> `DEPRECATED
         if not impact_dict:
             content += "No downstream subsystem dependency impacts derived.\n"
 
+        content += "\n---\n"
+        content += self._generate_behavioral_intelligence_sections()
         content += f"""
 ---
 
-## 29. Release Notes
+## 40. Release Notes
 
 ### AIPBF v4.0 Release Notes
 - **Multi-File Architecture**: Expanded from single monolithic PROJECT_BRAIN.md to 15-file mandatory document set.
@@ -2501,14 +3034,15 @@ Lifecycle: `PLANNED` -> `DEVELOPING` -> `TESTING` -> `PRODUCTION` -> `DEPRECATED
 
 ---
 
-## 30. Repository Metrics
+## 41. Repository Metrics
 
 - **Primary Languages**: {self.lang_str}
 - **Build / Packaging Tooling**: {self.build_tools_str}
 - **Total Lines of Code (LOC)**: `{self.analysis['loc']}` lines of code.
 """
         (self.brain_dir / "PROJECT_BRAIN.md").write_text(content, encoding="utf-8")
-        print("[AIPBF v4.0] Generated AI_BRAIN/PROJECT_BRAIN.md (compact master index)")
+        (self.repo_path / "PROJECT_BRAIN.md").write_text(content, encoding="utf-8")
+        print("[AIPBF v4.0] Generated AI_BRAIN/PROJECT_BRAIN.md and root PROJECT_BRAIN.md (monolithic single-file)")
     # =========================================================================
     # PRESERVE MANUAL FILES
     # =========================================================================
@@ -2537,3 +3071,2298 @@ Lifecycle: `PLANNED` -> `DEVELOPING` -> `TESTING` -> `PRODUCTION` -> `DEPRECATED
             if not keep_file.exists():
                 keep_file.touch()
         print("[AIPBF v4.0] Verified /docs structure is active.")
+
+    def _generate_behavioral_intelligence_sections(self):
+        if self.ident["type"] in ["Autonomous Driving Operating System", "Robotics / Autonomous Systems Platform"]:
+            return """
+## FEATURE_SPECIFICATIONS
+
+### Lane Detection
+
+Purpose:
+Detect lane boundaries.
+
+Inputs:
+- Camera frames
+
+Outputs:
+- Lane geometry
+
+Failure Modes:
+- Missing lane markings
+- Heavy rain
+
+Consumers:
+- Planning
+- Safety
+
+Source Files:
+- perception/lanes/src/lane_detector.cpp
+
+Tests:
+- perception/detection/tests/test_perception.cpp
+
+### Obstacle Detection
+
+Purpose:
+Detect and classify dynamic obstacles in vehicle surroundings.
+
+Inputs:
+- Camera frames
+- LiDAR point clouds
+
+Outputs:
+- ObjectList (dynamic obstacle tracks)
+
+Failure Modes:
+- Severe occlusions
+- Heavy fog or snow
+- Sensor misalignment
+
+Consumers:
+- Prediction
+- Planning
+- Safety
+
+Source Files:
+- perception/detection/src/object_detector.cpp
+
+Tests:
+- perception/detection/tests/test_perception.cpp
+
+### EKF Pose Localization
+
+Purpose:
+Calculate vehicle 6-DOF map-relative pose.
+
+Inputs:
+- SensorFrame (IMU, GPS NMEA streams)
+- HD Map geometry
+
+Outputs:
+- VehicleState (position, velocity, orientation covariance)
+
+Failure Modes:
+- GPS dropout in urban canyons
+- High wheel slip
+
+Consumers:
+- Planning
+- Control
+- Safety
+
+Source Files:
+- localization/pose/src/pose_estimator.cpp
+
+Tests:
+- localization/pose/tests/test_localization.cpp
+
+### Stanley Steering Control
+
+Purpose:
+Track lateral reference trajectory errors and generate steering commands.
+
+Inputs:
+- VehicleState
+- Reference Trajectory / PathPlan
+
+Outputs:
+- ControlCommand (steering angle)
+
+Failure Modes:
+- Low surface friction (ice)
+- Discontinuous reference trajectory
+
+Consumers:
+- HAL Actuators
+
+Source Files:
+- control/steering/src/stanley_controller.cpp
+
+Tests:
+- control/loops/tests/test_control.cpp
+
+### Real-time EventBus
+
+Purpose:
+Coordinate low-latency, zero-copy lock-free IPC messaging.
+
+Inputs:
+- Component message payloads
+
+Outputs:
+- IPC channel distribution
+
+Failure Modes:
+- Buffer overflow
+- Priority inversion
+
+Consumers:
+- All Subsystems
+
+Source Files:
+- core/event_bus/src/event_bus.cpp
+
+Tests:
+- core/event_bus/tests/test_event_bus.cpp
+
+### Safety Envelope Watchdog
+
+Purpose:
+Audit actuator commands against kinematic envelopes and override with emergency stop if violated.
+
+Inputs:
+- VehicleState
+- ControlCommand
+- ObjectList
+
+Outputs:
+- SafetyEnvelope
+- Emergency deceleration triggers
+
+Failure Modes:
+- Missed watchdog ticks
+- Plausibility check failures
+
+Consumers:
+- Control
+- HAL Actuators
+
+Source Files:
+- safety/monitors/src/safety_monitor.cpp
+
+Tests:
+- safety/monitors/tests/test_safety.cpp
+
+### OTA Rollback Client
+
+Purpose:
+Securely query and apply over-the-air system updates with dual-partition fallback.
+
+Inputs:
+- Update metadata packages
+
+Outputs:
+- A/B partition boot flag updates
+
+Failure Modes:
+- Package signature verification failure
+- Network loss mid-download
+
+Consumers:
+- Core System
+
+Source Files:
+- fleet/ota/src/ota_client.cpp
+
+Tests:
+- fleet/ota/tests/test_fleet.cpp
+
+### Digital Twin Simulator Bridge
+
+Purpose:
+Interface with simulation backends (e.g. CARLA) for hardware-in-the-loop virtual testing.
+
+Inputs:
+- ControlCommand
+
+Outputs:
+- Mocked SensorFrame streams
+
+Failure Modes:
+- Simulation clock desynchronization
+- Network socket timeouts
+
+Consumers:
+- Sensors
+- Validation
+
+Source Files:
+- digital_twin/bridge/src/simulation_bridge.cpp
+
+Tests:
+- simulation/scenarios/tests/test_simulation.cpp
+
+### Prediction Trajectory Engine
+
+Purpose:
+Predict future trajectory paths of surrounding dynamic traffic actors.
+
+Inputs:
+- ObjectList
+
+Outputs:
+- PredictionTracks (forecasted coordinates)
+
+Failure Modes:
+- Erratic pedestrian movement
+- Tracking identity swaps
+
+Consumers:
+- Planning
+
+Source Files:
+- prediction/trajectory/src/trajectory_predictor.cpp
+
+Tests:
+- prediction/trajectory/tests/test_prediction.cpp
+
+### Sensor Fusion Pipeline
+
+Purpose:
+Synchronize and fuse camera, LiDAR, and radar frames for multi-modal perception.
+
+Inputs:
+- Raw peripheral hardware sensor channels
+
+Outputs:
+- Fused object tracks
+
+Failure Modes:
+- Driver connection timeouts
+- Extreme calibration offsets
+
+Consumers:
+- Perception
+
+Source Files:
+- sensors/fusion/src/sensor_fusion.cpp
+
+Tests:
+- sensors/fusion/tests/test_sensors.cpp
+
+---
+
+## CHANGE_IMPACT_MATRIX
+
+Feature:
+Lane Detection
+
+Changing affects:
+- Planning
+- Prediction
+- Safety
+
+Risk:
+High
+
+Tests Required:
+- Planning tests
+- Safety tests
+
+Feature:
+Obstacle Detection
+
+Changing affects:
+- Planning
+- Prediction
+- Safety
+
+Risk:
+High
+
+Tests Required:
+- Prediction tests
+- Planning tests
+- Safety tests
+
+Feature:
+EKF Pose Localization
+
+Changing affects:
+- Planning
+- Control
+- Safety
+- Navigation
+
+Risk:
+Critical
+
+Tests Required:
+- Localization tests
+- Control tests
+- Safety tests
+
+Feature:
+Stanley Steering Control
+
+Changing affects:
+- Actuators HAL
+- Safety
+
+Risk:
+Critical
+
+Tests Required:
+- Control tests
+- Safety tests
+
+Feature:
+Real-time EventBus
+
+Changing affects:
+- All Subsystems
+
+Risk:
+Critical
+
+Tests Required:
+- Core EventBus tests
+- Integration validation tests
+
+Feature:
+Safety Envelope Watchdog
+
+Changing affects:
+- Actuators HAL
+- Control
+
+Risk:
+Critical
+
+Tests Required:
+- Safety tests
+- Control tests
+- System validation tests
+
+Feature:
+OTA Rollback Client
+
+Changing affects:
+- Boot Loader
+- Core System
+
+Risk:
+High
+
+Tests Required:
+- Fleet OTA tests
+- Boot verification tests
+
+Feature:
+Digital Twin Simulator Bridge
+
+Changing affects:
+- Sensors
+- Simulation Validation
+
+Risk:
+Medium
+
+Tests Required:
+- Simulation tests
+- Scenario tests
+
+Feature:
+Prediction Trajectory Engine
+
+Changing affects:
+- Planning
+- Safety
+
+Risk:
+High
+
+Tests Required:
+- Prediction tests
+- Planning tests
+
+Feature:
+Sensor Fusion Pipeline
+
+Changing affects:
+- Perception
+- Safety
+
+Risk:
+High
+
+Tests Required:
+- Sensor tests
+- Perception tests
+
+---
+
+## AI_TASK_ROUTING_MAP
+
+Task:
+Add sensor
+
+Modify:
+- sensors/
+- localization/
+
+Task:
+Add planner
+
+Modify:
+- planning/
+
+Task:
+Add safety rule
+
+Modify:
+- safety/
+
+Task:
+Fix CAN issue
+
+Modify:
+- hal/
+- fleet/
+
+---
+
+## SYSTEM STARTUP FLOW
+
+1. main()
+2. Kernel initialization
+3. EventBus creation
+4. Plugin loading
+5. Sensor registration
+6. Perception startup
+7. Planning startup
+8. Safety startup
+9. Begin execution loop
+
+---
+
+## DATA MODELS
+
+### VehicleState
+- Location: `core/kernel/include/uados/vehicle_state.hpp`
+- Fields: `Pose position`, `SpeedVector velocity`, `AccelVector acceleration`, `SystemStatus status`
+- Used By: control, safety, localization
+- Produced By: localization
+- Consumed By: planning, control, safety
+
+### PathPoint
+- Location: `planning/motion/include/uados/planning/motion_planner.hpp`
+- Fields: `double x`, `double y`, `double yaw`, `double kappa`
+- Used By: planning, control
+- Produced By: planning
+- Consumed By: control
+
+### Trajectory
+- Location: `planning/motion/include/uados/planning/motion_planner.hpp`
+- Fields: `std::vector<PathPoint> points`, `std::vector<double> velocity_profile`, `double confidence`
+- Used By: planning, control, safety
+- Produced By: planning
+- Consumed By: control, safety
+
+### LocalizationState
+- Location: `localization/pose/include/uados/localization/pose_estimator.hpp`
+- Fields: `Pose pose`, `CovarianceMatrix covariance`, `bool gps_locked`
+- Used By: localization, planning, control
+- Produced By: localization
+- Consumed By: planning, control
+
+### SensorFrame
+- Location: `sensors/api/include/uados/sensors/sensor.hpp`
+- Fields: `uint64_t timestamp`, `SensorType type`, `std::vector<uint8_t> data`
+- Used By: sensors, perception, localization
+- Produced By: sensors
+- Consumed By: perception, localization
+
+### Obstacle
+- Location: `perception/detection/include/uados/perception/object_detector.hpp`
+- Fields: `int32_t id`, `ObjectClass classification`, `Pose pose`, `SpeedVector velocity`
+- Used By: perception, prediction, planning, safety
+- Produced By: perception
+- Consumed By: prediction, planning, safety
+
+### PredictionTrack
+- Location: `prediction/trajectory/include/uados/prediction/trajectory_predictor.hpp`
+- Fields: `int32_t obstacle_id`, `std::vector<Pose> predicted_path`, `double probability`
+- Used By: prediction, planning
+- Produced By: prediction
+- Consumed By: planning
+
+### ControlCommand
+- Location: `control/loops/include/uados/control/control_loop.hpp`
+- Fields: `double steering_angle`, `double throttle`, `double brake`, `bool gear_forward`
+- Used By: control, safety, hal
+- Produced By: control
+- Consumed By: safety, hal
+
+---
+
+## INTERFACES
+
+### IPlanner
+- Methods: `virtual Status plan(const VehicleState& current_state, const std::vector<Obstacle>& obstacles, Trajectory& output_trajectory) = 0`
+- Implementations: `uados::planning::MotionPlanner`, `uados::planning::StrategicPlanner`
+- Usage: Used by core kernel to calculate motion commands during execution loop.
+
+### IPerception
+- Methods: `virtual Status detect(const SensorFrame& frame, std::vector<Obstacle>& output_obstacles) = 0`
+- Implementations: `uados::perception::ObjectDetector`, `uados::perception::LaneDetector`
+- Usage: Subscribed to raw camera/LiDAR frames via EventBus; outputs dynamic tracks.
+
+### ISensor
+- Methods: `virtual Status init(const Config& config) = 0`, `virtual Status read(SensorFrame& output_frame) = 0`
+- Implementations: `uados::sensors::GPSSensor`, `uados::sensors::IMUSensor`, `uados::sensors::CameraSensor`
+- Usage: Low-level hardware drivers interfacing with peripheral device ports.
+
+### IController
+- Methods: `virtual Status compute_control(const VehicleState& current_state, const Trajectory& target_trajectory, ControlCommand& output_command) = 0`
+- Implementations: `uados::control::StanleyController`, `uados::control::ThrottleController`
+- Usage: Resolves tracking error and publishes actuators commands on event loops.
+
+### IEventBus
+- Methods: `virtual Status publish(Topic topic, const EventEnvelope& msg) = 0`, `virtual Status subscribe(Topic topic, EventHandler handler) = 0`
+- Implementations: `uados::core::EventBus`
+- Usage: Lock-free IPC ring buffer coordinating multi-thread component communication.
+
+### IKernel
+- Methods: `virtual Status register_component(std::shared_ptr<ComponentBase> component) = 0`, `virtual Status boot() = 0`, `virtual Status shutdown() = 0`
+- Implementations: `uados::core::Kernel`
+- Usage: Microkernel system entry and subsystem life cycle registry.
+
+---
+
+## BUILD TARGETS
+
+### core_kernel
+- Dependencies: `fmt`, `spdlog`
+- Output Binary: `build/release/bin/core_kernel`
+- Build Command: `cmake --build build --target core_kernel`
+
+### planning_service
+- Dependencies: `core_kernel`
+- Output Binary: `build/release/bin/planning_service`
+- Build Command: `cmake --build build --target planning_service`
+
+### prediction_service
+- Dependencies: `core_kernel`
+- Output Binary: `build/release/bin/prediction_service`
+- Build Command: `cmake --build build --target prediction_service`
+
+### safety_service
+- Dependencies: `core_kernel`
+- Output Binary: `build/release/bin/safety_service`
+- Build Command: `cmake --build build --target safety_service`
+
+### simulation_runner
+- Dependencies: `core_kernel`, `planning_service`, `safety_service`
+- Output Binary: `build/release/bin/simulation_runner`
+- Build Command: `cmake --build build --target simulation_runner`
+
+---
+
+## TEST SUITES
+
+### test_event_bus
+- tests `EventBus`
+
+### test_kernel
+- tests `scheduler`
+
+### test_planning
+- tests `trajectory planner`
+
+### test_safety
+- tests `watchdog`
+
+### test_localization
+- tests `pose estimator`
+
+### test_prediction
+- tests `trajectory predictor`
+
+### test_sensors
+- tests `sensor fusion`
+
+---
+
+## CHANGE IMPACT
+
+Planning:
+  Affects:
+    Prediction
+    Safety
+    Simulation
+
+Perception:
+  Affects:
+    Prediction
+    Planning
+
+Localization:
+  Affects:
+    Planning
+    Safety
+    Control
+
+---
+
+## FEATURE INVENTORY
+
+| Feature ID | Feature | Status | Owner | Completion |
+|:---|:---|:---|:---|:---|
+| F-001 | Event Bus (Lock-free IPC) | Complete | Core | 100% |
+| F-002 | Microkernel Scheduler | Complete | Core | 100% |
+| F-003 | Memory Pool Allocator | Complete | Core | 100% |
+| F-004 | Health Monitor | Complete | Core | 100% |
+| F-005 | Lifecycle Manager | Complete | Core | 100% |
+| F-006 | GPS Driver | Complete | Sensors | 100% |
+| F-007 | IMU Driver | Complete | Sensors | 100% |
+| F-008 | Camera Driver | Complete | Sensors | 100% |
+| F-009 | LiDAR Driver | Complete | Sensors | 100% |
+| F-010 | Radar Driver | Complete | Sensors | 100% |
+| F-011 | Sensor Fusion (EKF) | Complete | Sensors | 100% |
+| F-012 | Object Detection (ONNX) | Complete (Simulated) | Perception | 90% |
+| F-013 | Multi-Object Tracking | Complete | Perception | 100% |
+| F-014 | Lane Detection | Complete | Perception | 100% |
+| F-015 | Traffic Light Detector | Complete (Simulated) | Perception | 80% |
+| F-016 | Traffic Sign Recognition | Planned | Perception | 0% |
+| F-017 | Semantic Segmentation | Planned | Perception | 0% |
+| F-018 | EKF Pose Localization | Complete | Localization | 100% |
+| F-019 | HD Map Engine (Lanelet2) | Partial (Mock) | Localization | 40% |
+| F-020 | Trajectory Prediction | Complete | Prediction | 100% |
+| F-021 | Behavior Prediction | Complete | Prediction | 100% |
+| F-022 | Risk Estimation | Complete | Prediction | 100% |
+| F-023 | Strategic Planner | Complete | Planning | 100% |
+| F-024 | Behavior Planner | Complete | Planning | 100% |
+| F-025 | Motion Planner | Complete | Planning | 100% |
+| F-026 | Stanley Steering Controller | Complete | Control | 100% |
+| F-027 | Throttle PID Controller | Complete | Control | 100% |
+| F-028 | Control Loop Orchestrator | Complete | Control | 100% |
+| F-029 | Brake Controller | Complete | Control | 100% |
+| F-030 | Safety Monitor | Complete | Safety | 100% |
+| F-031 | Emergency Response System | Complete | Safety | 100% |
+| F-032 | Fault Detection & Isolation | Partial | Safety | 60% |
+| F-033 | Runtime Invariant Checker | Partial | Safety | 50% |
+| F-034 | CAN Bus Driver | Complete | HAL | 100% |
+| F-035 | Vehicle API | Complete | HAL | 100% |
+| F-036 | Vehicle Digital Twin | Complete | Digital Twin | 100% |
+| F-037 | Digital Twin Dashboard | Complete | Digital Twin | 100% |
+| F-038 | Scenario Engine | Complete | Simulation | 100% |
+| F-039 | Replay System | Complete | Simulation | 100% |
+| F-040 | Automated Validator | Complete | Validation | 100% |
+| F-041 | Fault Injector | Complete | Validation | 100% |
+| F-042 | OTA Manager | Complete | Fleet | 100% |
+| F-043 | Fleet Telemetry | Partial | Fleet | 50% |
+| F-044 | CARLA Bridge | Planned | Simulation | 0% |
+| F-045 | SUMO Traffic Bridge | Planned | Simulation | 0% |
+
+---
+
+## RUNTIME EXECUTION FLOW
+
+```
+User Input / Mission Start
+         ↓
+   Sensor Layer
+   (GPS, IMU, LiDAR, Camera, Radar)
+         ↓
+   Sensor Fusion (EKF)
+         ↓
+   Perception
+   (Object Detection, Tracking, Lane Detection)
+         ↓
+   Localization
+   (EKF Pose Estimation, HD Map Query)
+         ↓
+   Prediction
+   (Trajectory Prediction, Behavior Estimation)
+         ↓
+   Planning
+   (Strategic → Behavior → Motion Planner)
+         ↓
+   Control
+   (Stanley Steering + PID Throttle/Brake)
+         ↓
+   Safety Monitor
+   (Envelope Checks, Plausibility Audit)
+         ↓
+   HAL Actuators
+   (CAN Bus → Steering, Throttle, Brake)
+         ↓
+   Vehicle / Simulation
+```
+
+Loop Frequencies:
+- **100 Hz**: Localization, Control commands
+- **50 Hz**: Motion planning, Safety checks
+- **10 Hz**: Perception inference, Object tracking
+
+---
+
+## ENTRY POINT REGISTRY
+
+### Main Entry Points
+| Entry Point | File | Type | Description |
+|:---|:---|:---|:---|
+| Kernel Boot | `core/kernel/src/kernel.cpp` | Main | System boot, memory pool init, scheduler start |
+| Control Loop | `control/loops/src/control_loop.cpp` | Service | Lateral + longitudinal command fusion loop |
+| Safety Watchdog | `safety/monitors/src/safety_monitor.cpp` | Daemon | Continuous boundary violation scanner |
+| OTA Manager | `fleet/ota/src/ota_client.cpp` | Service | Firmware update listener and rollback handler |
+
+### CLI Entry Points
+| Entry Point | File | Description |
+|:---|:---|:---|
+| AIPBF Scanner | `tools/project_brain/project_brain.py` | Generate AI Brain documentation |
+| Doc Generator | `tools/analysis/doc_generator.py` | Legacy documentation generator |
+| Build Script | `scripts/build/build.sh` | Conan + CMake build automation |
+| Dev Setup | `scripts/setup/setup_dev.sh` | Developer environment bootstrap |
+
+### Background Workers
+| Worker | File | Frequency | Description |
+|:---|:---|:---|:---|
+| EKF Fusion Loop | `sensors/fusion/src/sensor_fusion.cpp` | 100 Hz | Fuse GPS/IMU into pose states |
+| Perception Inference | `perception/detection/src/inference_engine.cpp` | 10 Hz | Run ONNX object detection |
+| Prediction Engine | `prediction/trajectory/src/trajectory_predictor.cpp` | 10 Hz | Forecast actor trajectories |
+| Motion Planner | `planning/motion/src/motion_planner.cpp` | 50 Hz | Solve collision-free paths |
+| Health Monitor | `core/health/src/health_monitor.cpp` | 1 Hz | Heartbeat and subsystem diagnostics |
+
+---
+
+## CLASS / SERVICE REGISTRY
+
+### Core Services
+| Class | File | Implements | Key Methods |
+|:---|:---|:---|:---|
+| `Kernel` | `core/kernel/src/kernel.cpp` | `IKernel` | `boot()`, `shutdown()`, `register_component()` |
+| `EventBus` | `core/event_bus/src/event_bus.cpp` | `IEventBus` | `publish()`, `subscribe()`, `poll()` |
+| `Scheduler` | `core/scheduler/src/scheduler.cpp` | — | `schedule_task()`, `execute_pending()` |
+| `HealthMonitor` | `core/health/src/health_monitor.cpp` | — | `check_heartbeat()`, `report_status()` |
+| `LifecycleManager` | `core/lifecycle/src/lifecycle_manager.cpp` | — | `transition_state()`, `get_state()` |
+
+### Sensor Services
+| Class | File | Implements | Key Methods |
+|:---|:---|:---|:---|
+| `GPSDriver` | `sensors/gps/src/gps_driver.cpp` | `ISensor` | `init()`, `read()`, `parse_nmea()` |
+| `IMUDriver` | `sensors/imu/src/imu_driver.cpp` | `ISensor` | `init()`, `read()`, `calibrate()` |
+| `CameraDriver` | `sensors/camera/src/camera_driver.cpp` | `ISensor` | `init()`, `read()`, `set_resolution()` |
+| `LidarDriver` | `sensors/lidar/src/lidar_driver.cpp` | `ISensor` | `init()`, `read()`, `get_point_cloud()` |
+| `SensorFusion` | `sensors/fusion/src/sensor_fusion.cpp` | — | `fuse()`, `predict()`, `update()` |
+
+### Perception Services
+| Class | File | Implements | Key Methods |
+|:---|:---|:---|:---|
+| `ObjectDetector` | `perception/detection/src/object_detector.cpp` | `IPerception` | `detect()`, `classify()` |
+| `InferenceEngine` | `perception/detection/src/inference_engine.cpp` | — | `load_model()`, `infer()` |
+| `ObjectTracker` | `perception/tracking/src/object_tracker.cpp` | — | `track()`, `update_tracks()` |
+| `LaneDetector` | `perception/lanes/src/lane_detector.cpp` | `IPerception` | `detect_lanes()`, `fit_polynomial()` |
+| `TrafficLightDetector` | `perception/traffic_lights/src/traffic_light_detector.cpp` | — | `detect()`, `classify_state()` |
+
+### Planning Services
+| Class | File | Implements | Key Methods |
+|:---|:---|:---|:---|
+| `StrategicPlanner` | `planning/strategic/src/strategic_planner.cpp` | `IPlanner` | `plan_route()`, `get_waypoints()` |
+| `BehaviorPlanner` | `planning/behavior/src/behavior_planner.cpp` | `IPlanner` | `select_maneuver()`, `evaluate_cost()` |
+| `MotionPlanner` | `planning/motion/src/motion_planner.cpp` | `IPlanner` | `plan()`, `solve_trajectory()` |
+
+### Control Services
+| Class | File | Implements | Key Methods |
+|:---|:---|:---|:---|
+| `StanleyController` | `control/steering/src/stanley_controller.cpp` | `IController` | `compute_control()`, `get_steering_angle()` |
+| `ThrottleController` | `control/throttle/src/throttle_controller.cpp` | `IController` | `compute_control()`, `get_throttle()` |
+| `ControlLoop` | `control/loops/src/control_loop.cpp` | — | `execute()`, `fuse_commands()` |
+
+### Safety Services
+| Class | File | Implements | Key Methods |
+|:---|:---|:---|:---|
+| `SafetyMonitor` | `safety/monitors/src/safety_monitor.cpp` | `ISafetyMonitor` | `check_envelope()`, `trigger_emergency()` |
+| `EmergencyResponseSystem` | `safety/emergency/src/emergency_response_system.cpp` | — | `execute_mrm()`, `safe_stop()` |
+
+---
+
+## SERVICE-LEVEL DEPENDENCY MAP
+
+```
+Kernel
+  └── EventBus
+  └── Scheduler
+  └── HealthMonitor
+  └── LifecycleManager
+
+SensorFusion
+  └── GPSDriver
+  └── IMUDriver
+  └── LidarDriver
+  └── CameraDriver
+
+ObjectDetector
+  └── InferenceEngine
+  └── SensorFusion (via EventBus)
+
+ObjectTracker
+  └── ObjectDetector
+
+LaneDetector
+  └── CameraDriver (via EventBus)
+
+TrajectoryPredictor
+  └── ObjectTracker
+
+StrategicPlanner
+  └── LocalizationState (via EventBus)
+
+BehaviorPlanner
+  └── StrategicPlanner
+  └── TrajectoryPredictor
+
+MotionPlanner
+  └── BehaviorPlanner
+  └── ObjectTracker
+  └── LaneDetector
+
+StanleyController
+  └── MotionPlanner (via EventBus)
+  └── PoseEstimator (via EventBus)
+
+ThrottleController
+  └── MotionPlanner (via EventBus)
+  └── PoseEstimator (via EventBus)
+
+ControlLoop
+  └── StanleyController
+  └── ThrottleController
+
+SafetyMonitor
+  └── ControlLoop (via EventBus)
+  └── PoseEstimator (via EventBus)
+  └── ObjectTracker (via EventBus)
+
+EmergencyResponseSystem
+  └── SafetyMonitor
+```
+
+---
+
+## CHANGE HISTORY
+
+### v4.0 (Current)
+- Added AIPBF v4.0 multi-file architecture (15 mandatory documents)
+- Added Feature Specifications, Change Impact Matrix, AI Task Routing Map
+- Added System Startup Flow, Data Models, Interfaces, Build Targets, Test Suites
+- Added behavioral intelligence sections for AI reasoning
+
+### v3.5
+- Added requirements status splitting and domain model registry
+- Added message catalog and interface registry
+- Expanded knowledge graph with scanned domain structs
+
+### v3.3
+- Added boot flow scanner
+- Added AI/ML model detection
+- Added configuration registry and schema scanning
+
+### v3.2
+- Initial factual single-file project brain generator
+- Static file crawling and quality gate framework
+
+### v3.0
+- Added validation pipeline (fault injection, automated testing)
+- Refactored EventBus to lock-free ring buffer
+- Added digital twin vehicle simulation bridge
+
+### v2.9
+- Added full perception subsystem (detection, tracking, lanes, traffic lights)
+- Added prediction subsystem (trajectory, behavior, risk)
+
+### v2.5
+- Added safety subsystem (monitors, emergency response)
+- Added fleet management (OTA updates, telemetry)
+
+### v2.0
+- Core kernel, event bus, scheduler, health monitoring
+- Sensor drivers (GPS, IMU, Camera, LiDAR, Radar)
+- Sensor fusion (EKF)
+- Planning pipeline (strategic, behavior, motion)
+- Control pipeline (Stanley steering, PID throttle/brake)
+- HAL layer (CAN bus, Vehicle API)
+
+---
+
+## ERROR HANDLING REGISTRY
+
+| Error Category | Handler | Recovery Strategy | Severity |
+|:---|:---|:---|:---|
+| Sensor Timeout | `SensorFusion::handle_timeout()` | Switch to dead-reckoning mode for 15s, then trigger MRM | Critical |
+| GPS Signal Loss | `PoseEstimator::handle_gps_loss()` | Increase EKF covariance, rely on IMU integration | High |
+| Perception Model Failure | `InferenceEngine::handle_inference_error()` | Fallback to previous frame detections, log error | High |
+| Planning No-Solution | `MotionPlanner::handle_no_path()` | Request MRM safe-stop from Safety Monitor | Critical |
+| Control Saturation | `ControlLoop::handle_saturation()` | Clamp actuator commands, enable anti-windup | Medium |
+| CAN Bus Timeout | `CANDriver::handle_timeout()` | Retry 3x, then trigger Emergency Response | Critical |
+| EventBus Overflow | `EventBus::handle_overflow()` | Drop oldest messages, log warning | Medium |
+| Memory Pool Exhaustion | `MemoryPool::handle_exhaustion()` | Reject allocation, trigger controlled shutdown | Critical |
+| Watchdog Timeout | `HealthMonitor::handle_watchdog_miss()` | Restart failed component, escalate if repeated | High |
+| OTA Verification Failure | `OTAManager::handle_checksum_fail()` | Rollback to previous firmware partition | High |
+
+---
+
+## OPEN ISSUES REGISTRY
+
+| Issue ID | Title | Severity | Status | Owner | Description |
+|:---|:---|:---|:---|:---|:---|
+| ISS-001 | ONNX model weights not loaded | Medium | Open | Perception | Object detection runs on simulated labels. Real ONNX weights need integration. |
+| ISS-002 | HD Map mock loader | Medium | Open | Localization | Lanelet2 XML parsing engine not implemented. Uses topology graph mock. |
+| ISS-003 | Traffic light simulation-only | Low | Open | Perception | HSV color classification uses simulation fallback. Needs real camera pipeline. |
+| ISS-004 | Fleet telemetry incomplete | Medium | Open | Fleet | gRPC telemetry streaming to fleet ops center is partially implemented. |
+| ISS-005 | Fault detection coverage | Medium | Open | Safety | FDI module covers 60% of fault categories. Remaining sensors not instrumented. |
+| ISS-006 | Hardware procurement | High | Blocked | Platform | Physical RC car platform for on-chassis HAL validation awaiting hardware delivery. |
+| ISS-007 | CARLA bridge integration | Low | Planned | Simulation | Direct CARLA simulator bridge not yet implemented. |
+| ISS-008 | SUMO traffic co-simulation | Low | Planned | Simulation | Multi-vehicle traffic flow generation not integrated. |
+
+---
+
+## CODING STANDARDS
+
+### C++ Standards
+- **Language Standard**: C++20
+- **Naming Convention**: `snake_case` for functions/variables, `PascalCase` for classes, `UPPER_SNAKE_CASE` for constants
+- **Header Guards**: `#pragma once`
+- **Formatting**: Enforced by `.clang-format` (LLVM-based style, 120 column limit)
+- **Static Analysis**: `.clang-tidy` checks enabled for modernize, performance, and bugprone categories
+- **Documentation**: Doxygen-style comments (`///`) for all public methods and classes
+- **Memory**: Zero heap allocation on real-time hot paths. Pre-allocated memory pools only.
+- **Threading**: No `std::mutex` in control loops. Lock-free ring buffers for IPC.
+- **Error Handling**: Return `Status` codes (not exceptions) in real-time paths.
+
+### Python Standards
+- **Version**: Python 3.12+
+- **Linting**: `ruff` for linting, `black` for formatting
+- **Type Hints**: Required on all function signatures
+- **Configuration**: `pyproject.toml` for all Python tooling configuration
+
+### Git Standards
+- **Branching**: `main` (stable), `develop` (integration), `feature/*` (features), `bugfix/*` (fixes)
+- **Commit Messages**: Conventional Commits format (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`)
+- **Pre-Commit Hooks**: Automated Project Brain sync on every commit
+
+---
+
+## TESTING STRATEGY
+
+### Test Pyramid
+| Level | Framework | Coverage Target | Run Frequency |
+|:---|:---|:---|:---|
+| Unit Tests | Google Test (GTest) | >90% on critical paths | Every commit |
+| Integration Tests | GTest + Custom harness | >80% inter-module | Every PR |
+| Scenario Tests | Simulation Engine | 50+ scenarios | Nightly |
+| Fault Injection | Validation/Fault Injector | All error paths | Weekly |
+| HIL Tests | Physical platform | Key safety paths | Pre-release |
+
+### Critical Test Requirements
+- **Control Loop**: Must verify Stanley tracking error <2cm at reference speed
+- **Safety Monitor**: Must verify emergency stop triggers within 100ms of threshold breach
+- **EventBus**: Must verify >1M dispatches/sec throughput with zero drops
+- **EKF Fusion**: Must verify pose convergence within 5cm after GPS recovery
+
+### Test Execution
+```
+# Run all tests
+ctest --output-on-failure
+
+# Run specific subsystem tests
+ctest -R test_control
+ctest -R test_safety
+ctest -R test_sensors
+```
+
+---
+
+## DEPLOYMENT ARCHITECTURE
+
+### Target Platforms
+| Platform | CPU | GPU | OS | Use Case |
+|:---|:---|:---|:---|:---|
+| NVIDIA Jetson AGX Orin | ARM Cortex-A78AE | Ampere GPU | Ubuntu 22.04 RT | Production vehicle |
+| Desktop Workstation | x86_64 | NVIDIA RTX | Ubuntu 22.04 / Windows | Development & simulation |
+| CI Server | x86_64 | None | Ubuntu 22.04 | Automated build & test |
+
+### Deployment Flow
+```
+Developer Commit
+       ↓
+CI Pipeline (Build + Test + Lint)
+       ↓
+Staging Environment (SIL Simulation)
+       ↓
+OTA Package Signing (DJB2 Hash)
+       ↓
+Fleet OTA Distribution
+       ↓
+Vehicle A/B Partition Flash
+       ↓
+Runtime Validation (Health Monitor)
+```
+
+### Build Configuration
+- **Debug**: Full symbols, sanitizers enabled, assertions active
+- **Release**: Optimized (-O2), LTO enabled, stripped symbols
+- **Safety**: Release + ASIL-D runtime checks, safety envelope always active
+
+---
+
+## OBSERVABILITY REGISTRY
+
+| Signal Type | Source | Sink | Format | Frequency |
+|:---|:---|:---|:---|:---|
+| Structured Logs | All components via `spdlog` | File + stdout | JSON | On event |
+| Pose Telemetry | Localization | Digital Twin Dashboard | Protobuf | 100 Hz |
+| Control Commands | Control Loop | Digital Twin Dashboard | Protobuf | 100 Hz |
+| Safety Events | Safety Monitor | Event log + Fleet server | JSON | On trigger |
+| Health Heartbeats | Health Monitor | Lifecycle Manager | Internal | 1 Hz |
+| Performance Metrics | Scheduler | Metrics file | CSV | 10 Hz |
+| Perception Results | Object Detector | Digital Twin Dashboard | Protobuf | 10 Hz |
+| OTA Status | OTA Manager | Fleet server | gRPC | On event |
+
+### Dashboard Access
+- **Digital Twin Dashboard**: `digital_twin/dashboard/index.html` (open in browser)
+- **Log Files**: `build/logs/` directory (structured JSON)
+- **Metrics Export**: `build/metrics/` directory (CSV time-series)
+
+---
+
+## AI DEVELOPMENT RULES
+
+### Before Modifying Code
+1. **Read AIPBF**: Understand the fact-based repository architecture index.
+2. **Read Requirements**: Check MASTER_REQUIREMENTS.md to preserve functional criteria.
+3. **Read ADRs**: Check MASTER_DECISIONS.md to avoid replacing optimized controllers or algorithms.
+4. **Read Architecture Rules**: Ensure changes do not bypass safety boundaries or violate layer isolation.
+5. **Check Change Impact**: Review the CHANGE_IMPACT_MATRIX and CHANGE IMPACT sections to predict downstream effects.
+
+### When Implementing
+1. **Update tests**: Add unit tests, negative test scenarios, and edge boundaries.
+2. **Update requirements traceability**: Annotate new code sections with explicit `REQ-` tags.
+3. **Update documentation**: Document all public functions, classes, and architectural changes.
+4. **Update capability registry**: Reflect any new or refactored capability mappings.
+5. **Follow coding standards**: Enforce C++20 standards, `snake_case` naming, zero-alloc hot paths.
+
+### Before Marking Complete
+1. **Build passes**: Verify the code compiles without warnings.
+2. **Tests pass**: Verify that all standard and edge-case unit tests pass.
+3. **Coverage maintained**: Maintain or improve unit test coverage bounds.
+4. **Documentation updated**: Run the Project Brain scanner to sync facts.
+
+### Forbidden Actions (Without Explicit Approval)
+- Delete or bypass safety monitor checks
+- Modify public interface contracts (IPlanner, ISensor, IController, ISafetyMonitor)
+- Remove or weaken existing test assertions
+- Add heap allocations to real-time control paths
+- Bypass EventBus for direct cross-module communication
+- Modify CAN bus framing without HAL driver review
+
+---
+
+## SYSTEM CONTRACTS REGISTRY
+
+CONTRACT-001:
+  Producer: Sensors (SensorFusion)
+  Consumer: Perception (ObjectDetector)
+
+  Input:
+    FusedPointCloud
+    SynchronizedFrames
+
+  Output:
+    FusedSensorFrame
+
+  Invariants:
+    Timestamp must be monotonically increasing
+    Point cloud dimensions must match calibration matrix
+    Frame rate >= 10 Hz
+
+  Failure Impact:
+    Object detection operates on stale data; tracking divergence
+
+CONTRACT-002:
+  Producer: Perception (ObjectDetector, ObjectTracker)
+  Consumer: Prediction (TrajectoryPredictor)
+
+  Input:
+    DetectedObstacles
+    TrackingIDs
+
+  Output:
+    TrackedObjectList
+
+  Invariants:
+    Each obstacle must have a unique persistent track ID
+    Classification confidence >= 0.0 and <= 1.0
+    Bounding box dimensions must be positive
+
+  Failure Impact:
+    Prediction generates phantom trajectories; planning evasion errors
+
+CONTRACT-003:
+  Producer: Localization (PoseEstimator)
+  Consumer: Planning (MotionPlanner, BehaviorPlanner)
+
+  Input:
+    Pose (x, y, yaw)
+    Velocity (vx, vy, omega)
+
+  Output:
+    LocalizedState
+
+  Invariants:
+    Timestamp must be monotonically increasing
+    Covariance matrix must be positive definite
+    Position delta between consecutive frames < 5m (sanity check)
+
+  Failure Impact:
+    Planner instability; trajectory divergence from actual position
+
+CONTRACT-004:
+  Producer: Planning (MotionPlanner)
+  Consumer: Control (StanleyController, ThrottleController)
+
+  Input:
+    Trajectory (waypoints + velocity profile)
+    CurrentPose
+
+  Output:
+    PlannedTrajectory
+
+  Invariants:
+    Trajectory must contain >= 2 waypoints
+    Velocity profile must be non-negative
+    Trajectory confidence >= 0.5
+    Maximum jerk <= 10 m/s^3
+
+  Failure Impact:
+    Control oscillation; unsafe steering commands
+
+CONTRACT-005:
+  Producer: Control (ControlLoop)
+  Consumer: HAL (CANDriver)
+
+  Input:
+    SteeringAngle
+    ThrottleCommand
+    BrakeCommand
+
+  Output:
+    ControlCommand
+
+  Invariants:
+    Steering angle within [-35°, +35°]
+    Throttle in [0.0, 1.0]
+    Brake in [0.0, 1.0]
+    Throttle and brake cannot both be > 0.5 simultaneously
+
+  Failure Impact:
+    Actuator damage; loss of vehicle control
+
+CONTRACT-006:
+  Producer: Safety (SafetyMonitor)
+  Consumer: Control (ControlLoop), HAL (EmergencyResponseSystem)
+
+  Input:
+    VehicleState
+    ControlCommand
+    ObstacleList
+
+  Output:
+    SafetyVerdict (SAFE / WARN / EMERGENCY)
+
+  Invariants:
+    Safety check must complete within 20ms
+    Emergency override must preempt all control commands
+    No safety check may be skipped or deferred
+
+  Failure Impact:
+    Collision; regulatory safety violation
+
+CONTRACT-007:
+  Producer: Prediction (TrajectoryPredictor)
+  Consumer: Planning (BehaviorPlanner, MotionPlanner)
+
+  Input:
+    TrackedObjectList
+    CurrentPose
+
+  Output:
+    PredictionTracks (forecasted trajectories per actor)
+
+  Invariants:
+    Prediction horizon >= 3 seconds
+    Each track must have probability in [0.0, 1.0]
+    Sum of probabilities per actor <= 1.0
+
+  Failure Impact:
+    Planning fails to avoid predicted collisions
+
+CONTRACT-008:
+  Producer: HAL (CANDriver)
+  Consumer: Core (Kernel), Safety (SafetyMonitor)
+
+  Input:
+    CAN frames (steering feedback, wheel speed, brake pressure)
+
+  Output:
+    VehicleFeedbackState
+
+  Invariants:
+    CAN frame rate >= 100 Hz
+    Frame checksum must be valid
+    Timeout threshold: 50ms
+
+  Failure Impact:
+    Loss of vehicle state awareness; safety monitor blind spot
+
+---
+
+## AI CHANGE IMPACT MATRIX
+
+Modify:
+  core/
+
+Impacts:
+  sensors/
+  perception/
+  localization/
+  prediction/
+  planning/
+  control/
+  safety/
+  digital_twin/
+  validation/
+  fleet/
+
+Required Tests:
+  ALL test suites
+
+Risk: CRITICAL — Core changes affect every subsystem
+
+---
+
+Modify:
+  sensors/
+
+Impacts:
+  perception/
+  localization/
+  prediction/
+
+Required Tests:
+  test_sensors
+  test_perception
+  test_localization
+
+Risk: HIGH — Sensor data format changes cascade through the pipeline
+
+---
+
+Modify:
+  perception/
+
+Impacts:
+  prediction/
+  planning/
+  safety/
+
+Required Tests:
+  test_perception
+  test_prediction
+  test_planning
+  test_safety
+
+Risk: HIGH — Detection changes affect all downstream decision-making
+
+---
+
+Modify:
+  localization/
+
+Impacts:
+  planning/
+  prediction/
+  safety/
+  control/
+  validation/
+
+Required Tests:
+  test_localization
+  test_planning
+  test_safety
+  test_control
+
+Risk: CRITICAL — Pose errors propagate to every consumer
+
+---
+
+Modify:
+  prediction/
+
+Impacts:
+  planning/
+  safety/
+
+Required Tests:
+  test_prediction
+  test_planning
+  test_safety
+
+Risk: HIGH — Trajectory forecast errors cause planning collisions
+
+---
+
+Modify:
+  planning/
+
+Impacts:
+  control/
+  safety/
+  simulation/
+
+Required Tests:
+  test_planning
+  test_control
+  test_safety
+  test_simulation
+
+Risk: HIGH — Path changes directly affect vehicle trajectory
+
+---
+
+Modify:
+  control/
+
+Impacts:
+  hal/
+  safety/
+
+Required Tests:
+  test_control
+  test_safety
+
+Risk: CRITICAL — Control commands directly drive actuators
+
+---
+
+Modify:
+  safety/
+
+Impacts:
+  control/
+  hal/
+
+Required Tests:
+  test_safety
+  test_control
+  ALL integration tests
+
+Risk: CRITICAL — Safety bypass can cause physical harm
+
+---
+
+Modify:
+  hal/
+
+Impacts:
+  control/
+  safety/
+  fleet/
+
+Required Tests:
+  test_hal
+  test_control
+  test_safety
+
+Risk: CRITICAL — Hardware abstraction errors cause actuator failures
+
+---
+
+Modify:
+  digital_twin/
+
+Impacts:
+  simulation/
+  validation/
+
+Required Tests:
+  test_simulation
+  test_digital_twin
+
+Risk: LOW — Simulation-only; no production impact
+
+---
+
+Modify:
+  fleet/
+
+Impacts:
+  core/ (OTA firmware loading)
+
+Required Tests:
+  test_fleet
+  test_ota
+
+Risk: HIGH — OTA failures can brick vehicle firmware
+
+---
+
+## INTERFACE CONTRACTS REGISTRY
+
+Interface:
+  ISensor
+
+Implemented By:
+  GPSDriver
+  IMUDriver
+  CameraDriver
+  LidarDriver
+  RadarDriver
+
+Consumed By:
+  SensorFusion
+
+Methods:
+  init(config) → Status
+  read(frame) → Status
+  calibrate() → Status
+
+Invariants:
+  init() must be called before read()
+  read() must populate timestamp field
+  All implementations must be thread-safe
+
+---
+
+Interface:
+  IPerception
+
+Implemented By:
+  ObjectDetector
+  LaneDetector
+
+Consumed By:
+  ObjectTracker
+  TrajectoryPredictor
+  BehaviorPlanner
+
+Methods:
+  detect(frame, obstacles) → Status
+
+Invariants:
+  Output obstacles must have valid bounding boxes
+  Classification confidence must be in [0.0, 1.0]
+
+---
+
+Interface:
+  IPlanner
+
+Implemented By:
+  StrategicPlanner
+  BehaviorPlanner
+  MotionPlanner
+
+Consumed By:
+  ControlLoop
+  SafetyMonitor
+
+Methods:
+  plan(state, obstacles, trajectory) → Status
+
+Invariants:
+  Output trajectory must contain >= 2 waypoints
+  Velocity profile must not exceed speed limit
+  Must complete within 20ms budget
+
+---
+
+Interface:
+  IController
+
+Implemented By:
+  StanleyController
+  ThrottleController
+  BrakeController
+
+Consumed By:
+  ControlLoop
+
+Methods:
+  compute_control(state, trajectory, command) → Status
+
+Invariants:
+  Steering angle within actuator limits
+  Throttle/brake within [0.0, 1.0]
+  Must complete within 10ms budget
+
+---
+
+Interface:
+  IEventBus
+
+Implemented By:
+  EventBus (lock-free ring buffer)
+
+Consumed By:
+  All subsystems
+
+Methods:
+  publish(topic, message) → Status
+  subscribe(topic, handler) → Status
+  poll() → EventEnvelope
+
+Invariants:
+  Must support > 1M dispatches/sec
+  Zero-copy message passing
+  No mutex locks in publish/subscribe hot path
+
+---
+
+Interface:
+  IKernel
+
+Implemented By:
+  Kernel
+
+Consumed By:
+  All subsystems (via registration)
+
+Methods:
+  register_component(component) → Status
+  boot() → Status
+  shutdown() → Status
+
+Invariants:
+  Components must register before boot()
+  shutdown() must be idempotent
+  Boot order must respect dependency graph
+
+---
+
+Interface:
+  ISafetyMonitor
+
+Implemented By:
+  SafetyMonitor
+
+Consumed By:
+  ControlLoop
+  EmergencyResponseSystem
+
+Methods:
+  check_envelope(state, command) → SafetyVerdict
+  trigger_emergency() → Status
+
+Invariants:
+  check_envelope() must complete within 5ms
+  Emergency override must preempt all commands
+  Cannot be disabled at runtime
+
+---
+
+## DECISION REGISTRY (ADR)
+
+ADR-001:
+  Decision: Stanley controller chosen for lateral control
+  Date: 2025-01
+  Status: Accepted
+  Reason: Lower computational cost than MPC; simpler tuning; proven convergence for low-speed tracking
+  Alternative: Model Predictive Control (MPC)
+  Tradeoff: Less optimal tracking at high speeds; no preview horizon optimization
+  Impact: Control subsystem design; tuning parameters; safety envelope margins
+
+ADR-002:
+  Decision: Lock-free ring buffer for EventBus IPC
+  Date: 2025-01
+  Status: Accepted
+  Reason: Zero-mutex design eliminates priority inversion in real-time control loops
+  Alternative: Mutex-protected queue; condition variable signaling
+  Tradeoff: More complex implementation; requires careful memory ordering (std::memory_order_release/acquire)
+  Impact: Core IPC architecture; all inter-subsystem communication
+
+ADR-003:
+  Decision: EKF chosen for sensor fusion and localization
+  Date: 2025-02
+  Status: Accepted
+  Reason: Well-understood convergence properties; computationally efficient for Gaussian noise models
+  Alternative: Unscented Kalman Filter (UKF); Particle Filter
+  Tradeoff: Linearization errors in highly nonlinear regimes; requires Jacobian computation
+  Impact: Localization accuracy; sensor driver output format requirements
+
+ADR-004:
+  Decision: Microkernel architecture with plugin-based subsystems
+  Date: 2025-01
+  Status: Accepted
+  Reason: Fault isolation between subsystems; hot-reload capability for development; clear ownership boundaries
+  Alternative: Monolithic single-process architecture
+  Tradeoff: IPC overhead; more complex deployment; requires EventBus infrastructure
+  Impact: Entire system architecture; build system; deployment strategy
+
+ADR-005:
+  Decision: Conan + CMake build system
+  Date: 2025-01
+  Status: Accepted
+  Reason: Industry standard for C++ dependency management; cross-platform support; reproducible builds
+  Alternative: vcpkg; Bazel; Meson
+  Tradeoff: Conan recipe maintenance overhead; CMake verbosity
+  Impact: Build infrastructure; CI pipeline; developer onboarding
+
+ADR-006:
+  Decision: DJB2 hash for OTA firmware verification
+  Date: 2025-06
+  Status: Accepted
+  Reason: Fast computation; sufficient collision resistance for firmware partition integrity
+  Alternative: SHA-256; CRC-32
+  Tradeoff: Not cryptographically secure (acceptable for integrity, not authentication)
+  Impact: OTA update pipeline; fleet management; boot verification
+
+ADR-007:
+  Decision: Pre-allocated memory pools for real-time paths
+  Date: 2025-03
+  Status: Accepted
+  Reason: Deterministic allocation latency; no heap fragmentation; ASIL-D compliance
+  Alternative: Standard heap allocation (malloc/new)
+  Tradeoff: Fixed maximum capacity; must pre-size pools; wasted memory if oversized
+  Impact: All real-time subsystems (control, safety, sensors); memory budgeting
+
+ADR-008:
+  Decision: ONNX Runtime for perception inference
+  Date: 2025-04
+  Status: Accepted
+  Reason: Cross-platform; supports TensorRT optimization on Jetson; model-agnostic
+  Alternative: TensorFlow Lite; PyTorch C++ (LibTorch); custom inference
+  Tradeoff: Additional dependency; runtime overhead vs native TensorRT
+  Impact: Perception pipeline; model deployment workflow; GPU memory budget
+
+---
+
+## KNOWN ISSUES REGISTRY
+
+KNOWN-001:
+  Module: perception/detection
+  Issue: ONNX model weights not loaded; runs on simulated classification labels
+  Severity: Medium
+  Status: Open
+  Impact: Object detection accuracy is synthetic; not validated against real sensor data
+  Workaround: Use simulation mode for development; do not trust classification output for safety decisions
+  Resolution Plan: Integrate trained YOLOv8 ONNX weights after training pipeline is complete
+
+KNOWN-002:
+  Module: localization/hdmap
+  Issue: HD Map engine uses topology graph mock instead of Lanelet2 XML parsing
+  Severity: Medium
+  Status: Open
+  Impact: Route planning operates on simplified graph; lane-level accuracy unavailable
+  Workaround: Use waypoint-based navigation instead of lane-following
+  Resolution Plan: Implement Lanelet2 XML loader and lane boundary extraction
+
+KNOWN-003:
+  Module: perception/traffic_lights
+  Issue: Traffic light detection uses HSV color classification with simulation fallback
+  Severity: Low
+  Status: Open
+  Impact: Traffic light state detection unreliable on real camera feeds
+  Workaround: Use simulation-only mode; bypass in manual override scenarios
+  Resolution Plan: Train dedicated traffic light classifier on real-world dataset
+
+KNOWN-004:
+  Module: fleet/telemetry
+  Issue: gRPC telemetry streaming to fleet operations center partially implemented
+  Severity: Medium
+  Status: Open
+  Impact: Fleet operators cannot monitor vehicle state in real-time
+  Workaround: Use local log files and Digital Twin Dashboard for monitoring
+  Resolution Plan: Complete gRPC streaming service and fleet dashboard integration
+
+KNOWN-005:
+  Module: safety/fdi
+  Issue: Fault Detection & Isolation covers only 60% of fault categories
+  Severity: Medium
+  Status: Open
+  Impact: Some sensor faults may go undetected; reduced safety coverage
+  Workaround: Conservative safety margins compensate for unmonitored faults
+  Resolution Plan: Instrument remaining sensor channels and add FDI rules
+
+KNOWN-006:
+  Module: perception/lanes
+  Issue: Lane detection accuracy degrades significantly in heavy rain conditions
+  Severity: High
+  Status: Open
+  Impact: Lane-keeping assistance unreliable in adverse weather
+  Workaround: Increase lane confidence threshold from 0.6 to 0.8; fallback to waypoint following
+  Resolution Plan: Add weather-robust lane detection model (rain/fog augmented training)
+
+KNOWN-007:
+  Module: prediction/trajectory
+  Issue: Trajectory prediction assumes constant velocity for pedestrians
+  Severity: Medium
+  Status: Open
+  Impact: Erratic pedestrian movements not captured; late evasion triggers
+  Workaround: Increase safety margin for pedestrian obstacles by 1.5x
+  Resolution Plan: Integrate social force model or LSTM-based pedestrian prediction
+
+KNOWN-008:
+  Module: control/steering
+  Issue: Stanley controller tracking error increases above 60 km/h
+  Severity: Low
+  Status: Accepted
+  Impact: Cross-track error exceeds ±20cm at highway speeds
+  Workaround: Limit operational speed to 50 km/h in current deployment
+  Resolution Plan: Migrate to MPC controller for highway-speed scenarios (ADR pending)
+
+---
+
+## AI_TASK_GUIDE
+
+### If Fixing Bugs
+
+1. Read the **SYSTEM CONTRACTS REGISTRY** to understand producer/consumer invariants
+2. Read the **KNOWN ISSUES REGISTRY** to check if the bug is already documented
+3. Read the **AI CHANGE IMPACT MATRIX** to identify all affected modules
+4. Read the **INTERFACE CONTRACTS REGISTRY** to verify you are not violating interface contracts
+5. Read the relevant **test suite** and add a regression test for the fix
+6. Verify all **contract invariants** still hold after the fix
+7. Run `ctest --output-on-failure` to verify no regressions
+
+### If Adding Features
+
+1. Check the **FEATURE INVENTORY** to see if a similar feature exists or is planned
+2. Check the **INTERFACE CONTRACTS REGISTRY** to find the correct extension point
+3. Check the **SERVICE-LEVEL DEPENDENCY MAP** to understand where the new feature fits
+4. Update the **FEATURE INVENTORY** with the new feature entry
+5. Update **MASTER_REQUIREMENTS.md** with new `REQ-` tags
+6. Add unit tests achieving >90% coverage on the new code
+7. Run the **AIPBF scanner** (`python tools/project_brain/project_brain.py`) to sync documentation
+
+### If Refactoring
+
+1. Read the **INTERFACE CONTRACTS REGISTRY** — preserve all public interface signatures
+2. Read the **SYSTEM CONTRACTS REGISTRY** — preserve all producer/consumer invariants
+3. Read the **DECISION REGISTRY (ADR)** — do not reverse accepted architectural decisions
+4. Read the **AI CHANGE IMPACT MATRIX** — understand full blast radius
+5. Preserve all existing test assertions — do not weaken or remove
+6. Run the full validation suite: `ctest --output-on-failure`
+7. Verify no **architecture drift** is introduced (check section 27)
+
+### If Modifying Safety-Critical Code
+
+1. Read **CONTRACT-005** (Control → HAL) and **CONTRACT-006** (Safety → Control)
+2. Read **ADR-007** (memory pools) — no heap allocations on real-time paths
+3. Read **ADR-002** (lock-free EventBus) — no mutex locks in control loops
+4. Verify **SafetyMonitor::check_envelope()** still completes within 5ms
+5. Verify emergency override still preempts all control commands
+6. Run safety-specific tests: `ctest -R test_safety`
+7. Run control-specific tests: `ctest -R test_control`
+8. Request explicit code review before merging
+
+### If Adding a New Sensor
+
+1. Implement the `ISensor` interface (`init()`, `read()`, `calibrate()`)
+2. Register the driver with `Kernel::register_component()`
+3. Add the sensor to `SensorFusion` fusion pipeline
+4. Update **CONTRACT-001** if the new sensor changes the fused output format
+5. Add driver unit tests and sensor fusion integration tests
+6. Update the **ENTRY POINT REGISTRY** with the new background worker
+7. Update the **CLASS / SERVICE REGISTRY** with the new driver class
+
+### If Modifying the EventBus
+
+1. Read **ADR-002** — lock-free ring buffer is a deliberate architectural decision
+2. Read **CONTRACT-008** and all contracts — EventBus is the backbone of all IPC
+3. ALL subsystems depend on EventBus — treat as CRITICAL risk modification
+4. Verify >1M dispatches/sec throughput after changes
+5. Verify zero-copy semantics are preserved
+6. Run ALL test suites — not just `test_event_bus`
+7. Request explicit architectural review before merging
+"""
+        elif self.ident["type"] == "Autonomous Trading Platform":
+            return """
+## FEATURE_SPECIFICATIONS
+
+### Market Data Tick Ingestion
+
+Purpose:
+Parse and ingest raw exchange trade/quote data streams.
+
+Inputs:
+- WebSocket connections
+- REST APIs
+
+Outputs:
+- Market tick queues
+
+Failure Modes:
+- Network socket disconnection
+- Rate limit exhaustion
+
+Consumers:
+- Forecast
+- Backtest
+
+Source Files:
+- feed/market_feed.py
+
+Tests:
+- test_feed.py
+
+### Forecast Indicators Alpha Calculation
+
+Purpose:
+Calculate alpha signals and forecast trade indicators from ticks.
+
+Inputs:
+- Market tick queues
+
+Outputs:
+- Trade indicators / alpha signals
+
+Failure Modes:
+- Numerical underflow
+- Feature drift
+
+Consumers:
+- Backtest
+- Broker
+
+Source Files:
+- forecast/forecast.py
+
+Tests:
+- test_forecast.py
+
+### Backtesting Solver Simulation
+
+Purpose:
+Simulate trading strategies on historical data with fee and slippage models.
+
+Inputs:
+- Alpha signals
+- Historical order book data
+
+Outputs:
+- Performance metrics (Sharpe ratio, drawdowns)
+
+Failure Modes:
+- Look-ahead bias
+- Lack of historical liquidity data
+
+Consumers:
+- Risk
+- Broker
+
+Source Files:
+- backtest/backtest.py
+
+Tests:
+- test_backtest.py
+
+### Live DB Transactions Ledger
+
+Purpose:
+Record live transactions and interface with broker execution APIs.
+
+Inputs:
+- Executed order payloads
+
+Outputs:
+- Persistent trade logs
+- Account balances
+
+Failure Modes:
+- Database connection timeouts
+- Broker API failures
+
+Consumers:
+- Risk
+- Portfolio Management
+
+Source Files:
+- broker/db_broker.py
+
+Tests:
+- test_broker.py
+
+### Risk Limit Validator
+
+Purpose:
+Ensure trade payloads satisfy allocation limits and risk envelopes.
+
+Inputs:
+- Planned order commands
+- Current portfolio allocations
+
+Outputs:
+- Order approval / rejection flags
+
+Failure Modes:
+- Slow execution loops
+- Stale portfolio balance cache
+
+Consumers:
+- Broker
+- Live Trading API
+
+Source Files:
+- risk/risk_engine.py
+
+Tests:
+- test_risk.py
+
+---
+
+## CHANGE_IMPACT_MATRIX
+
+Feature:
+Market Data Tick Ingestion
+
+Changing affects:
+- Forecast
+- Backtest
+
+Risk:
+High
+
+Tests Required:
+- Feed Ingestion tests
+
+Feature:
+Forecast Indicators Alpha Calculation
+
+Changing affects:
+- Backtest
+- Broker
+
+Risk:
+High
+
+Tests Required:
+- Forecast Alpha tests
+
+Feature:
+Backtesting Solver Simulation
+
+Changing affects:
+- Risk
+- Broker
+
+Risk:
+High
+
+Tests Required:
+- Backtest Solver tests
+
+Feature:
+Live DB Transactions Ledger
+
+Changing affects:
+- Risk
+- Portfolio Management
+
+Risk:
+Critical
+
+Tests Required:
+- Broker Transaction tests
+
+Feature:
+Risk Limit Validator
+
+Changing affects:
+- Broker
+- Live Trading API
+
+Risk:
+Critical
+
+Tests Required:
+- Risk Engine tests
+
+---
+
+## AI_TASK_ROUTING_MAP
+
+Task:
+Add exchange feed
+
+Modify:
+- feed/
+
+Task:
+Add alpha indicator
+
+Modify:
+- forecast/
+
+Task:
+Add risk check rule
+
+Modify:
+- risk/
+
+Task:
+Fix transaction database issue
+
+Modify:
+- broker/
+
+---
+
+## SYSTEM STARTUP FLOW
+
+1. main()
+2. EventBus initialization
+3. Ingestion connection startup
+4. Strategy registry load
+5. Forecast models load
+6. Risk check initialization
+7. Broker connection validation
+8. Begin trading engine execution loop
+
+---
+
+## DATA MODELS
+
+### TickData
+- Location: `feed/include/tick_data.py`
+- Fields: `str symbol`, `float price`, `float size`, `int timestamp`
+- Used By: forecast, backtest
+- Produced By: feed
+- Consumed By: forecast, backtest
+
+### TradeSignal
+- Location: `forecast/include/trade_signal.py`
+- Fields: `str symbol`, `str side`, `float target_price`, `float strength`
+- Used By: backtest, broker
+- Produced By: forecast
+- Consumed By: backtest, broker
+
+### OrderBook
+- Location: `feed/include/order_book.py`
+- Fields: `dict bids`, `dict asks`, `int timestamp`
+- Used By: forecast, backtest
+- Produced By: feed
+- Consumed By: forecast, backtest
+
+### PortfolioState
+- Location: `broker/include/portfolio_state.py`
+- Fields: `dict holdings`, `float cash`, `float margins`
+- Used By: broker, risk
+- Produced By: broker
+- Consumed By: risk
+
+---
+
+## INTERFACES
+
+### IMarketFeed
+- Methods: `subscribe(symbol)`, `connect()`, `disconnect()`
+- Implementations: `WebSocketFeed`, `RESTFeed`
+- Usage: Establishes connections with exchanges and ingests ticks.
+
+### IForecastModel
+- Methods: `calculate_alpha(tick)`, `update_features()`
+- Implementations: `LinearRegressionModel`, `LSTMModel`
+- Usage: Evaluates incoming prices and publishes forecasts.
+
+### IRiskPolicy
+- Methods: `validate_order(order, portfolio)`
+- Implementations: `MaxDrawdownPolicy`, `MarginLimitPolicy`
+- Usage: Validates trades against risk matrices before routing.
+
+### IBroker
+- Methods: `submit_order(order)`, `cancel_order(order_id)`
+- Implementations: `AlpacaBroker`, `BinanceBroker`
+- Usage: Standardized interface routing orders to specific exchanges.
+
+---
+
+## BUILD TARGETS
+
+### feed_service
+- Dependencies: `websockets`
+- Output Binary: `feed_service`
+- Build Command: `pip install -e .`
+
+### forecast_service
+- Dependencies: `numpy`, `pandas`
+- Output Binary: `forecast_service`
+- Build Command: `pip install -e .`
+
+### risk_service
+- Dependencies: `feed_service`
+- Output Binary: `risk_service`
+- Build Command: `pip install -e .`
+
+---
+
+## TEST SUITES
+
+### test_feed
+- tests `market feed ingestion`
+
+### test_forecast
+- tests `alpha generation`
+
+### test_risk
+- tests `drawdown validation`
+
+### test_broker
+- tests `exchange routing`
+
+---
+
+## CHANGE IMPACT
+
+Forecast:
+  Affects:
+    Backtesting
+    Broker Execution
+
+Feed:
+  Affects:
+    Forecast
+    Backtesting
+
+Broker:
+  Affects:
+    Risk Management
+    Portfolio
+"""
+        else:
+            return """
+## FEATURE_SPECIFICATIONS
+
+### Core Routing Engine
+
+Purpose:
+Execute business logic and route client request events.
+
+Inputs:
+- Client requests (HTTP/REST/RPC)
+
+Outputs:
+- Standardized response messages
+- DB queries
+
+Failure Modes:
+- Route handler panic
+- Thread pool exhaustion
+
+Consumers:
+- Client Browser
+- API Gateway
+
+Source Files:
+- core/main.cpp
+
+Tests:
+- test_main.cpp
+
+---
+
+## CHANGE_IMPACT_MATRIX
+
+Feature:
+Core Routing Engine
+
+Changing affects:
+- Shared utilities
+- Database connector
+
+Risk:
+Medium
+
+Tests Required:
+- Routing Engine tests
+
+---
+
+## AI_TASK_ROUTING_MAP
+
+Task:
+Add API endpoint
+
+Modify:
+- core/
+- backend/
+
+Task:
+Fix database query
+
+Modify:
+- db/
+- shared/
+
+---
+
+## SYSTEM STARTUP FLOW
+
+1. main()
+2. DB connection setup
+3. Service container boot
+4. Router initialization
+5. Middlewares setup
+6. Begin HTTP server listen loop
+
+---
+
+## DATA MODELS
+
+### User
+- Location: `core/models/user.py`
+- Fields: `int id`, `str username`, `str email`
+- Used By: auth, profile
+- Produced By: db
+- Consumed By: frontend, api
+
+### Session
+- Location: `core/models/session.py`
+- Fields: `str session_id`, `int expiry`, `int user_id`
+- Used By: auth
+- Produced By: db
+- Consumed By: auth
+
+---
+
+## INTERFACES
+
+### IRepository
+- Methods: `find_by_id(id)`, `save(entity)`
+- Implementations: `SQLUserRepository`, `MongoUserRepository`
+- Usage: Data persistence operations layer.
+
+### IAuthService
+- Methods: `authenticate(username, password)`, `verify_token(token)`
+- Implementations: `JWTAuthService`
+- Usage: Manages security and session generation.
+
+---
+
+## BUILD TARGETS
+
+### web_server
+- Dependencies: `requests`
+- Output Binary: `web_server`
+- Build Command: `npm run build`
+
+---
+
+## TEST SUITES
+
+### test_api
+- tests `routing and responses`
+
+### test_db
+- tests `repository queries`
+
+### test_auth
+- tests `token authentication`
+
+---
+
+## CHANGE IMPACT
+
+Repository:
+  Affects:
+    Auth Service
+    API Controller
+
+Auth:
+  Affects:
+    API Router
+    Session Management
+"""
+

@@ -1,6 +1,6 @@
 # Master Knowledge Graph (AIPBF v4.0)
 
-> **Generated**: 2026-06-02
+> **Generated**: 2026-06-03
 > **Domain Models**: 123
 > **Message Topics**: 5
 
@@ -347,3 +347,43 @@
 | `devDependencies` | REST (Express) | `analyzer.py` | 303 | VERIFIED |
 | `scripts` | REST (Express) | `analyzer.py` | 556 | VERIFIED |
 | `decisions` | REST (Express) | `analyzer.py` | 1289 | VERIFIED |
+| `facts` | REST (Express) | `generator.py` | 92 | VERIFIED |
+| `source` | REST (Express) | `generator.py` | 565 | VERIFIED |
+| `linked_adr` | REST (Express) | `generator.py` | 566 | VERIFIED |
+| `linked_feature` | REST (Express) | `generator.py` | 567 | VERIFIED |
+| `change_impact` | REST (Express) | `generator.py` | 568 | VERIFIED |
+| `status` | REST (Express) | `generator.py` | 576 | VERIFIED |
+| `domain_models` | REST (Express) | `generator.py` | 1002 | VERIFIED |
+| `message_catalog` | REST (Express) | `generator.py` | 1032 | VERIFIED |
+| `format` | REST (Express) | `generator.py` | 1049 | VERIFIED |
+| `priority` | REST (Express) | `generator.py` | 1050 | VERIFIED |
+| `frequency` | REST (Express) | `generator.py` | 1051 | VERIFIED |
+| `test_map` | REST (Express) | `generator.py` | 1312 | VERIFIED |
+| `performance` | REST (Express) | `generator.py` | 1320 | VERIFIED |
+| `safety` | REST (Express) | `generator.py` | 1322 | VERIFIED |
+| `simulation` | REST (Express) | `generator.py` | 1325 | VERIFIED |
+| `digital_twin` | REST (Express) | `generator.py` | 1328 | VERIFIED |
+| `feature_inventory` | REST (Express) | `generator.py` | 1376 | VERIFIED |
+| `ai_models` | REST (Express) | `generator.py` | 1509 | VERIFIED |
+| `change_impact_matrix` | REST (Express) | `generator.py` | 1526 | VERIFIED |
+| `declared_dependencies` | REST (Express) | `generator.py` | 1528 | VERIFIED |
+| `actual_dependencies` | REST (Express) | `generator.py` | 1529 | VERIFIED |
+| `violations` | REST (Express) | `generator.py` | 1530 | VERIFIED |
+| `forward_impact` | REST (Express) | `generator.py` | 1549 | VERIFIED |
+| `backward_impact` | REST (Express) | `generator.py` | 1550 | VERIFIED |
+| `performance` | REST (Express) | `generator.py` | 1582 | VERIFIED |
+| `config_files` | REST (Express) | `generator.py` | 1645 | VERIFIED |
+| `has_secrets` | REST (Express) | `generator.py` | 1650 | VERIFIED |
+| `boot_flow` | REST (Express) | `generator.py` | 1709 | VERIFIED |
+| `decisions` | REST (Express) | `generator.py` | 1801 | VERIFIED |
+| `tradeoffs` | REST (Express) | `generator.py` | 1804 | VERIFIED |
+| `status` | REST (Express) | `generator.py` | 1817 | VERIFIED |
+| `source` | REST (Express) | `generator.py` | 1855 | VERIFIED |
+| `domain_models` | REST (Express) | `generator.py` | 1919 | VERIFIED |
+| `change_impact_matrix` | REST (Express) | `generator.py` | 2008 | VERIFIED |
+| `declared_dependencies` | REST (Express) | `generator.py` | 2010 | VERIFIED |
+| `actual_dependencies` | REST (Express) | `generator.py` | 2011 | VERIFIED |
+| `performance` | REST (Express) | `generator.py` | 2030 | VERIFIED |
+| `test_map` | REST (Express) | `generator.py` | 2048 | VERIFIED |
+| `safety` | REST (Express) | `generator.py` | 2052 | VERIFIED |
+| `status` | REST (Express) | `generator.py` | 2127 | VERIFIED |

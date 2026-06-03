@@ -1,8 +1,8 @@
 # Master Security Document (AIPBF v4.0)
 
-> **Generated**: 2026-06-02
+> **Generated**: 2026-06-03
 > **Vulnerabilities Found**: 0
-> **Unsafe Findings**: 21
+> **Unsafe Findings**: 29
 > **Verification Gate**: SAST Heuristic Scan
 
 ---
@@ -40,11 +40,19 @@
 
 | File Location | Unsafe Allocation Method | Impact | Remediation Strategy |
 |:---|:---|:---|:---|
-| `aipbf_export/generator.py:L652` | `Use of unsafe buffer function (strcpy)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Use of unsafe buffer function (strcpy) |
-| `aipbf_export/generator.py:L662` | `Use of unsafe buffer function (strcpy)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Use of unsafe buffer function (strcpy) |
+| `aipbf_export/generator.py:L656` | `Use of unsafe buffer function (strcpy)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Use of unsafe buffer function (strcpy) |
+| `aipbf_export/generator.py:L666` | `Use of unsafe buffer function (strcpy)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Use of unsafe buffer function (strcpy) |
 | `aipbf_export/generator.py:L330` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
 | `aipbf_export/generator.py:L332` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
-| `aipbf_export/generator.py:L652` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `aipbf_export/generator.py:L656` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `aipbf_export/generator.py:L4132` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `aipbf_export/generator.py:L4134` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `aipbf_export/generator.py:L4824` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `aipbf_export/generator.py:L4825` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `aipbf_export/generator.py:L4827` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `aipbf_export/generator.py:L4856` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `aipbf_export/generator.py:L4858` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
+| `aipbf_export/generator.py:L4859` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
 | `aipbf_export/reviewer.py:L84` | `Use of unsafe buffer function (strcpy)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Use of unsafe buffer function (strcpy) |
 | `aipbf_export/reviewer.py:L87` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
 | `core/event_bus/include/uados/event_bus/event_bus_factory.hpp:L11` | `Raw pointer new allocation (recommend std::make_unique or std::make_shared)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Raw pointer new allocation (recommend std::make_unique or std::make_shared) |
@@ -66,8 +74,8 @@
 
 | File Location | Shell Command Call | Impact | Remediation Strategy |
 |:---|:---|:---|:---|
-| `aipbf_export/generator.py:L664` | `Use of shell command execution (system)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Use of shell command execution (system) |
-| `aipbf_export/generator.py:L664` | `Use of shell pipe execution (popen)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Use of shell pipe execution (popen) |
+| `aipbf_export/generator.py:L668` | `Use of shell command execution (system)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Use of shell command execution (system) |
+| `aipbf_export/generator.py:L668` | `Use of shell pipe execution (popen)` | Potential memory safety violation, buffer overflow, or arbitrary code execution. | Refactor module to remove unsafe API calls. Use of shell pipe execution (popen) |
 
 
 ---

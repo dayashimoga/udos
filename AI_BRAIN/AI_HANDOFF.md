@@ -1,6 +1,6 @@
 # AI Handoff Document (AIPBF v4.0)
 
-> **Generated**: 2026-06-02
+> **Generated**: 2026-06-03
 > **Purpose**: Enable any AI model to restore full project context after context loss, model switching, or conversation reset.
 
 ---
@@ -15,7 +15,7 @@
 - Verified active directories: `/core`, `/hal`, `/sensors`, `/control`, `/safety`, `/fleet`, `/docs`, `/scripts`, `/prediction`, `/perception`, `/localization`, `/simulation`, `/validation`, `/.github`, `/aipbf_export`, `/AI_BRAIN`, `/configs`, `/digital_twin`, `/planning`.
 
 ## What Doesn't Work (Known Issues)
-- Found 0 security vulnerabilities and 21 unsafe findings.
+- Found 0 security vulnerabilities and 29 unsafe findings.
 
 ## Missing Work (Pending)
 - Integrate JUnit XML export to verify testing pass rates.
